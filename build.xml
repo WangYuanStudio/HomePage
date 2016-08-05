@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="zeffee" default="build">
+    
+    <target name="build" depends="clean,make_dir,tar"/>
+
+    
+    <property name="tarfile"     value="${phing.project.name}.${buildnumber}.${buildid}.tar.gz" />
+    <property name="distfile"    value="dist/${tarfile}" />
+    <property name="tests.dir" value="tests" />
+  
+    
+    <target name="clean" description="Delete some old dir">
+        <delete dir="${project.basedir}/build"  failonerror="false" />
+        <delete dir="dist" failonerror="false" />
+    </target>
+
+    
+    <target name="make_dir">
+        <mkdir dir="${project.basedir}/build" />
+        <mkdir dir="${project.basedir}/dist" />
+    </target>
+
+    
+    <target name="phpdcd" description="Check the code that never be used">
+        
+        
+        <exec command="phpdcd ./" dir="${project.basedir}" output="${project.basedir}/build/phpdcd.txt" />
+
+        
+        <echo msg="done!"/>
+    </target>
+
+    
+    <target name="phpcs" description="Check the coding standards">
+        <exec command="phpcs ./" dir="${project.basedir}" output="${project.basedir}/build/phpcs.txt" />
+
+        <echo msg="done!"/>
+    </target>
+
+    
+    <target name="phploc" description="Measure project size using PHPLOC">
+        
+        <phploc reportType="xml" reportName="phploc" reportDirectory="${project.basedir}/build/" pharlocation="/usr/local/bin/phploc">
+            
+            <fileset dir="${project.basedir}">
+                <include name="**/*.php"/>
+            </fileset>
+        </phploc>
+
+        <echo msg="done!"/>
+    </target>
+
+    
+    <target name="phpcpd" description="Find duplicate code using PHPCPD">
+        <phpcpd pharlocation="/usr/bin/phpcpd">
+            <fileset dir="${project.basedir}">
+                <include name="*.php"/>
+            </fileset>
+            
+            <formatter type="pmd" outfile="build/phpcpd.xml"/>
+        </phpcpd>
+
+        <echo msg="done!"/>
+    </target>
+
+    
+    <target name="phpunit" description="Run PHPUnit tests">
+        <phpunit haltonerror="true" haltonfailure="true" printsummary="true"  pharlocation="/usr/local/bin/phpunit">
+        <batchtest>
+        <fileset dir="${tests.dir}">
+            <include name="**/*Test.php" />
+        </fileset>
+        </batchtest>
+        </phpunit>
+    </target>
+
+    
+    <target name="check" description="Check variables" >
+        <fail unless="buildnumber" message="buildnumber not defined!" />
+        <fail unless="buildid" message="buildid not defined!" />
+    </target>
+
+    
+    <target name="tar" depends="check" description="Create tar file for release">
+        <tar destfile="${distfile}" compression="gzip">
+            
+            <fileset refid="zeffee_tar"/>
+        </tar>
+    </target>
+
+    <fileset id="zeffee_tar" dir=".">
+        <include name="App/**"/>
+        <include name="logs/**"/>
+        <include name="tests/**"/>
+        <include name="public/**"/>
+        <include name="vendor/**"/>
+        <include name="Zereri/**"/>
+        <include name="composer.json"/>
+    </fileset>
+</project>
