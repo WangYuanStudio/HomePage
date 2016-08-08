@@ -9,7 +9,6 @@ class Example
      */
     public function test()
     {
-    	$res = ["aaa"];
-        response(["name" => $res]);
+        response(["name" => "zereri"]);
     }
 }
