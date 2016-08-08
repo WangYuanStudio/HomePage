@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="zeffee" default="build">
     
-    <target name="build" depends="clean,make_dir,phpunit,tar"/>
+    <target name="build" depends="clean,make_dir,tar"/>
 
     
     <property name="tarfile"     value="${phing.project.name}.${buildnumber}.${buildid}.tar.gz" />
