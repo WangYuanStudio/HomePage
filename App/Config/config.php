@@ -23,7 +23,7 @@ return [
     'database'  => [
         "drive"   => "mysql",
         "host"    => "localhost",
-        "dbname"  => "zereri",
+        "dbname"  => "wangyuan",
         "user"    => "root",
         "pwd"     => "root",
         "charset" => "utf8"
