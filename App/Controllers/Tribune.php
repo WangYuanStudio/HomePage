@@ -10,6 +10,7 @@ namespace App\Controllers;
 
 use App\Models\Post;
 use App\Models\Bbs;
+use App\Lib\SphinxClient;
 
 class Tribune
 {
@@ -128,8 +129,8 @@ class Tribune
     }
 
 
-    /**
-     * 获取未读信息条数
+    /**获取未读信息条数
+     *
      */
     public function getUnReadNum()
     {
@@ -137,7 +138,7 @@ class Tribune
     }
 
 
-    /**获取指定用户的未读信息
+    /* 获取指定用户的未读信息
      *
      * @param $uid
      *
@@ -149,6 +150,24 @@ class Tribune
             '(select bbs.*,author.nickname author_nickname,author.photo author_photo,point.nickname point_nickname,point.photo point_photo from bbs left join user author on author.id=bbs.uid left join user point on point.id=bbs.point_uid where point_uid=? and is_read=0 and uid<>?) union (select bbs.*,author.nickname author_nickname,author.photo author_photo,point.nickname point_nickname,point.photo point_photo from bbs left join user author on author.id=bbs.uid left join user point on point.id=bbs.point_uid where master_uid=? and master_read=0 and uid<>?) order by time desc',
             [$uid, $uid, $uid, $uid]
         );
+    }
+
+
+    /**搜索指定内容的帖子
+     *
+     * @param string $key 关键字
+     *
+     * @return data.帖子内容
+     */
+    public function searchPost($key)
+    {
+        $sphinx = new SphinxClient();
+        $sphinx->SetServer("localhost", 9312);
+        $sphinx->SetMatchMode(SPH_MATCH_ANY);
+        $search = $sphinx->Query($key, "*");
+        $data = Post::whereIn('id', array_keys($search["matches"]))->select();
+
+        response(["data" => $data]);
     }
 
 
