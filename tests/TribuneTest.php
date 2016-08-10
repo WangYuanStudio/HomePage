@@ -55,4 +55,38 @@ class TribuneTest extends PHPUnit_Framework_TestCase
 
         $this->assertNotEmpty($res_data['floor']);
     }
+
+
+    public function testPostInfo()
+    {
+        $data = [
+            "pid" => 1
+        ];
+
+        $resp = Test::curl("http://localhost:80/wangyuan/public/Tribune/postInfo", json_encode($data));
+
+        $res_data = json_decode($resp["result"], true);
+
+        $this->assertNotEmpty($res_data['first']);
+        $this->assertNotEmpty($res_data['others']);
+    }
+
+
+    /**
+     * @group published
+     */
+    public function testGetPublished()
+    {
+        $data = [
+
+        ];
+
+        $resp = Test::curl("http://localhost:80/wangyuan/public/Tribune/getPublished", json_encode($data));
+
+        $res_data = json_decode($resp["result"], true);
+
+        $this->assertInternalType("array", $res_data['post']);
+        $this->assertInternalType("array", $res_data['unread']);
+
+    }
 }
