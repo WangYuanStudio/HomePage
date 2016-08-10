@@ -70,3 +70,15 @@
 [08-Aug-2016 17:29:28 PRC] PHP   2. Zereri\Lib\Call->call() F:\phpstudy\WWW\wangyuan\public\index.php:26
 [08-Aug-2016 17:29:28 PRC] PHP   3. Zereri\Lib\Call->callController() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:160
 [08-Aug-2016 17:29:28 PRC] PHP   4. App\Controllers\Tribune->response() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:171
+[09-Aug-2016 01:37:59 PRC] PHP Fatal error:  Class 'App\Controllers\Nette\Mail\SmtpMailer' not found in F:\phpstudy\WWW\wangyuan\App\Controllers\Tribune.php on line 104
+[09-Aug-2016 01:37:59 PRC] PHP Stack trace:
+[09-Aug-2016 01:37:59 PRC] PHP   1. {main}() F:\phpstudy\WWW\wangyuan\public\index.php:0
+[09-Aug-2016 01:37:59 PRC] PHP   2. Zereri\Lib\Call->call() F:\phpstudy\WWW\wangyuan\public\index.php:26
+[09-Aug-2016 01:37:59 PRC] PHP   3. Zereri\Lib\Call->callController() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:160
+[09-Aug-2016 01:37:59 PRC] PHP   4. App\Controllers\Tribune->test() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:171
+[09-Aug-2016 18:42:59 PRC] PHP Fatal error:  Call to undefined method Zereri\Lib\Sql::gourpBy() in F:\phpstudy\WWW\wangyuan\App\Controllers\Tribune.php on line 113
+[09-Aug-2016 18:42:59 PRC] PHP Stack trace:
+[09-Aug-2016 18:42:59 PRC] PHP   1. {main}() F:\phpstudy\WWW\wangyuan\public\index.php:0
+[09-Aug-2016 18:42:59 PRC] PHP   2. Zereri\Lib\Call->call() F:\phpstudy\WWW\wangyuan\public\index.php:26
+[09-Aug-2016 18:42:59 PRC] PHP   3. Zereri\Lib\Call->callController() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:160
+[09-Aug-2016 18:42:59 PRC] PHP   4. App\Controllers\Tribune->getPublished() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:171
