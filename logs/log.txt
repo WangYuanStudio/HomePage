@@ -1,0 +1,84 @@
+[08-Aug-2016 16:28:59 PRC] PHP Parse error:  syntax error, unexpected ')', expecting variable (T_VARIABLE) in F:\phpstudy\WWW\wangyuan\App\Controllers\Tribune.php on line 51
+[08-Aug-2016 16:28:59 PRC] PHP Stack trace:
+[08-Aug-2016 16:28:59 PRC] PHP   1. {main}() F:\phpstudy\WWW\wangyuan\public\index.php:0
+[08-Aug-2016 16:28:59 PRC] PHP   2. Zereri\Lib\Factory::newController() F:\phpstudy\WWW\wangyuan\public\index.php:24
+[08-Aug-2016 16:28:59 PRC] PHP   3. Zereri\Lib\Call->__construct() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Factory.php:41
+[08-Aug-2016 16:28:59 PRC] PHP   4. Zereri\Lib\Call->getReflect() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:55
+[08-Aug-2016 16:28:59 PRC] PHP   5. Zereri\Lib\Call->isMethodExists() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:66
+[08-Aug-2016 16:28:59 PRC] PHP   6. method_exists() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:80
+[08-Aug-2016 16:28:59 PRC] PHP   7. spl_autoload_call() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:80
+[08-Aug-2016 16:28:59 PRC] PHP   8. Composer\Autoload\ClassLoader->loadClass() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:0
+[08-Aug-2016 16:28:59 PRC] PHP   9. Composer\Autoload\includeFile() F:\phpstudy\WWW\wangyuan\vendor\composer\ClassLoader.php:301
+[08-Aug-2016 16:28:59 PRC] PHP Parse error:  syntax error, unexpected ')', expecting variable (T_VARIABLE) in F:\phpstudy\WWW\wangyuan\App\Controllers\Tribune.php on line 51
+[08-Aug-2016 16:28:59 PRC] PHP Stack trace:
+[08-Aug-2016 16:28:59 PRC] PHP   1. {main}() F:\phpstudy\WWW\wangyuan\public\index.php:0
+[08-Aug-2016 16:28:59 PRC] PHP   2. Zereri\Lib\Factory::newController() F:\phpstudy\WWW\wangyuan\public\index.php:24
+[08-Aug-2016 16:28:59 PRC] PHP   3. Zereri\Lib\Call->__construct() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Factory.php:41
+[08-Aug-2016 16:28:59 PRC] PHP   4. Zereri\Lib\Call->getReflect() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:55
+[08-Aug-2016 16:28:59 PRC] PHP   5. Zereri\Lib\Call->isMethodExists() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:66
+[08-Aug-2016 16:28:59 PRC] PHP   6. method_exists() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:80
+[08-Aug-2016 16:28:59 PRC] PHP   7. spl_autoload_call() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:80
+[08-Aug-2016 16:28:59 PRC] PHP   8. Composer\Autoload\ClassLoader->loadClass() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:0
+[08-Aug-2016 16:28:59 PRC] PHP   9. Composer\Autoload\includeFile() F:\phpstudy\WWW\wangyuan\vendor\composer\ClassLoader.php:301
+[08-Aug-2016 16:29:39 PRC] PHP Parse error:  syntax error, unexpected ')', expecting variable (T_VARIABLE) in F:\phpstudy\WWW\wangyuan\App\Controllers\Tribune.php on line 51
+[08-Aug-2016 16:29:39 PRC] PHP Stack trace:
+[08-Aug-2016 16:29:39 PRC] PHP   1. {main}() F:\phpstudy\WWW\wangyuan\public\index.php:0
+[08-Aug-2016 16:29:39 PRC] PHP   2. Zereri\Lib\Factory::newController() F:\phpstudy\WWW\wangyuan\public\index.php:24
+[08-Aug-2016 16:29:39 PRC] PHP   3. Zereri\Lib\Call->__construct() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Factory.php:41
+[08-Aug-2016 16:29:39 PRC] PHP   4. Zereri\Lib\Call->getReflect() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:55
+[08-Aug-2016 16:29:39 PRC] PHP   5. Zereri\Lib\Call->isMethodExists() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:66
+[08-Aug-2016 16:29:39 PRC] PHP   6. method_exists() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:80
+[08-Aug-2016 16:29:39 PRC] PHP   7. spl_autoload_call() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:80
+[08-Aug-2016 16:29:39 PRC] PHP   8. Composer\Autoload\ClassLoader->loadClass() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:0
+[08-Aug-2016 16:29:39 PRC] PHP   9. Composer\Autoload\includeFile() F:\phpstudy\WWW\wangyuan\vendor\composer\ClassLoader.php:301
+[08-Aug-2016 16:29:39 PRC] PHP Parse error:  syntax error, unexpected ')', expecting variable (T_VARIABLE) in F:\phpstudy\WWW\wangyuan\App\Controllers\Tribune.php on line 51
+[08-Aug-2016 16:29:39 PRC] PHP Stack trace:
+[08-Aug-2016 16:29:39 PRC] PHP   1. {main}() F:\phpstudy\WWW\wangyuan\public\index.php:0
+[08-Aug-2016 16:29:39 PRC] PHP   2. Zereri\Lib\Factory::newController() F:\phpstudy\WWW\wangyuan\public\index.php:24
+[08-Aug-2016 16:29:39 PRC] PHP   3. Zereri\Lib\Call->__construct() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Factory.php:41
+[08-Aug-2016 16:29:39 PRC] PHP   4. Zereri\Lib\Call->getReflect() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:55
+[08-Aug-2016 16:29:39 PRC] PHP   5. Zereri\Lib\Call->isMethodExists() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:66
+[08-Aug-2016 16:29:39 PRC] PHP   6. method_exists() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:80
+[08-Aug-2016 16:29:39 PRC] PHP   7. spl_autoload_call() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:80
+[08-Aug-2016 16:29:39 PRC] PHP   8. Composer\Autoload\ClassLoader->loadClass() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:0
+[08-Aug-2016 16:29:39 PRC] PHP   9. Composer\Autoload\includeFile() F:\phpstudy\WWW\wangyuan\vendor\composer\ClassLoader.php:301
+[08-Aug-2016 16:30:17 PRC] PHP Parse error:  syntax error, unexpected ')', expecting variable (T_VARIABLE) in F:\phpstudy\WWW\wangyuan\App\Controllers\Tribune.php on line 51
+[08-Aug-2016 16:30:17 PRC] PHP Stack trace:
+[08-Aug-2016 16:30:17 PRC] PHP   1. {main}() F:\phpstudy\WWW\wangyuan\public\index.php:0
+[08-Aug-2016 16:30:17 PRC] PHP   2. Zereri\Lib\Factory::newController() F:\phpstudy\WWW\wangyuan\public\index.php:24
+[08-Aug-2016 16:30:17 PRC] PHP   3. Zereri\Lib\Call->__construct() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Factory.php:41
+[08-Aug-2016 16:30:17 PRC] PHP   4. Zereri\Lib\Call->getReflect() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:55
+[08-Aug-2016 16:30:17 PRC] PHP   5. Zereri\Lib\Call->isMethodExists() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:66
+[08-Aug-2016 16:30:17 PRC] PHP   6. method_exists() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:80
+[08-Aug-2016 16:30:17 PRC] PHP   7. spl_autoload_call() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:80
+[08-Aug-2016 16:30:17 PRC] PHP   8. Composer\Autoload\ClassLoader->loadClass() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:0
+[08-Aug-2016 16:30:17 PRC] PHP   9. Composer\Autoload\includeFile() F:\phpstudy\WWW\wangyuan\vendor\composer\ClassLoader.php:301
+[08-Aug-2016 16:30:17 PRC] PHP Parse error:  syntax error, unexpected ')', expecting variable (T_VARIABLE) in F:\phpstudy\WWW\wangyuan\App\Controllers\Tribune.php on line 51
+[08-Aug-2016 16:30:17 PRC] PHP Stack trace:
+[08-Aug-2016 16:30:17 PRC] PHP   1. {main}() F:\phpstudy\WWW\wangyuan\public\index.php:0
+[08-Aug-2016 16:30:17 PRC] PHP   2. Zereri\Lib\Factory::newController() F:\phpstudy\WWW\wangyuan\public\index.php:24
+[08-Aug-2016 16:30:17 PRC] PHP   3. Zereri\Lib\Call->__construct() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Factory.php:41
+[08-Aug-2016 16:30:17 PRC] PHP   4. Zereri\Lib\Call->getReflect() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:55
+[08-Aug-2016 16:30:17 PRC] PHP   5. Zereri\Lib\Call->isMethodExists() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:66
+[08-Aug-2016 16:30:17 PRC] PHP   6. method_exists() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:80
+[08-Aug-2016 16:30:17 PRC] PHP   7. spl_autoload_call() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:80
+[08-Aug-2016 16:30:17 PRC] PHP   8. Composer\Autoload\ClassLoader->loadClass() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:0
+[08-Aug-2016 16:30:17 PRC] PHP   9. Composer\Autoload\includeFile() F:\phpstudy\WWW\wangyuan\vendor\composer\ClassLoader.php:301
+[08-Aug-2016 17:29:28 PRC] PHP Fatal error:  Unsupported operand types in F:\phpstudy\WWW\wangyuan\App\Controllers\Tribune.php on line 65
+[08-Aug-2016 17:29:28 PRC] PHP Stack trace:
+[08-Aug-2016 17:29:28 PRC] PHP   1. {main}() F:\phpstudy\WWW\wangyuan\public\index.php:0
+[08-Aug-2016 17:29:28 PRC] PHP   2. Zereri\Lib\Call->call() F:\phpstudy\WWW\wangyuan\public\index.php:26
+[08-Aug-2016 17:29:28 PRC] PHP   3. Zereri\Lib\Call->callController() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:160
+[08-Aug-2016 17:29:28 PRC] PHP   4. App\Controllers\Tribune->response() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:171
+[09-Aug-2016 01:37:59 PRC] PHP Fatal error:  Class 'App\Controllers\Nette\Mail\SmtpMailer' not found in F:\phpstudy\WWW\wangyuan\App\Controllers\Tribune.php on line 104
+[09-Aug-2016 01:37:59 PRC] PHP Stack trace:
+[09-Aug-2016 01:37:59 PRC] PHP   1. {main}() F:\phpstudy\WWW\wangyuan\public\index.php:0
+[09-Aug-2016 01:37:59 PRC] PHP   2. Zereri\Lib\Call->call() F:\phpstudy\WWW\wangyuan\public\index.php:26
+[09-Aug-2016 01:37:59 PRC] PHP   3. Zereri\Lib\Call->callController() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:160
+[09-Aug-2016 01:37:59 PRC] PHP   4. App\Controllers\Tribune->test() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:171
+[09-Aug-2016 18:42:59 PRC] PHP Fatal error:  Call to undefined method Zereri\Lib\Sql::gourpBy() in F:\phpstudy\WWW\wangyuan\App\Controllers\Tribune.php on line 113
+[09-Aug-2016 18:42:59 PRC] PHP Stack trace:
+[09-Aug-2016 18:42:59 PRC] PHP   1. {main}() F:\phpstudy\WWW\wangyuan\public\index.php:0
+[09-Aug-2016 18:42:59 PRC] PHP   2. Zereri\Lib\Call->call() F:\phpstudy\WWW\wangyuan\public\index.php:26
+[09-Aug-2016 18:42:59 PRC] PHP   3. Zereri\Lib\Call->callController() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:160
+[09-Aug-2016 18:42:59 PRC] PHP   4. App\Controllers\Tribune->getPublished() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:171
