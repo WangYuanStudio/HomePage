@@ -21,7 +21,7 @@ class Sign
 	*@param string phone 		长号	
 	*@param string short_phone 	短号
 	*
-	*return status 状态/错误代码  
+	*return status.状态/错误代码  
 	*/
 
 	public function Insertnews($uid,$name,$sid,$department,$class,$phone,$short_phone)
@@ -61,25 +61,8 @@ class Sign
 		}
 	}
 
-	/**插入role表
-	*
-	*@param string $name    	名字 
-	*@param string $department  部门
-	*
-	*return status
-	*/
 
-	public function Insertrole($name,$department)
-	{
-		$insert_role=Role::insert([
-			"name"	=>$name,
-			"department"	=>$department
-			]);
-
-		response("status");
-	}
-
-	/**后台审核
+	/**报名后台分页
 	*
 	*@param int $page    页码
 	*
