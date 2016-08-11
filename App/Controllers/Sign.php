@@ -8,7 +8,7 @@
 namespace App\Controllers;
 
 use App\Models\Info;
-use App\Models\Role;
+use App\Models\User;
 
 class Sign
 {
@@ -49,7 +49,8 @@ class Sign
 					"department" 	=>$department,
 					"class"			=>$class,
 					"phone"			=>$phone,
-					"short_phone"	=>$short_phone
+					"short_phone"	=>$short_phone,
+					"privilege"     =>0
 					]);
 					response(['status' => 1,'msg' => '报名成功' ]);
 				}
@@ -61,8 +62,25 @@ class Sign
 		}
 	}
 
+	/**报名审核通过
+	*
+	*@param int uid  用户id
+	*
+	*return status.返回true
+	*/
+	public function Updateuser($uid)
+	{
+		User::where('id','=',$uid)->update([
+					"role"	=>3
+		]);
+		Info::where('uid','=',$uid)->update([
+					"privilege"=>1
+		]);
+		response("true");
 
-	/**报名后台分页
+	}
+
+	/**报名未审核
 	*
 	*@param int $page    页码
 	*
@@ -71,7 +89,8 @@ class Sign
 
 	public function CheckPower($page=1)
 	{
-		$data=Info::limit(($page - 1) * 10, 10)
+		$data=Info::where('privilege','=',0)
+			->limit(($page - 1) * 10, 10)
             ->select('*');
 
         response(["data" => $data]);
