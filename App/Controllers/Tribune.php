@@ -104,7 +104,7 @@ class Tribune
      *
      * @param int $uid 0 用户id,默认值为登录者uid
      *
-     * @return post.帖子信息 bbs.回复信息
+     * @return post.帖子信息 bbs.被回复的信息,访问自己个人中心才有 unread.未读信息,访问自己个人中心才有
      */
     public function getPublished($uid = -1)
     {
@@ -113,23 +113,20 @@ class Tribune
         if (-1 === $uid) {
             $uid = 2;
 
-            $data['unread'] = $this->getUnReadMsg($uid);
-
-            Bbs::where('point_uid', '=', $uid)->update([
-                "is_read" => 1
-            ]);
-            Bbs::where('master_uid', '=', $uid)->update([
-                "master_read" => 1
-            ]);
+            if ($data['unread'] = $this->getUnReadMsg($uid)) {
+                Bbs::where('point_uid', '=', $uid)->update(["is_read" => 1]);
+                Bbs::where('master_uid', '=', $uid)->update(["master_read" => 1]);
+            } else {
+                $data['bbs'] = Bbs::leftJoin("user", "user.id", "=", "bbs.uid")->where("bbs.point_uid", "=", $uid)->orderBy('time desc')->limit(0, 10)->select('user.nickname,user.mail,user.role,user.photo,bbs.*');
+            }
         }
         $data['post'] = Post::where("post.uid", "=", $uid)->orderBy('time desc')->limit(0, 5)->select();
-        //$data['bbs'] = Bbs::where("bbs.uid", "=", $uid)->orderBy('time desc')->limit(0, 5)->select();
 
         response($data);
     }
 
 
-    /**获取未读信息条数
+    /**论坛-获取未读信息条数
      *
      */
     public function getUnReadNum()
@@ -153,21 +150,69 @@ class Tribune
     }
 
 
-    /**搜索指定内容的帖子
+    /**论坛-搜索指定内容的帖子或回复
      *
      * @param string $key 关键字
      *
-     * @return data.帖子内容
+     * @return post.符合条件的帖子 bbs.符合条件的回复
      */
     public function searchPost($key)
     {
         $sphinx = new SphinxClient();
         $sphinx->SetServer("localhost", 9312);
         $sphinx->SetMatchMode(SPH_MATCH_ANY);
-        $search = $sphinx->Query($key, "*");
-        $data = Post::whereIn('id', array_keys($search["matches"]))->select();
 
-        response(["data" => $data]);
+        $post = $this->sphinxSearch($sphinx, $key, "post", "main");
+        $bbs = $this->sphinxSearch($sphinx, $key, "bbs", "bbs");
+
+        response(["post" => $post, "bbs" => $bbs]);
+    }
+
+
+    /* 搜索关键字
+     *
+     * @param $sphinx
+     * @param $key
+     * @param $table
+     * @param $index
+     *
+     * @return mixed
+     */
+    private function sphinxSearch(&$sphinx, $key, $table, $index)
+    {
+        $search = $sphinx->Query($key, $index);
+        if (isset($search["matches"])) {
+            $match_id = array_keys($search["matches"]);
+
+            switch ($table) {
+                //no break at all
+                case "post":
+                    return Post::whereIn('id', $match_id)->orderBy('field(id,' . implode(",", $match_id) . ')')->select();
+                case "bbs":
+                    return Bbs::leftJoin("user", "user.id", "=", "bbs.uid")->whereIn('bbs.id', $match_id)->orderBy('field(bbs.id,' . implode(",", $match_id) . ')')->select("user.nickname,user.mail,user.role,user.photo,bbs.*");
+            }
+        }
+    }
+
+
+    /**论坛-删除帖子
+     *
+     * @param int $pid 帖子的id
+     */
+    public function deletePost($pid)
+    {
+        Post::where('id', '=', $pid)->delete();
+        Bbs::where('pid', '=', $pid)->delete();
+    }
+
+
+    /**论坛-删除回复
+     *
+     * @param int $bid 回复的id
+     */
+    public function deleteBbs($bid)
+    {
+        Bbs::where('id', '=', $bid)->delete();
     }
 
 
