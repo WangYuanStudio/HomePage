@@ -3,12 +3,12 @@ namespace App\Lib;
 
 use App\Models\Role;
 
-/**
+/*
  * Authorization Control
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-07-31 20:14
+ * Last modified time: 2016-08-08 16:25
  *
  * Usage method:
  * use App\Lib\Authorization;
