@@ -10,11 +10,22 @@ use App\Lib\Document;
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-11 11:42
+ * Last modified time: 2016-08-12 16:20
  */
 class Homework
 {
-	//public $middle = "authorization";
+	public $middle = [
+		'uploadWork' => 'Hws_WorkSubmit',
+		'correctWork' => 'Hws_WorkManagement',
+		'setExcellentWorks' => 'Hws_WorkManagement',
+		'updateWork' => 'Hws_WorkManagement',
+		'deleteWork' => 'Hws_WorkManagement',
+		'addTask' => 'Hws_TaskManagement',
+		'updateTask' => 'Hws_TaskManagement',
+		'deleteTask' => 'Hws_TaskManagement',
+		'setTaskOff' => 'Hws_TaskManagement'
+		//"all" => "Example" TODO: 对所有方法判断登录
+	];
 
 	/*作业系统 - 获取优秀作业
 	 * 
@@ -34,8 +45,8 @@ class Homework
 	 * @param int $uid 1 用户ID
 	 * @return count.条目数 data.用户优秀作业数组
 	 */
-	public function getExcellentWorksFromUid($uid) {
-		response($this->getExcellentWorksRaw($uid)));
+	public function getExcellentWorksFromUid($uid) {	// TODO: 默认获取当前登录用户
+		response($this->getExcellentWorksRaw($uid));
 	}
 
 	/**作业系统 - 获取所有优秀作业
@@ -61,7 +72,7 @@ class Homework
 	 * @param int $uid 1 用户ID
 	 * @return count.条目数 data.用户作业数组
 	 */
-	public function getWorksFromUid($uid) {
+	public function getWorksFromUid($uid) {	// TODO: 默认获取当前登录用户
 		$raw = Hws_Record::where('uid', '=', $uid)->select();
 		response(['count' => count($raw), 'data' => $raw]);
 	}
@@ -95,10 +106,10 @@ class Homework
 	 */
 	public function uploadWork($form_filename, $tid, $path = 'upload/', $note = null) {
 		if ($task = Hws_Task::where('id', '=', $tid)->select()) {
-			// TODO: 验证用户的部门，是否符合相应的task
 			// 验证提交开放时间
 			if (time() >= strtotime($task[0]['start_time']) &&
 			time() <= strtotime($task[0]['end_time'])) {
+				// 文件上传
 				$src = Document::Documents($form_filename, $path);
 				if ($rid = Hws_Record::insert([
 					'tid' => $tid,
@@ -107,14 +118,18 @@ class Homework
 					'time' => date("Y-m-d H:i:s", time()),
 					'note' => $note
 				])) {
+					// 提交成功
 					response(['status' => 0, 'rid' => $rid[0]]);
 				} else {
+					// 数据库出错
 					response(['status' => -2,  'msg' => '数据插入失败']);
 				}
 			} else {
+				// 时间不符
 				response(['status' => 1,  'msg' => '不在作业开放提交时间内']);
 			}
 		} else {
+			// tid不存在
 			response(['status' => -1,  'msg' => 'tid无效']);
 		}
 	}
@@ -125,19 +140,19 @@ class Homework
 	 * @param char $score 1 等级/分数
 	 * @param string $comment 1 评语
 	 * @param bit $recommend 0 是否推荐（1/0）
-	 * @return status.状态/错误代码 msg.错误提示
+	 * @return status.状态/错误代码 row.受影响条数 msg.错误提示
 	 */
 	public function correctWork($rid, $score, $comment, $recommend = 0) {
 		// 验证rid
 		if (Hws_Record::where('id', '=', $rid)->select()) {
-			Hws_Record::where('id', '=', $rid)->update([
+			$row = Hws_Record::where('id', '=', $rid)->update([
 				'score' => $score,
 				'comment' => $comment,
 				'comment_uid' => 1, // TODO: 获取登录用户UID
 				'comment_time' => date("Y-m-d H:i:s", time()),
 				'recommend' => $recommend
 			]);
-			response(['status' => 0]);
+			response(['status' => 0, 'row' => $row]);
 		} else {
 			response(['status' => -1, 'msg' => 'rid无效']);
 		}
@@ -149,28 +164,28 @@ class Homework
 	 * @return count.条目数 data.任务信息数组
 	 */
 	public function getAllTasks($department = null) {
-		if ($department) {
+		if ($department)
 			$raw = Hws_Task::where('department', '=', $department)->select();
-		} else {
+		else
 			$raw = Hws_Task::select();
-		}
+
 		response(['count' => count($raw), 'data' => $raw]);
 	}
 
-	/* 下方为管理员功能 */
+	/* 下方为管理员/正式成员功能 */
 
 	/**作业系统 - 设置优秀作业
 	 * 
-	 * @param int $rid 1 作业ID
+	 * @param int/array $rid 1 作业ID
 	 * @return row.受影响条数
 	 */
 	public function setExcellentWorks($rid) {
 		$raw = null;
-		if (is_array($rid)) {
+		if (is_array($rid))
 			$raw = Hws_Record::whereIn('id', $rid);
-		} else {
+		else
 			$raw = Hws_Record::where('id', '=', $rid);
-		}
+
 		response(['row' => $raw->update(['recommend' => 1])]);
 	}
 
@@ -206,6 +221,7 @@ class Homework
 		$end_time = $this->getJSTimestamp($end_time);	// 转换时间戳
 		$start_time = is_null($start_time) ? time() : $this->getJSTimestamp($start_time);
 		if ($end_time < time() || $end_time < $start_time) {
+			// 时间设置不符
 			response(['status' => 1, 'msg' => '截止时间需大于现在和起始时间']);
 			return;
 		}
