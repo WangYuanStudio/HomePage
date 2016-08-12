@@ -109,6 +109,19 @@ class Vcode
     private $image;
 
 
+    /**
+     * Vcode constructor.
+     *
+     * @param int    $num             验证码长度
+     * @param int    $size            字体大小
+     * @param null   $height          图片高度
+     * @param null   $width           图片宽度
+     * @param bool   $distortion      是否扭曲文字
+     * @param bool   $border          是否生成边框
+     * @param int    $noise_point_num 噪点
+     * @param int    $noise_line_num  干扰线
+     * @param string $font_family     字体文件
+     */
     public function __construct($num = 5, $size = 16, $height = NULL, $width = NULL, $distortion = false, $border = false, $noise_point_num = 30, $noise_line_num = 3, $font_family = "")
     {
         $this->text_num = $num;
