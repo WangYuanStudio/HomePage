@@ -25,7 +25,7 @@ class Document{
 	*传过来的文件类型，如rar，zip，7z
 	*@type   string
 	*/
-	private static $allowtype=array('zip','rar','7z');
+	private static $allowtype=array('zip','rar','7z','png','gif','bmp','ipeg','jpg');
 
 	/**
 	*设置文件名+时间
@@ -85,7 +85,7 @@ class Document{
 		}
 	}
 	/**
-	*获取文件类型，并判断是否为zip,rar,7z
+	*获取文件类型，并判断是否为zip,rar,7z,jpg,ipeg,gif,png
 	*/
 	private static function checkFileType(){
 		$aryStr=explode(".",self::$name);
