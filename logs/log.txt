@@ -82,3 +82,4 @@
 [09-Aug-2016 18:42:59 PRC] PHP   2. Zereri\Lib\Call->call() F:\phpstudy\WWW\wangyuan\public\index.php:26
 [09-Aug-2016 18:42:59 PRC] PHP   3. Zereri\Lib\Call->callController() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:160
 [09-Aug-2016 18:42:59 PRC] PHP   4. App\Controllers\Tribune->getPublished() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:171
+[12-Aug-2016 05:06:27 UTC] PHP Fatal error:  Cannot redeclare App\Controllers\Enroll::uploadPhoto() in C:\Users\huizhe\Documents\HomePage\App\Controllers\Enroll.php on line 73
