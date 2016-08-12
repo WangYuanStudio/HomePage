@@ -20,7 +20,7 @@ use App\Lib\Document;
 	*
 	*return status.返回插入的id或状态/错误代码
 	*/
-	public function Login($nickname,$mail,$password,$photo="avatar/head.gif")
+	public function Register($nickname,$mail,$password,$photo="avatar/head.gif")
 	{
 		$checkdata=0;
 		if(preg_match("/([\w\-]+\@[\w\-]+\.[\w\-]+)/",$mail))
