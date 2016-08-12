@@ -1,14 +1,14 @@
 <?php
 /*
 *User: huizhe
-*Date: 2016/8/11
-*Time: 22:34
+*Date: 2016/8/12
+*Time: 13:18
 */
 
 namespace App\Controllers;
 
 use App\Models\User;
-
+use App\Lib\Document;
 
  class Enroll
  {
@@ -16,11 +16,11 @@ use App\Models\User;
 	*@param string nickname		昵称
 	*@param string mail         邮箱
 	*@param string password     密码        
-	*@param string photo 		头像，默认为../head.gif
+	*@param string photo 		头像  默认为 avatar/head.gif
 	*
 	*return status.返回插入的id或状态/错误代码
 	*/
-	public function Login($nickname,$mail,$password,$photo="../head.gif")
+	public function Login($nickname,$mail,$password,$photo="avatar/head.gif")
 	{
 		$checkdata=0;
 		if(preg_match("/([\w\-]+\@[\w\-]+\.[\w\-]+)/",$mail))
@@ -49,18 +49,21 @@ use App\Models\User;
 		}
 	}
 	
-	/**头像
-	*@param string photo 头像路径
+	/**更换头像
+	*@param int id 用户ID
+	*@param string form_filename 头像上传组名
+	*@param string path 头像路径，默认为avatar/
 	*
-	*return status.返回status
+	*return status.返回头像完整路径
 	*/
-	public function UploadPhoto($id,$photo)
+	public function UploadPhoto($form_filename,$path='avatar/',$id)
 	{
-		
-		$da=User::where('id','=',$id)->Update([
-				"photo"=>$photo
+		$src = Document::Documents($form_filename, $path);
+		User::where('id','=',$id)->Update([
+				"photo"=>$src
 				]);
-		response("status");
-		
+		response(["status"=>$src]);	
 	}
+	
+
 }
