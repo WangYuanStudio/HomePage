@@ -81,10 +81,10 @@ use App\Lib\Vcode;
 				cache::set([
 					"nickname"=>$nickname,
 					"mail"=>$mail,
-					"password"=>$password
-					Mail::to($mail)->title($title)->content($content);
-					response(['status'=>1,'msg'=>"已发送邮件"]);
+					"password"=>$password					
 					]);
+				Mail::to($mail)->title($title)->content($content);
+					response(['status'=>1,'msg'=>"已发送邮件"]);
 		 		response("status");
 			}
 		}else{
