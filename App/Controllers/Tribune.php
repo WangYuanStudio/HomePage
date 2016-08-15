@@ -216,11 +216,19 @@ class Tribune
     }
 
 
-    public function test()
+
+    public function test($name = "bbb")
     {
-        $res = Bbs::raw('(select bbs.*,author.nickname author_nickname,author.photo author_photo,point.nickname point_nickname,point.photo point_photo from bbs left join user author on author.id=bbs.uid left join user point on point.id=bbs.point_uid where point_uid=? and is_read=0 and uid<>?) union (select bbs.*,author.nickname author_nickname,author.photo author_photo,point.nickname point_nickname,point.photo point_photo from bbs left join user author on author.id=bbs.uid left join user point on point.id=bbs.point_uid where master_uid=? and master_read=0 and uid<>?) order by time desc', []);
+
+        $v = new \App\Lib\Vcode('num',3);
+        Session::set("code", $v->getData());
+        $v->show();
+    }
+
+    public function a()
+    {
         echo "<pre>";
-        print_r($res);
+        print_r(Session::get("code"));
         echo "</pre>";
     }
 }
