@@ -10,6 +10,13 @@ namespace App\Lib;
 
 class Vcode
 {
+    /**验证模式
+     *
+     * @var string
+     */
+    private $type;
+
+
     /**图片高度
      *
      * @var int
@@ -29,13 +36,6 @@ class Vcode
      * @var int
      */
     private $text_num;
-
-
-    /**图片显示的验证码
-     *
-     * @var string
-     */
-    private $img_text;
 
 
     /**最终验证的文本
@@ -112,6 +112,7 @@ class Vcode
     /**
      * Vcode constructor.
      *
+     * @param string $type            "mix" or "num", 混合模式或者数字模式
      * @param int    $num             验证码长度
      * @param int    $size            字体大小
      * @param null   $height          图片高度
@@ -122,8 +123,9 @@ class Vcode
      * @param int    $noise_line_num  干扰线
      * @param string $font_family     字体文件
      */
-    public function __construct($num = 5, $size = 16, $height = NULL, $width = NULL, $distortion = false, $border = false, $noise_point_num = 30, $noise_line_num = 3, $font_family = "")
+    public function __construct($type = "mix", $num = 5, $size = 16, $height = NULL, $width = NULL, $distortion = false, $border = false, $noise_point_num = 30, $noise_line_num = 3, $font_family = "")
     {
+        $this->type = $type;
         $this->text_num = $num;
         $this->font_size = $size;
         $this->img_height = $height ?: $this->getDefaultImgHeight();
@@ -190,8 +192,8 @@ class Vcode
     {
         $text_arr = $this->getText();
 
-        for ($i = 0; $i < $this->text_num; $i++) {
-            imagettftext($this->image, $this->font_size, mt_rand(-1, 1) * mt_rand(1, 20), 5 + $i * floor($this->font_size * 1.3), floor($this->img_height * 0.75), $this->font_color, $this->font_family, $text_arr[ $i ]);
+        foreach ($text_arr as $i => $text) {
+            imagettftext($this->image, $this->font_size, mt_rand(-1, 1) * mt_rand(1, 20), 5 + $i * floor($this->font_size * 1.3), floor($this->img_height * 0.75), $this->font_color, $this->font_family, $text);
         }
 
         return $this;
@@ -205,17 +207,54 @@ class Vcode
     private function getText()
     {
         $img_text = [];
-        $final_verify_text = [];
 
+        switch ($this->type) {
+            case "mix":
+                $this->getMixVerifyText($img_text);
+                break;
+            case "num":
+                $this->getNumVerifyText($img_text);
+                break;
+        }
+
+        return $img_text;
+    }
+
+
+    /**生成数字型验证文本
+     *
+     * @param $img_text
+     */
+    private function getNumVerifyText(&$img_text)
+    {
+        $this->verify_text = ["type" => "结果"];
+
+        $img_text[0] = mt_rand(1, 99);
+        if ("-" === ($img_text[1] = "+-"[ mt_rand(0, 1) ])) {
+            $img_text[2] = mt_rand(0, $img_text[0]);
+
+            $this->verify_text["text"] = $img_text[0] - $img_text[2];
+        } else {
+            $img_text[2] = mt_rand(0, 99);
+
+            $this->verify_text["text"] = $img_text[0] + $img_text[2];
+        }
+    }
+
+
+    /**生成混合型验证文本
+     *
+     * @param $img_text
+     */
+    private function getMixVerifyText(&$img_text)
+    {
+        $final_verify_text = [];
         for ($i = 0; $i < $this->text_num; $i++) {
             $rand_num = mt_rand(0, 3);
             $final_verify_text[ $rand_num ][] = $img_text[] = $this->getRandText($rand_num);
         }
 
-        $this->img_text = join("", $img_text);
         $this->verify_text = $this->getVerifyText($final_verify_text);
-
-        return $img_text;
     }
 
 
@@ -234,7 +273,7 @@ class Vcode
             case 1:
                 return "0123456789"[ mt_rand(0, 9) ];
             case 2:
-                return iconv('GB2312', 'UTF-8', chr(rand(0xB0, 0xCC)) . chr(rand(0xA1, 0xBB)));
+                return iconv('GB2312', 'UTF-8', chr(mt_rand(179, 218)) . chr(mt_rand(179, 218)));
             case 3:
                 return "!@#$%&*+-="[ mt_rand(0, 9) ];
         }
