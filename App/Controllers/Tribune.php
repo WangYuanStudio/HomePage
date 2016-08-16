@@ -18,65 +18,86 @@ class Tribune
      *
      * @param int $page 页码
      *
-     * @return data.指定页的帖子数据
+     * @return post.指定页的帖子数据 publish_key.发布帖子的key
      */
-    public function index($page)
+    public function index($page = 1)
     {
-        $data = Post::leftJoin('user', 'user.id', '=', 'post.uid')
+        $data = [];
+        $data["post"] = Post::leftJoin('user', 'user.id', '=', 'post.uid')
             ->orderBy("post.time desc")
             ->limit(($page - 1) * 10, 10)
             ->select('user.nickname,user.mail,user.role,user.photo,post.*');
 
-        response(["data" => $data]);
+        if (1 === $page) {
+            $data["publish_key"] = $this->setCsrfKey("publish_key");
+        }
+
+        response($data);
     }
 
 
     /**论坛-发帖
      *
-     * @param string $title    标题
-     * @param string $content  内容
-     * @param string $classify 分类
+     * @param string $title       标题
+     * @param string $content     内容
+     * @param string $classify    分类
+     * @param string $publish_key 发布帖子的key
      *
-     * @return status.返回插入的id
+     * @return status.返回状态 post_id.返回插入的id,仅在200状态码返回
      */
-    public function publish($title, $content, $classify)
+    public function publish($title, $content, $classify, $publish_key)
     {
-        $post_id = Post::insert([
-            "uid"      => 1,
-            "title"    => $title,
-            "content"  => $content,
-            "classify" => $classify,
-            "time"     => date("Y-m-d H:i:s")
-        ]);
+        if (!$publish_key || $publish_key != Session::get("publish_key")) {
+            response(["status" => 403]);
+        } else {
+            $post_id = Post::insert([
+                "uid"      => 1,
+                "title"    => $title,
+                "content"  => $content,
+                "classify" => $classify,
+                "time"     => date("Y-m-d H:i:s")
+            ]);
 
-        response(["post_id" => $post_id]);
+            response(["status" => 200, "post_id" => $post_id]);
+        }
+
+        Session::remove("publish_key");
     }
 
 
     /**论坛-发表回复
      *
-     * @param int    $pid        1 所属帖子的id
-     * @param string $content    1 回复内容
-     * @param int    $pointuid   1 回复指定楼层的层主id
-     * @param int    $pointfloor 1 回复指定楼层的楼层数,回复一楼则不填
-     * @param int    $masteruid  1 楼主的uid
+     * @param int    $pid          1 所属帖子的id
+     * @param string $content      1 回复内容
+     * @param int    $pointuid     1 回复指定楼层的层主id
+     * @param int    $pointfloor   1 回复指定楼层的楼层数,回复一楼则不填
+     * @param int    $masteruid    1 楼主的uid
+     * @param string $response_key 1 楼主的uid
+     *
+     * @return status.返回状态 floor.返回回复的楼层,仅在200状态码返回
      */
-    public function response($pid, $content, $pointuid, $pointfloor, $masteruid)
+    public function response($pid, $content, $pointuid, $pointfloor, $masteruid, $response_key)
     {
-        $floor = Bbs::where("pid", "=", $pid)->count("sum")->select()[0]["sum"] + 2;
+        if (!$response_key || $response_key != Session::get("response_key")) {
+            response(["status" => 403]);
+        } else {
+            $floor = Bbs::where("pid", "=", $pid)->count("sum")->select()[0]["sum"] + 2;
 
-        Bbs::insert([
-            "floor"       => $floor,
-            "pid"         => $pid,
-            "uid"         => 1,
-            "content"     => $content,
-            "time"        => date("Y-m-d H:i:s"),
-            "point_uid"   => $pointuid,
-            "point_floor" => $pointfloor,
-            "master_uid"  => $masteruid
-        ]);
+            Bbs::insert([
+                "floor"       => $floor,
+                "pid"         => $pid,
+                "uid"         => 1,
+                "content"     => $content,
+                "time"        => date("Y-m-d H:i:s"),
+                "point_uid"   => $pointuid,
+                "point_floor" => $pointfloor,
+                "master_uid"  => $masteruid
+            ]);
 
-        response(["floor" => $floor]);
+            response(["status" => 200, "floor" => $floor]);
+        }
+
+        Session::remove("response_key");
     }
 
 
@@ -85,7 +106,7 @@ class Tribune
      * @param int $pid 1 帖子的id
      * @param int $pid 0 回复的页数,默认值为1
      *
-     * @return first.楼主信息 bbs.其他楼层信息
+     * @return first.楼主信息,仅加载第一页返回 bbs.其他楼层信息
      */
     public function postInfo($pid, $page = 1)
     {
@@ -95,8 +116,24 @@ class Tribune
             $data["first"] = Post::leftJoin('user', 'user.id', '=', 'post.uid')->where("post.id", "=", $pid)->select('user.nickname,user.mail,user.role,user.photo,post.*');
         }
         $data["bbs"] = Bbs::leftJoin('user', 'user.id', '=', 'bbs.uid')->where("bbs.pid", "=", $pid)->limit(($page - 1) * 8, 8)->select('user.nickname,user.mail,user.role,user.photo,bbs.*');
+        $data["response_key"] = $this->setCsrfKey("response_key");
 
         response($data);
+    }
+
+
+    /* 设置csrf密钥
+     *
+     * @param $name
+     *
+     * @return string
+     */
+    private function setCsrfKey($name)
+    {
+        $key = md5(time());
+        Session::set($name, $key);
+
+        return $key;
     }
 
 
@@ -158,6 +195,13 @@ class Tribune
      */
     public function searchPost($key)
     {
+        //这里加个次数限制
+        Cache::increment($_SERVER["REMOTE_ADDR"]);
+        Cache::EXPIRE($_SERVER["REMOTE_ADDR"], 10);
+        if (Cache::get($_SERVER["REMOTE_ADDR"]) > 5) {
+            response(["status" => 403]);
+        }
+
         $sphinx = new SphinxClient();
         $sphinx->SetServer("localhost", 9312);
         $sphinx->SetMatchMode(SPH_MATCH_ANY);
@@ -216,11 +260,9 @@ class Tribune
     }
 
 
-
-    public function test($name = "bbb")
+    public function test()
     {
-
-        $v = new \App\Lib\Vcode('num',3);
+        $v = new \App\Lib\Vcode('num', 3);
         Session::set("code", $v->getData());
         $v->show();
     }
@@ -230,5 +272,10 @@ class Tribune
         echo "<pre>";
         print_r(Session::get("code"));
         echo "</pre>";
+    }
+
+    public function ip()
+    {
+        response($_SERVER["REMOTE_ADDR"], "text");
     }
 }
