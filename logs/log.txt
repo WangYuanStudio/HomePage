@@ -83,3 +83,32 @@
 [09-Aug-2016 18:42:59 PRC] PHP   3. Zereri\Lib\Call->callController() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:160
 [09-Aug-2016 18:42:59 PRC] PHP   4. App\Controllers\Tribune->getPublished() F:\phpstudy\WWW\wangyuan\Zereri\Lib\Call.php:171
 [12-Aug-2016 05:06:27 UTC] PHP Fatal error:  Cannot redeclare App\Controllers\Enroll::uploadPhoto() in C:\Users\huizhe\Documents\HomePage\App\Controllers\Enroll.php on line 73
+[13-Aug-2016 00:09:41 PRC] PHP Parse error:  syntax error, unexpected '(', expecting identifier (T_STRING) or variable (T_VARIABLE) or '{' or '$' in C:\Users\huizhe\Documents\HomePage\App\Controllers\Enroll.php on line 79
+[13-Aug-2016 00:10:12 PRC] PHP Fatal error:  Call to undefined method App\Lib\Vcode::getdate() in C:\Users\huizhe\Documents\HomePage\App\Controllers\Enroll.php on line 86
+[13-Aug-2016 00:11:34 PRC] PHP Fatal error:  Call to undefined method App\Lib\Vcode::getdate() in C:\Users\huizhe\Documents\HomePage\App\Controllers\Enroll.php on line 85
+[13-Aug-2016 00:11:36 PRC] PHP Fatal error:  Call to undefined method App\Lib\Vcode::getdate() in C:\Users\huizhe\Documents\HomePage\App\Controllers\Enroll.php on line 85
+[13-Aug-2016 00:11:37 PRC] PHP Fatal error:  Call to undefined method App\Lib\Vcode::getdate() in C:\Users\huizhe\Documents\HomePage\App\Controllers\Enroll.php on line 85
+[13-Aug-2016 00:11:58 PRC] PHP Notice:  Undefined variable: var in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\CatchErrors.php on line 132
+[13-Aug-2016 00:14:25 PRC] PHP Notice:  Undefined variable: var in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\CatchErrors.php on line 132
+[13-Aug-2016 00:16:23 PRC] PHP Notice:  Undefined variable: var in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\CatchErrors.php on line 132
+[13-Aug-2016 00:16:59 PRC] PHP Notice:  Undefined variable: var in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\CatchErrors.php on line 132
+[12-Aug-2016 16:23:04 UTC] PHP Notice:  Undefined variable: var in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\CatchErrors.php on line 132
+[13-Aug-2016 22:26:01 PRC] PHP Parse error:  syntax error, unexpected '.' in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Common.php on line 10
+[13-Aug-2016 22:26:40 PRC] PHP Parse error:  syntax error, unexpected '.' in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Common.php on line 10
+[13-Aug-2016 22:27:19 PRC] PHP Parse error:  syntax error, unexpected '.' in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Common.php on line 10
+[13-Aug-2016 22:27:57 PRC] PHP Parse error:  syntax error, unexpected '.' in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Common.php on line 10
+[13-Aug-2016 22:52:17 PRC] PHP Parse error:  syntax error, unexpected '.' in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Common.php on line 10
+[13-Aug-2016 22:53:50 PRC] PHP Parse error:  syntax error, unexpected '.' in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Common.php on line 10
+[14-Aug-2016 19:55:58 PRC] PHP Parse error:  syntax error, unexpected '.' in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Common.php on line 10
+[14-Aug-2016 19:55:58 PRC] PHP Fatal error:  Class 'Zereri\Lib\Replacement\Common' not found in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Smarty.php on line 5
+[14-Aug-2016 19:55:58 PRC] PHP Parse error:  syntax error, unexpected '.' in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Common.php on line 10
+[14-Aug-2016 19:55:58 PRC] PHP Fatal error:  Class 'Zereri\Lib\Replacement\Common' not found in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Smarty.php on line 5
+[14-Aug-2016 19:55:59 PRC] PHP Parse error:  syntax error, unexpected '.' in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Common.php on line 10
+[14-Aug-2016 19:55:59 PRC] PHP Fatal error:  Class 'Zereri\Lib\Replacement\Common' not found in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Smarty.php on line 5
+[14-Aug-2016 19:55:59 PRC] PHP Parse error:  syntax error, unexpected '.' in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Common.php on line 10
+[14-Aug-2016 19:55:59 PRC] PHP Fatal error:  Class 'Zereri\Lib\Replacement\Common' not found in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Smarty.php on line 5
+[14-Aug-2016 19:56:03 PRC] PHP Parse error:  syntax error, unexpected '.' in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Common.php on line 10
+[14-Aug-2016 19:56:03 PRC] PHP Fatal error:  Class 'Zereri\Lib\Replacement\Common' not found in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Smarty.php on line 5
+[14-Aug-2016 19:56:04 PRC] PHP Parse error:  syntax error, unexpected '.' in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Common.php on line 10
+[14-Aug-2016 19:56:04 PRC] PHP Fatal error:  Class 'Zereri\Lib\Replacement\Common' not found in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Smarty.php on line 5
+[14-Aug-2016 19:56:10 PRC] PHP Parse error:  syntax error, unexpected '.' in C:\Users\huizhe\Documents\HomePage\Zereri\Lib\Replacement\Common.php on line 10
