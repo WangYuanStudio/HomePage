@@ -22,9 +22,9 @@ use App\Lib\Vcode;
 	*/
 	public function Register($photo="avatar/head.gif")
 	{	
-		$nickname=cache::get("nickname");
-		$mail 	 =cache::get("mail");
-		$password=cache::get("password");
+		$nickname=Cache::get("nickname");
+		$mail 	 =Cache::get("mail");
+		$password=Cache::get("password");
 		$password=password_hash($password,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
 		$login_id=User::Insert([
 			"nickname" =>$nickname,
@@ -33,14 +33,14 @@ use App\Lib\Vcode;
 			"photo" =>$photo,
 			"role" =>4
 			]);
-		cache::flush();
+		Cache::flush();
 		response(['status'=>$login_id]);		
 	}
 	
 	/**更换头像
-	*@param int id 用户ID
 	*@param string form_filename 头像上传组名
 	*@param string path 头像路径，默认为avatar/
+	*@param int id 用户ID
 	*
 	*return status.返回头像完整路径
 	*/
@@ -78,14 +78,13 @@ use App\Lib\Vcode;
 			{
 				response(['status'=> -1,'msg' =>'邮箱已存在']);
 			}else{				
-				cache::set([
+				Cache::set([
 					"nickname"=>$nickname,
 					"mail"=>$mail,
 					"password"=>$password					
 					]);
 				Mail::to($mail)->title($title)->content($content);
-					response(['status'=>1,'msg'=>"已发送邮件"]);
-		 		response("status");
+					response(['status'=>1,'msg'=>"已发送邮件"]);		 		
 			}
 		}else{
 			response(['status'=>-2,'msg'=>'邮箱格式错误']);
@@ -94,15 +93,16 @@ use App\Lib\Vcode;
 
 	/**获取验证码图片
 	*
-	*return status.
+	*return status.返回验证码图片
 	*/
 
 	public function Vphoto()
 	{		
 		$verify=new Vcode();	
 		$verify->show();
-		$Vdata=$verify->getData();
-		session::set("Vda",$Vdata["text"]);		
+		$Vdata=$verify->getData();		
+		Session::set("Vda",$Vdata["text"]);		
+		Session::set("Vtype",$Vdata["type"]);
 	}
 
 	/**获取验证
@@ -111,15 +111,32 @@ use App\Lib\Vcode;
 	*
 	*return status.返回状态/错误
 	*/
-	public function CheckVerify($Vcheckdata)
-	{
-		$verify=session::get("Vda");
-		if($verify==$Vcheckdata)
+	public function CheckVerify($Vcheckdata=NUll)
+	{	
+		$verify=Session::get("Vda");
+		if(is_null($Vcheckdata))
 		{
-			response(['status'=>1,'msg'=>"验证码正确"]);
-		}else{
-			response(['status'=>-1,'msg'=>"验证码错误"]);
+			response(["status"=>-2,'msg'=>"验证码为空"]);
 		}
-		session::remove("Vda");
+		else{
+			if($verify==$Vcheckdata)
+			{
+				response(['status'=>1,'msg'=>"验证码正确"]);
+				Session::remove("Vda");
+			}else{
+				response(['status'=>-1,'msg'=>"验证码错误"]);
+			}
+		}
+		
 	}
+
+	/**获取验证码类型
+	*
+	*return status.返回验证码类型
+	*/
+	public function GetVtype(){
+		response(['stauts'=>Session::get("Vtype")]);	
+		Session::remove("Vtype");	
+	}
+
 }
