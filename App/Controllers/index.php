@@ -1,7 +1,7 @@
 <?php
 namespace App\Controllers;
 
-class index
+class Index
 {
     /**官网成员展示系
    *
