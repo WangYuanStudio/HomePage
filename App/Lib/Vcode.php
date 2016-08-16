@@ -227,15 +227,17 @@ class Vcode
      */
     private function getNumVerifyText(&$img_text)
     {
+        $this->verify_text = ["type" => "结果"];
+
         $img_text[0] = mt_rand(1, 99);
-        if (($img_text[1] = "+-"[ mt_rand(0, 1) ]) === "-") {
+        if ("-" === ($img_text[1] = "+-"[ mt_rand(0, 1) ])) {
             $img_text[2] = mt_rand(0, $img_text[0]);
 
-            $this->verify_text = ["text" => $img_text[0] - $img_text[2]];
+            $this->verify_text["text"] = $img_text[0] - $img_text[2];
         } else {
             $img_text[2] = mt_rand(0, 99);
 
-            $this->verify_text = ["text" => $img_text[0] + $img_text[2]];
+            $this->verify_text["text"] = $img_text[0] + $img_text[2];
         }
     }
 
