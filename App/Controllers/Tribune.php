@@ -8,12 +8,29 @@
 
 namespace App\Controllers;
 
+use App\Lib\Response;
 use App\Models\Post;
 use App\Models\Bbs;
 use App\Lib\SphinxClient;
 
 class Tribune
 {
+    public $middle = [
+        //checkip
+        "publish"      => "check_login",
+        "response"     => "check_login",
+        "getPublished" => "check_login",
+        "getUnReadNum" => "check_login",
+        "searchPost"   => "check_login",
+        "deletePost"   => "check_login",
+        "deleteBbs"    => "check_login"
+    ];
+
+    public static $status = [
+        700 => "Unavailable Key"
+    ];
+
+
     /**论坛-首页加载-获取帖子数据
      *
      * @param int $page 页码
@@ -30,8 +47,7 @@ class Tribune
 
         $data["publish_key"] = $this->setCsrfKey("publish_key");
 
-
-        response($data);
+        Response::out(200, $data);
     }
 
 
@@ -42,12 +58,14 @@ class Tribune
      * @param string $classify    分类
      * @param string $publish_key 发布帖子的key
      *
-     * @return status.返回状态 post_id.返回插入的id,仅在200状态码返回
+     * @return post_id.返回插入的id,仅在200状态码返回
      */
     public function publish($title, $content, $classify, $publish_key)
     {
-        if (!$publish_key || $publish_key != Session::get("publish_key")) {
-            response(["status" => 403]);
+        if (!Session::get("publish_key") || $publish_key != Session::get("publish_key")) {
+            Session::remove("publish_key");
+
+            Response::out(700);
         } else {
             $post_id = Post::insert([
                 "uid"      => 1,
@@ -57,10 +75,8 @@ class Tribune
                 "time"     => date("Y-m-d H:i:s")
             ]);
 
-            response(["status" => 200, "post_id" => $post_id]);
+            Response::out(200, ["post_id" => $post_id, "publish_key" => $this->setCsrfKey("publish_key")]);
         }
-
-        Session::remove("publish_key");
     }
 
 
@@ -73,12 +89,14 @@ class Tribune
      * @param int    $masteruid    1 楼主的uid
      * @param string $response_key 1 楼主的uid
      *
-     * @return status.返回状态 floor.返回回复的楼层,仅在200状态码返回
+     * @return floor.返回回复的楼层,仅在200状态码返回
      */
     public function response($pid, $content, $pointuid, $pointfloor, $masteruid, $response_key)
     {
-        if (!$response_key || $response_key != Session::get("response_key")) {
-            response(["status" => 403]);
+        if (!Session::get("response_key") || $response_key != Session::get("response_key")) {
+            Session::remove("response_key");
+
+            Response::out(700);
         } else {
             $floor = Bbs::where("pid", "=", $pid)->count("sum")->select()[0]["sum"] + 2;
 
@@ -93,10 +111,8 @@ class Tribune
                 "master_uid"  => $masteruid
             ]);
 
-            response(["status" => 200, "floor" => $floor]);
+            Response::out(200, ["floor" => $floor, "response_key" => $this->setCsrfKey("response_key")]);
         }
-
-        Session::remove("response_key");
     }
 
 
@@ -117,7 +133,7 @@ class Tribune
         $data["bbs"] = Bbs::leftJoin('user', 'user.id', '=', 'bbs.uid')->where("bbs.pid", "=", $pid)->limit(($page - 1) * 8, 8)->select('user.nickname,user.mail,user.role,user.photo,bbs.*');
         $data["response_key"] = $this->setCsrfKey("response_key");
 
-        response($data);
+        Response::out(200, $data);
     }
 
 
@@ -158,16 +174,17 @@ class Tribune
         }
         $data['post'] = Post::where("post.uid", "=", $uid)->orderBy('time desc')->limit(0, 5)->select();
 
-        response($data);
+        Response::out(200, $data);
     }
 
 
     /**论坛-获取未读信息条数
      *
+     * @return num.未读信息条数
      */
     public function getUnReadNum()
     {
-        response(["num" => count($this->getUnReadMsg(2))]);
+        Response::out(200, ["num" => count($this->getUnReadMsg(2))]);
     }
 
 
@@ -195,12 +212,12 @@ class Tribune
     public function searchPost($key)
     {
         //这里加个次数限制
-        Cache::increment($_SERVER["REMOTE_ADDR"]);
-        Cache::EXPIRE($_SERVER["REMOTE_ADDR"], 5);
-        if (Cache::get($_SERVER["REMOTE_ADDR"]) > 10) {
-            Cache::EXPIRE($_SERVER["REMOTE_ADDR"], 30);
-            response(["status" => 403]);
-        }
+//        Cache::increment($_SERVER["REMOTE_ADDR"]);
+//        Cache::EXPIRE($_SERVER["REMOTE_ADDR"], 5);
+//        if (Cache::get($_SERVER["REMOTE_ADDR"]) > 10) {
+//            Cache::EXPIRE($_SERVER["REMOTE_ADDR"], 30);
+//            response(["status" => 403]);
+//        }
 
         $sphinx = new SphinxClient();
         $sphinx->SetServer("localhost", 9312);
@@ -209,7 +226,7 @@ class Tribune
         $post = $this->sphinxSearch($sphinx, $key, "post", "main");
         $bbs = $this->sphinxSearch($sphinx, $key, "bbs", "bbs");
 
-        response(["post" => $post, "bbs" => $bbs]);
+        Response::out(200, ["post" => $post, "bbs" => $bbs]);
     }
 
 
@@ -262,21 +279,31 @@ class Tribune
 
     public function test()
     {
-        $v = new \App\Lib\Vcode('num', 3);
+        //576
+        $v = new \App\Lib\Vcode('img', 2, 16, 200, 200, false, true, 30, 0, "F:/phpstudy/WWW/wangyuan/public/1.jpg");
         Session::set("code", $v->getData());
         $v->show();
     }
 
     public function a()
     {
-        echo "<pre>";
-        print_r(Session::get("code"));
-        echo "</pre>";
+        response(Session::get("code")["type"]);
     }
 
-    public function ip()
+    public function b($text)
     {
-//        Session::set("aa");
-        response($_SERVER["REMOTE_ADDR"], "text");
+        $v = Session::get("code")["text"];
+        foreach ($text as $key => $value) {
+            if ($value["x"] > $v[ $key ]["max_x"]
+                || $value["x"] < $v[ $key ]["min_x"]
+                || $value["y"] > $v[ $key ]["max_y"]
+                || $value["y"] < $v[ $key ]["min_y"]
+            ) {
+                Response::out(302);
+                die();
+            }
+        }
+
+        Response::out(200);
     }
 }
