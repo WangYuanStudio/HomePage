@@ -28,9 +28,8 @@ class Tribune
             ->limit(($page - 1) * 10, 10)
             ->select('user.nickname,user.mail,user.role,user.photo,post.*');
 
-        if (1 === $page) {
-            $data["publish_key"] = $this->setCsrfKey("publish_key");
-        }
+        $data["publish_key"] = $this->setCsrfKey("publish_key");
+
 
         response($data);
     }
@@ -197,8 +196,9 @@ class Tribune
     {
         //这里加个次数限制
         Cache::increment($_SERVER["REMOTE_ADDR"]);
-        Cache::EXPIRE($_SERVER["REMOTE_ADDR"], 10);
-        if (Cache::get($_SERVER["REMOTE_ADDR"]) > 5) {
+        Cache::EXPIRE($_SERVER["REMOTE_ADDR"], 5);
+        if (Cache::get($_SERVER["REMOTE_ADDR"]) > 10) {
+            Cache::EXPIRE($_SERVER["REMOTE_ADDR"], 30);
             response(["status" => 403]);
         }
 
@@ -276,6 +276,7 @@ class Tribune
 
     public function ip()
     {
+//        Session::set("aa");
         response($_SERVER["REMOTE_ADDR"], "text");
     }
 }
