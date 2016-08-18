@@ -8,7 +8,7 @@ use Zereri\Lib\Register;
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-18 14:54
+ * Last modified time: 2016-08-18 15:07
  *
  * Usage method:
  * use App\Lib\Response;
@@ -30,7 +30,7 @@ class Response
 		else if (array_key_exists($code, $c = config('common_status')))
 			$response = ['status' => $code, 'errmsg' => $c[$code]];
 		else
-			$response = ['statuc' => $code, 'errmsg' => ($rewrite ? $return : $classname::$status[$code])];
+			$response = ['status' => $code, 'errmsg' => ($rewrite ? $return : $classname::$status[$code])];
 
 		response($response);
 	}
