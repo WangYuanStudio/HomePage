@@ -1,11 +1,22 @@
 <?php
 namespace App\Lib;
 
+    /**
+     * Created by PhpStorm.
+     * User: zeffee
+     * Date: 2016/8/12
+     * Time: 18:59
+     */
+
+
 /**
- * Created by PhpStorm.
- * User: zeffee
- * Date: 2016/8/12
- * Time: 18:59
+ * Class Vcode
+ * @package App\Lib
+ *
+ * Usage:
+ *          1.$verify = (new Vcode);
+ *          2.$verify->show();                  //显示图片
+ *          3.$data = $verify->getData();       //返回验证码类型type和文本text
  */
 
 class Vcode
@@ -121,9 +132,10 @@ class Vcode
      * @param bool   $border          是否生成边框
      * @param int    $noise_point_num 噪点
      * @param int    $noise_line_num  干扰线
+     * @param string $bg_img          背景图
      * @param string $font_family     字体文件
      */
-    public function __construct($type = "mix", $num = 5, $size = 16, $height = NULL, $width = NULL, $distortion = false, $border = false, $noise_point_num = 30, $noise_line_num = 3, $font_family = "")
+    public function __construct($type = "mix", $num = 5, $size = 16, $height = NULL, $width = NULL, $distortion = false, $border = false, $noise_point_num = 30, $noise_line_num = 3, $bg_img = "", $font_family = "")
     {
         $this->type = $type;
         $this->text_num = $num;
@@ -134,6 +146,7 @@ class Vcode
         $this->noise_line = $noise_line_num;
         $this->text_distortion = $distortion;
         $this->img_border = $border;
+        $this->bg_color = $bg_img;
         //字体自定义
         $this->font_family = $font_family ?: "c:\\windows\\fonts\SIMYOU.ttf";
 
@@ -174,11 +187,15 @@ class Vcode
     protected function initImg()
     {
         $this->image = imagecreatetruecolor($this->img_width, $this->img_height);
-
-        $this->bg_color = imagecolorallocate($this->image, mt_rand(100, 255), mt_rand(100, 255), mt_rand(100, 255));
         $this->font_color = imagecolorallocate($this->image, mt_rand(0, 100), mt_rand(0, 100), mt_rand(0, 100));
 
-        imagefill($this->image, 0, 0, $this->bg_color);
+        if ($this->bg_color) {
+            $this->bg_color = imagecreatefromjpeg($this->bg_color);
+            imagecopy($this->image, $this->bg_color, 0, 0, 0, 0, $this->img_width, $this->img_height);
+        } else {
+            $this->bg_color = imagecolorallocate($this->image, mt_rand(100, 255), mt_rand(100, 255), mt_rand(100, 255));
+            imagefill($this->image, 0, 0, $this->bg_color);
+        }
 
         return $this;
     }
@@ -193,7 +210,11 @@ class Vcode
         $text_arr = $this->getText();
 
         foreach ($text_arr as $i => $text) {
-            imagettftext($this->image, $this->font_size, mt_rand(-1, 1) * mt_rand(1, 20), 5 + $i * floor($this->font_size * 1.3), floor($this->img_height * 0.75), $this->font_color, $this->font_family, $text);
+            if ("img" === $this->type) {
+                imagettftext($this->image, $this->font_size, 0, $this->verify_text["text"][ $i ]["min_x"], $this->verify_text["text"][ $i ]["max_y"], $this->font_color, $this->font_family, $text);
+            } else {
+                imagettftext($this->image, $this->font_size, mt_rand(-1, 1) * mt_rand(1, 20), 5 + $i * floor($this->font_size * 1.3), floor($this->img_height * 0.75), $this->font_color, $this->font_family, $text);
+            }
         }
 
         return $this;
@@ -215,9 +236,34 @@ class Vcode
             case "num":
                 $this->getNumVerifyText($img_text);
                 break;
+            case "img":
+                $this->getImgVerifyText($img_text);
+                break;
         }
 
         return $img_text;
+    }
+
+
+    /**获取图片型验证文本
+     *
+     * @param $img_text
+     */
+    private function getImgVerifyText(&$img_text)
+    {
+        $unit = $this->font_size + 4;
+        for ($i = 0; $i < $this->text_num; $i++) {
+            $this->verify_text["type"][] = $img_text[] = $this->getRandText(2);
+
+            $x = mt_rand(0, $this->img_width - $unit);
+            $y = mt_rand($unit, $this->img_height);
+            $this->verify_text["text"][] = [
+                "min_x" => $x,
+                "max_x" => $x + $unit,
+                "min_y" => $y - $unit,
+                "max_y" => $y
+            ];
+        }
     }
 
 
