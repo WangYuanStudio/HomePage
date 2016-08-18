@@ -43,7 +43,7 @@ class Document{
 	*/	
 	private static  $size;
 
-	public static function Documents($files,$path,$fileoldname=NULL){
+	public static function Upload($files,$path,$fileoldname=NULL){
 		self::$size=$_FILES[$files]['size'];
 		//判断文件大小是否符合要求
 		if(self::checkFileSize()){	
