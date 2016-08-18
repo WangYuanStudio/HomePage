@@ -4,6 +4,17 @@ use  App\Lib\Vcode;
 use App\Models\User;
 class Login
 {
+
+  /*错误代码 && 错误信息
+   * 
+   * @var array
+   */
+    public static $error = [
+    611 => '密码错误！',
+    610 => '该用户被限制登录',
+    630 => '该邮箱尚未注册！',
+    640 => '验证码过期请刷新!'
+    ];
     /**官网——登录接口
    *
    * @param string $mail 邮箱地址
@@ -25,6 +36,7 @@ class Login
                     if(password_verify($password, $d[0]['password']))//判断密码
                     {
                         unset($d[0]['password']); 
+                         $d[0]['ip']=$_SERVER["REMOTE_ADDR"];
                         Session::set("user", $d[0]);//保存session
                         $status=["status" => "200",'errmsg' => "",'data'=>$d[0]];
                         response($status, "json");
@@ -32,25 +44,25 @@ class Login
                     }
                     else
                      {
-                        $status=["status" => "611",'errmsg' => "密码错误！",'data'=>''];
+                        $status=["status" => "611",'errmsg' => Login::$error[611],'data'=>''];
                         response($status, "json");
                     }
                 }
                 else{
-                     $status=["status" => "610",'errmsg' => "该用户被限制登录"，'data'=>''];
+                     $status=["status" => "610",'errmsg' => Login::$error[610]，'data'=>''];
                      response($status, "json");
                 }
             }
             else
             {
-                $status=["status" => "630",'errmsg' => "该邮箱尚未注册！"，'data'=>''];
+                $status=["status" => "630",'errmsg' =>Login::$error[630]，'data'=>''];
                 response($status, "json");
             }
            
         }
         else if(Session::get("Vda")==null)
         {
-            $status=["status" => "640",'errmsg' => "验证码过期请刷新",'data'=>''];
+            $status=["status" => "640",'errmsg' =>Login::$error[640],'data'=>''];
             response($status, "json");  
         }
         else{
