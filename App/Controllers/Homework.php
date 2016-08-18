@@ -12,7 +12,7 @@ use App\Lib\Response;
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-18 14:56
+ * Last modified time: 2016-08-18 15:04
  */
 class Homework
 {
@@ -25,8 +25,8 @@ class Homework
 		'addTask' => 'Hws_Management',
 		'updateTask' => 'Hws_Management',
 		'deleteTask' => 'Hws_Management',
-		'setTaskOff' => 'Hws_Management'
-		//'all' => 'check_login' // 对所有方法判断登录
+		'setTaskOff' => 'Hws_Management',
+		'all' => 'check_login' // 对所有方法判断登录
 	];
 
 	/*错误代码 && 错误信息
@@ -144,7 +144,6 @@ class Homework
 					// 数据库出错 作业数据插入失败
 					Response::out(501);
 				}
-				Response::out(200);
 			} else {
 				// 时间不符
 				Response::out(502);
