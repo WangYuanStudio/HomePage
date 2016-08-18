@@ -1,116 +1,107 @@
 <?php
 namespace App\Controllers;
+use App\Models\Member;
+use App\Models\Message;
+use App\Models\Article;
 
 class Index
 {
-    /**官网成员展示系
+    /**官网—成员展示系
    *
-   * @param string $department  部门名称
-   * @return status.状态/错误代码，$data成员信息包括id,name,sex,photo,department,habbit,position,blog,phone,introduction
+   * @param string $department 部门名称
+   * @return status.状态 errmsg.错误信息 data.二维数组包括该部门所有成员信息id,name,sex,photo,department,habbit,position,blog,phone,introduction
    */
+
     public function ShowMember($department)
     {
-        $d=TB('member')->where('department', '=', $department)->select();
-        if(sizeof($d)!=0)
+        $data=Member::where("department","=",$department)->select();
+         
+        if(sizeof($data)!=0)
         {
-            $data=$d;
-            response($data, "json");
-
+            $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>$data];
+            response( $status, "json");
         }
         else
         {
-            $status=["status" => "0",'msg' => '暂无成员信息'];
+            $status=['status' => "601",'errmsg' => '暂无成员信息!','data'=>''];
             response($status, "json");
         }
     }
      
-      /**游客留言
+    /**官网—游客留言信息
    *
-   * @return status.状态/错误代码，$data留言信息 包括nickname,message,time,id
+   *
+   * @return status.状态 errmsg.错误信息 data.二维数组包括所有审核后的留言信息nickname,message,time,id
    */
     public function GetMessage()
     {
-       $d=TB('message')->leftJoin('user', 'message.uid', '=', 'user.id')->where("auth","=","1")->orderBy('time desc')->select('message.*,user.nickname');
+       $d=Message::leftJoin('user', 'message.uid', '=', 'user.id')->where("auth","=","1")->orderBy('time desc')->select('message.*,user.nickname');
        if(sizeof($d)!=0)
        {
-          //  $name=TB("user")
-            $data =$d;
-            response($data,"json");
+            $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>$d];
+            response($status,"json");
        }
        else
        {
-           $status=['status'=>'0','msg' => '暂无留言'];
+           $status=['status' => "602",'errmsg' => '暂无留言信息!','data'=>''];
            response($status,"json");
        }
     }
 
-      /**游客发表留言
+      /**官网—游客发表留言
    ** @param string $message 留言信息
-   * @return status,msg 状态/返回信息，
+    * @return status.状态 errmsg.错误信息
    */
     public function Send_message($message)
     {
-      $token = Session::get("user");
-      $time=date('y-m-d h:i:s',time());
-      if($token==null)
-      {
-        $str= TB('message')->insert(['content' => $message, 'time5' => $time, 'auth' => false]);
-      }
-      else
-      {
-       $str= TB('message')->insert(['uid'=>Session::get("user.id"),'content' => $message, 'time' => $time, 'auth' => false]);
-      }
+      $str= Message::insert(['uid'=>Session::get("user.id"),'content' => $message, 'time' => $time, 'auth' => false]);
       if($str==0)
       {
-         $status=["status" => "0",'msg' => '留言失败'];
+         $status=["status" => "603",'errmsg' => '留言失败,请重试!','data'=>''];
          response($status,"json");
       }
       else
       {
-          $status=["status" => "1",'msg' => '成功留言'];
+         $status=["status" => "200",'errmsg' => '','data'=>''];
          response($status,"json");
       }
     }
-     /**管理员审核留言
+     /**官网—管理员审核留言
    ** @param int $id 留言id
-   * @return status,msg 状态/返回信息，
+   * @return status.状态 errmsg.错误信息
    */
     public function check_mes($id)
     {
-       $status= TB('message')->where('id','=',$id)->update(['auth' => true]);
+       $status=  Message::where('id','=',$id)->update(['auth' => true]);
        if($status==1)
        {
-         $status=["status" => "1",'msg' => '审核成功'];
+         $status=["status" => "200",'errmsg' => '','data'=>''];
          response( $status,"json");
        }
        else
        {
-        $status=["status" => "0",'msg' => '审核失败'];
+        $status=["status" => "604",'errmsg' => '审核失败,请重试！','data'=>''];
         response( $status,"json");
        }
     }
 
-        /**管理员删除留言
+        /**官网—管理员删除留言
    ** @param int $id 留言id
-   * @return status,msg 状态/返回信息，
+   * @return status.状态 errmsg.错误信息
    */
     public function del_mes($id)
     {
-      $status= TB('message')->where('id', '=',$id)->delete();
+      $status= Message::where('id', '=',$id)->delete();
       if($status==1)
       {
-        $status=["status" => "1",'msg' => '删除成功'];
+        $status=["status" => "200",'errmsg' => '','data'=>''];
         response( $status,"json");
       }
       else
       {
-         $status=["status" => "0",'msg' => '删除失败'];
+         $status=["status" => "605",'errmsg' => '留言删除失败','data'=>''];
          response( $status,"json");
       }
     }
-   
-  
-
-      
    
 }
