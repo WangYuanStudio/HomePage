@@ -2,7 +2,7 @@
 namespace App\Middles;
 use App\Controllers\Session;
 
-class check_login implements MiddleWare
+class Check_login implements MiddleWare
 {
     public function before($request)
     {
