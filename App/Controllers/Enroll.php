@@ -14,35 +14,38 @@ use App\Lib\Vcode;
 
  class Enroll
  {
-	/**实现注册
+	/**官网-实现注册
 	*       
-	*@param string photo 		头像  默认为 avatar/head.gif
+	*@param string $photo 	头像默认为avatar/head.gif
 	*
-	*return status.返回插入的id
+	*@return status.返回插入的id
 	*/
 	public function Register($photo="avatar/head.gif")
 	{	
-		$nickname=Cache::get("nickname");
-		$mail 	 =Cache::get("mail");
-		$password=Cache::get("password");
-		$password=password_hash($password,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
-		$login_id=User::Insert([
-			"nickname" =>$nickname,
-			"mail" =>$mail,
-			"password"=>$password,
-			"photo" =>$photo,
-			"role" =>4
-			]);
-		Cache::flush();
-		response(['status'=>$login_id]);		
+		// $nickname=Cache::get("nickname");
+		// $mail 	 =Cache::get("mail");
+		// $password=Cache::get("password");
+		// $password=password_hash($password,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
+		// $login_id=User::Insert([
+		// 	"nickname" =>$nickname,
+		// 	"mail" =>$mail,
+		// 	"password"=>$password,
+		// 	"photo" =>$photo,
+		// 	"role" =>10,
+		// 	"status"=>0
+		// 	]);
+		// Cache::delete("nickname");
+		// Cache::delete("mail");
+		// Cache::delete("password");
+		// response(['status'=>$login_id]);		
 	}
 	
-	/**更换头像
-	*@param string form_filename 头像上传组名
-	*@param string path 头像路径，默认为avatar/
-	*@param int id 用户ID
+	/**官网-更换头像
+	*@param string $form_filename 头像上传组名
+	*@param string $path 头像路径默认为avatar/
+	*@param int    $id 用户ID
 	*
-	*return status.返回头像完整路径
+	*@return status.返回头像完整路径
 	*/
 	public function UploadPhoto($form_filename,$path='avatar/',$id)
 	{
@@ -50,20 +53,19 @@ use App\Lib\Vcode;
 		User::where('id','=',$id)->Update([
 				"photo"=>$src
 				]);
-		response(["status"=>$src]);	
+		response(["status"=>200,'data'=>$src]);	
 	}
 	
-	/**发送邮件
+	/**官网-发送邮件
 	*
-	*@param string mail 	邮箱
-	*@param string title 	标题
-	*@param string content   发送内容
-	*@param string nickname		昵称
-	*@param string password     密码  
+	*@param string $mail 	邮箱
+	*@param string $nickname		昵称
+	*@param string $password     密码  
+	*@param string $Vcheckdata 		验证码
 	*
-	*return status.状态/错误 
+	*@return status.状态/错误 
 	*/
-	public function sendEmail($mail,$title,$content,$nickname,$password)
+	public function sendEmail($mail,$nickname,$password,$Vcheckdata=NULL)
 	{
 		$checkdata=0;
 		if(preg_match("/([\w\-]+\@[\w\-]+\.[\w\-]+)/",$mail))
@@ -76,24 +78,26 @@ use App\Lib\Vcode;
 			}
 			if(1==$checkdata)
 			{
-				response(['status'=> -1,'msg' =>'邮箱已存在']);
-			}else{				
-				Cache::set([
-					"nickname"=>$nickname,
-					"mail"=>$mail,
-					"password"=>$password					
-					]);
-				Mail::to($mail)->title($title)->content($content);
-					response(['status'=>1,'msg'=>"已发送邮件"]);		 		
+				response(['status'=> 408,'errmsg' =>'邮箱已存在']);
+			}else{
+				if($this->CheckVerify($Vcheckdata)){				
+					// Cache::set([
+					// "nickname"=>$nickname,
+					// "mail"=>$mail,
+					// "password"=>$password					
+					// ]);
+					Mail::to($mail)->title("WangYuanStudio")->content("欢迎注册网园官网用户");
+					response(['status'=>200,'data'=>"已发送邮件"]);	
+					}	 		
 			}
 		}else{
-			response(['status'=>-2,'msg'=>'邮箱格式错误']);
+			response(['status'=>409,'errmsg'=>'邮箱格式错误']);
 		}		 
 	}
 
-	/**获取验证码图片
+	/**官网-获取验证码图片
 	*
-	*return status.返回验证码图片
+	*@return status.返回验证码图片
 	*/
 
 	public function Vphoto()
@@ -101,42 +105,77 @@ use App\Lib\Vcode;
 		$verify=new Vcode();	
 		$verify->show();
 		$Vdata=$verify->getData();		
-		Session::set("Vda",$Vdata["text"]);		
-		Session::set("Vtype",$Vdata["type"]);
+		Session::set("Vda",$Vdata);		
 	}
 
-	/**获取验证
+	/**官网-获取验证
 	*
-	*@param string Vcheckdata  输入的验证码
+	*@param string $Vcheckdata  输入的验证码
 	*
-	*return status.返回状态/错误
+	*@return status.返回状态/错误
 	*/
-	public function CheckVerify($Vcheckdata=NUll)
+	public function CheckVerify($Vcheckdata=NULL)
 	{	
-		$verify=Session::get("Vda");
+		$verify=Session::get("Vda.text");		
 		if(is_null($Vcheckdata))
 		{
-			response(["status"=>-2,'msg'=>"验证码为空"]);
+			response(["status"=>404,'errmsg'=>"验证码为空"]);
 		}
 		else{
 			if($verify==$Vcheckdata)
-			{
-				response(['status'=>1,'msg'=>"验证码正确"]);
-				Session::remove("Vda");
+			{		
+				response(['stauts'=>200]);		
+				return true;				
 			}else{
-				response(['status'=>-1,'msg'=>"验证码错误"]);
+				response(['status'=>405,'errmsg'=>"验证码错误"]);
 			}
 		}
-		
+		return false;
 	}
 
-	/**获取验证码类型
+	/**官网-获取验证码类型
 	*
-	*return status.返回验证码类型
+	*@return status.返回验证码类型
 	*/
 	public function GetVtype(){
-		response(['stauts'=>Session::get("Vtype")]);	
-		Session::remove("Vtype");	
+		response(['stauts'=>Session::get("Vda.type")]);	
 	}
 
+	/**官网-限制账号
+	*
+	*@param int $uid    	用户id
+	*
+	*@return status.返回状态
+	*/
+	public function Limituser($uid){
+		$user_limit=User::where('id','=',$uid)->Update([
+			"status"=>1
+			]);	
+		if(1==$user_limit){
+			response(['status'=>200]);
+		}else{
+			response(['status'=>406,'errmsg'=>'限制账号操作失败']);
+		}
+	}
+	
+	/**官网解除限制账号
+	*
+	*@param int $uid      用户id
+	*
+	*@return status.返回状态
+	*/
+	public function Relieve($uid){
+		$user_relieve=User::where('id','=',$uid)->Update([
+			"status"=>NULL
+			]);	
+		if(1==$user_relieve){
+			response(['status'=>200]);
+		}else{
+			response(['status'=>407,'errmsg'=>'解封账号操作失败']);
+		}
+	}
+
+	public function sd(){
+		response([User::select('*')]);
+	}
 }
