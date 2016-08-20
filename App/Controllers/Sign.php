@@ -126,7 +126,7 @@ class Sign
 	*@param int $page    页码
 	*@param string $department		部门
 	*
-	@return data.指定页的帖子数据
+	@return status.状态码 data.指定页的帖子数据
 	*/
 
 	public function CheckPower($page=1,$department=null)

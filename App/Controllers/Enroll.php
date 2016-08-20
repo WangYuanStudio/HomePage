@@ -50,15 +50,12 @@ use App\Lib\Response;
 	{	
 		$token = stripslashes(trim($_POST['verify']));
 		if(time()<=Session::get("register.time")){
-			if($token==Session::get("register.token")){
-				$cache_data=Cache::get(["nickname","mail","password"]);		
-				$nickname=$cache_data["nickname"];
-				$mail 	 =$cache_data["mail"];
-				$password=$cache_data["password"];
+			if($token==Session::get("register.token")){									
+				$password=Cache::get("password");
 				$password=password_hash($password,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
 				$login_id=User::Insert([
-				"nickname" =>$nickname,
-				"mail" =>$mail,
+				"nickname" =>Cache::get("nickname"),
+				"mail" =>Cache::get("mail"),
 				"password"=>$password,
 				"photo" =>$photo,
 				"role" =>10,
@@ -186,7 +183,7 @@ use App\Lib\Response;
 
 	/**官网-获取验证码类型
 	*
-	*@return type.返回验证码类型
+	*@return status.状态码 type.返回验证码类型
 	*/
 	public function GetVtype(){
 		Response::out(200,['type'=>Session::get("Vda.type")]);	
@@ -275,8 +272,8 @@ use App\Lib\Response;
 
 	/**官网-找回密码之修改密码
 	*
-	*@param string $password    密码
-	*@param string $password2	密码
+	*@param string $password    	密码1
+	*@param string $password2		密码2
 	*
 	*@return status.状态码
 	*/
@@ -317,7 +314,7 @@ use App\Lib\Response;
 	*@param string $password1		新密码1
 	*@param string $password2		新密码2
 	*
-	*return status.状态码
+	*@return status.状态码
 	*/
 	public function Updatepsw($uid,$oldpassword,$password1,$password2)
 	{
