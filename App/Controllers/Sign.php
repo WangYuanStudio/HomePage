@@ -9,9 +9,24 @@ namespace App\Controllers;
 
 use App\Models\Info;
 use App\Models\User;
+use App\Lib\Response;
 
 class Sign
 {
+	public $middle = [
+		'Insertnews' => 'check_login',
+		'Updateuser' => 'check_login',
+		'CheckPower' => 'check_login'
+		// 对所有方法判断登录
+	];
+
+	public static $status=[
+		401 => 'Mobile phone trombone error.',
+		402 => 'Student id error.',
+		403 => 'The student number already exists.'	,
+		404 => 'An error occurred when audit failure, update the mysql.'	
+	];
+
 	/**报名系统-获取报名数据
 	*@param int $uid 			id
 	*@param string $name    	名字
@@ -20,11 +35,12 @@ class Sign
 	*@param string $class 		班级
 	*@param string $phone 		长号	
 	*@param string $short_phone 	短号
+	*@param string $Vcheckdata       验证码
 	*
-	*@return status.状态/错误代码  
+	*@return status.状态码  
 	*/
 
-	public function Insertnews($uid,$name,$sid,$department,$class,$phone,$short_phone)
+	public function Insertnews($uid,$name,$sid,$department,$class,$phone,$short_phone,$Vcheckdata=NULL)
 	{
 		$truedata=0;
 		//验证手机号
@@ -39,26 +55,32 @@ class Sign
 					}}
 				if(1==$truedata)
 				{
-					response(['status' => 403,'errmsg' =>'该学号已存在']);
+					Response::out(403);
 				}
 				else{
-					$insert_news=Info::insert([
-					"uid" 		 	=>$uid,
-					"name" 			=>$name,
-					"sid"			=>$sid,
-					"department" 	=>$department,
-					"class"			=>$class,
-					"phone"			=>$phone,
-					"short_phone"	=>$short_phone,
-					"privilege"     =>0
-					]);
-					response(['status' => 200,'data' => '报名成功' ]);
+					$verify=Session::get("Vda.text");
+					if($verify==$Vcheckdata){																					
+						$insert_news=Info::insert([
+						"uid" 		 	=>$uid,
+						"name" 			=>$name,
+						"sid"			=>$sid,
+						"department" 	=>$department,
+						"class"			=>$class,
+						"phone"			=>$phone,
+						"short_phone"	=>$short_phone,
+						"privilege"     =>0
+						]);
+						Response::out(200);
+						Session::remove("Vda");
+					}else{
+						Response::out(302);
+					}
 				}
 			}else{
-				response(['status' => 402,'errmsg' =>'学号错误']);
+				Response::out(402);
 			}
 		}else{
-			response(['status' => 401,'errmsg' => '手机长号错误']);
+			Response::out(401);
 		}
 	}
 
@@ -67,31 +89,35 @@ class Sign
 	*@param int $uid  用户id
 	*@param string $department		部门
 	*
-	*@return status.返回true
+	*@return status.状态码
 	*/
 	public function Updateuser($uid,$department)
 	{
 		if('页面部设计'==$department){		
-			User::where('id','=',$uid)->update([
+			$check=	User::where('id','=',$uid)->update([
 					"role"	=>8
 		]);
 		}elseif('页面部前端'==$department){
-			User::where('id','=',$uid)->update([
+			$check= User::where('id','=',$uid)->update([
 					"role"	=>7
 		]);
 		}elseif('编程部'==$department){
-			User::where('id','=',$uid)->update([
+			$check= User::where('id','=',$uid)->update([
 					"role"	=>9
 		]);
 		}else{
-			User::where('id','=',$uid)->update([
+			$check= User::where('id','=',$uid)->update([
 					"role"	=>6
 		]);
 		}
-		Info::where('uid','=',$uid)->update([
+			$check_info=Info::where('uid','=',$uid)->update([
 					"privilege"=>1
 		]);
-		response(['status'=>200,'data'=>'审核通过']);
+		if(1==$check&&1==$check_info){
+			Response::out(200);
+		}else{
+			Response::out(404);
+		}
 
 	}
 
@@ -100,7 +126,7 @@ class Sign
 	*@param int $page    页码
 	*@param string $department		部门
 	*
-	@return data.指定页的帖子数据
+	@return status.状态码 data.指定页的帖子数据
 	*/
 
 	public function CheckPower($page=1,$department=null)
@@ -114,8 +140,8 @@ class Sign
         	$data=Info::where('privilege','=',0)
 			->limit(($page - 1) * 10, 10)
             ->select('*');
-        }
-        $response=['status'=>200,'data'=>$data];
-        response($response,"json");
+        }       
+        Response::out(200,['data'=>$data]);
 	}
+	
 }
