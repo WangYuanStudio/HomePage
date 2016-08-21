@@ -43,6 +43,13 @@ class Document{
 	*/	
 	private static  $size;
 
+	/**
+	*Upload Files
+	*@param string $files   HTML的file的id
+	*@param string $path    文件保存的路径
+	*@param string $fileoldname    设置文件名
+	*
+	*/
 	public static function Upload($files,$path,$fileoldname=NULL){
 		self::$size=$_FILES[$files]['size'];
 		//判断文件大小是否符合要求
