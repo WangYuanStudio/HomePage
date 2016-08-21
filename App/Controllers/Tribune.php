@@ -211,14 +211,6 @@ class Tribune
      */
     public function searchPost($key)
     {
-        //这里加个次数限制
-//        Cache::increment($_SERVER["REMOTE_ADDR"]);
-//        Cache::EXPIRE($_SERVER["REMOTE_ADDR"], 5);
-//        if (Cache::get($_SERVER["REMOTE_ADDR"]) > 10) {
-//            Cache::EXPIRE($_SERVER["REMOTE_ADDR"], 30);
-//            response(["status" => 403]);
-//        }
-
         $sphinx = new SphinxClient();
         $sphinx->SetServer("localhost", 9312);
         $sphinx->SetMatchMode(SPH_MATCH_ANY);
@@ -279,8 +271,7 @@ class Tribune
 
     public function test()
     {
-        //576
-        $v = new \App\Lib\Vcode('img', 2, 16, 200, 200, false, true, 30, 0, "F:/phpstudy/WWW/wangyuan/public/1.jpg");
+        $v = new \App\Lib\Vcode('img', 2, 16, 200, 200, false, true, 30, 0, __ROOT__ . "/public/" . mt_rand(1, 6) . ".jpg");
         Session::set("code", $v->getData());
         $v->show();
     }
@@ -305,5 +296,11 @@ class Tribune
         }
 
         Response::out(200);
+    }
+
+    public function redis()
+    {
+        Cache::set("a", time());
+        Response::out(200, Cache::get("a"));
     }
 }
