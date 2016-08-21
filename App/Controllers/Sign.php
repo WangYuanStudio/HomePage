@@ -14,16 +14,16 @@ use App\Lib\Response;
 class Sign
 {
 	public $middle = [
-		'Insertnews' => 'check_login',
-		'Updateuser' => 'check_login',
-		'CheckPower' => 'check_login'
+		'Insertnews' => 'Check_login',
+		'Updateuser' => 'Check_login',
+		'CheckPower' => 'Check_login'
 		// 对所有方法判断登录
 	];
 
 	public static $status=[
 		401 => 'Mobile phone trombone error.',
 		402 => 'Student id error.',
-		403 => 'The student number already exists.'	,
+		403 => 'The student id already exists.'	,
 		404 => 'An error occurred when audit failure, update the mysql.'	
 	];
 
