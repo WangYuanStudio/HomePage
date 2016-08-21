@@ -12,7 +12,7 @@ use App\Lib\Response;
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-18 15:04
+ * Last modified time: 2016-08-21 10:32
  */
 class Homework
 {
@@ -26,7 +26,7 @@ class Homework
 		'updateTask' => 'Hws_Management',
 		'deleteTask' => 'Hws_Management',
 		'setTaskOff' => 'Hws_Management',
-		'all' => 'check_login' // 对所有方法判断登录
+		'all' => 'Check_login' // 对所有方法判断登录
 	];
 
 	/*错误代码 && 错误信息
@@ -130,7 +130,7 @@ class Homework
 			if (time() >= strtotime($task[0]['start_time']) &&
 			time() <= strtotime($task[0]['end_time'])) {
 				// 文件上传
-				$src = Document::Documents($form_filename, $path);
+				$src = Document::Upload($form_filename, $path);
 				if ($rid = Hws_Record::insert([
 					'tid' => $tid,
 					'uid' => 1,
