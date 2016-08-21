@@ -10,7 +10,15 @@ class Check_login implements MiddleWare
     	$token = Session::get("user");
     	if($token!=null)
     	{
-    		return true;
+            if(Session::get("user.ip")==$_SERVER["REMOTE_ADDR"])
+            {
+                return true;
+            }
+    		else
+            {
+                 Response::out(300);
+            return false;
+            }
     	}
     	else
     	{
