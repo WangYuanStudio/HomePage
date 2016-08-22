@@ -98,8 +98,7 @@ return [
         200 => '',
         300 => 'Invalid login status.',
         301 => 'Permission denied.',
-        302 => 'Verify code was wrong.',
-        303 => 'Operations are too frequent'
+        302 => 'Verify code was wrong.'
     ]
 
 ];

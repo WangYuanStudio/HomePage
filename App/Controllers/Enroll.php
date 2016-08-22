@@ -1,8 +1,8 @@
 <?php
 /*
 *User: huizhe
-*Date: 2016/8/12
-*Time: 13:18
+*Date: 2016/8/22
+*Time: 11:18
 */
 
 namespace App\Controllers;
@@ -16,11 +16,11 @@ use App\Lib\Response;
  class Enroll
  {
  	public $middle = [
-		'UploadPhoto' => 'check_login',
-		'Limituser' => 'check_login',
-		'Relieve' => 'check_login'
-		'Updatepsw' => 'check_login'
-		'Updateuser' => 'check_login'
+		'UploadPhoto' => 'Check_login',
+		'Limituser' => 'Check_login',
+		'Relieve' => 'Check_login'
+		'Updatepsw' => 'Check_login'
+		'Updateuser' => 'Check_login'
 		// 对所有方法判断登录
 	];
 
@@ -49,8 +49,8 @@ use App\Lib\Response;
 	public function Register($photo="avatar/head.gif")
 	{	
 		$token = stripslashes(trim($_POST['verify']));
-		if(time()<=Session::get("register.time")){
-			if($token==Session::get("register.token")){									
+		if(time()<=Cache::get("register_time")){
+			if($token==Cache::get("register_token")){									
 				$password=Cache::get("password");
 				$password=password_hash($password,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
 				$login_id=User::Insert([
@@ -61,9 +61,8 @@ use App\Lib\Response;
 				"role" =>10,
 				"status"=>0
 				]);
-				Cache::delete(["nickname","mail","password"]);
-				Response::out(200,['login_id'=>$login_id]);	
-				Session::remove("register");
+				Cache::delete(["nickname","mail","password","register_time","register_token"]);
+				Response::out(200,['login_id'=>$login_id]);					
 			}else{
 				Response::out(411);
 			}
@@ -116,25 +115,22 @@ use App\Lib\Response;
 			{
 				Response::out(408);
 			}else{
-				if($this->CheckVerify($Vcheckdata)){				
+				if($this->CheckVerify($Vcheckdata)){	
+					$token=md5(rand(10000,99999).time());			
 					Cache::set([
 					"nickname"=>$nickname,
 					"mail"=>$mail,
-					"password"=>$password					
-					]);
-					$token=md5(rand(10000,99999).time());
-					$register_data=[
-						"token" =>$token,
-						"time"	=>time()+30*60
-					];
-					Session::set("register",$register_data);					
+					"password"=>$password,				
+					"register_token" =>$token,
+					"register_time"	=>time()+30*60
+					]);															
 					$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
 					（注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>
     <a href='http://127.0.0.1:8080/Enroll/Register?verify=".$token."' target= 
 '_blank'>/http://127.0.0.1:8080/Enroll/Register?verify=".$token."</a><br/> 
     如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
 					Mail::to($mail)->title("WangYuanStudio")->content($emailbody);
-					Session::remove("Vda");
+					Session::remove("code");
 					Response::out(200);	
 					}	 		
 			}
@@ -149,11 +145,10 @@ use App\Lib\Response;
 	*/
 
 	public function Vphoto()
-	{		
-		$verify=new Vcode();	
-		$verify->show();
-		$Vdata=$verify->getData();		
-		Session::set("Vda",$Vdata);		
+	{				
+		$verify = new \App\Lib\Vcode('img', 2, 16, 200, 200, false, true, 30, 0, __ROOT__ . "/public/" . mt_rand(1, 6) . ".jpg");
+        Session::set("code", $verify->getData());
+        $verify->show();	
 	}
 
 	/**官网-获取验证
@@ -162,23 +157,22 @@ use App\Lib\Response;
 	*
 	*@return status.状态码
 	*/
-	public function CheckVerify($Vcheckdata=NULL)
+	public function CheckVerify($Vcheckdata)
 	{	
-		$verify=Session::get("Vda.text");		
-		if(is_null($Vcheckdata))
-		{
-			Response::out(405);
-		}
-		else{
-			if($verify==$Vcheckdata)
-			{		
-				Response::out(200);		
-				return true;				
-			}else{
-				Response::out(302);
-			}
-		}
-		return false;
+		$v = Session::get("code")["text"];
+        foreach ($Vcheckdata as $key => $value) {
+            if ($value["x"] > $v[ $key ]["max_x"]
+                || $value["x"] < $v[ $key ]["min_x"]
+                || $value["y"] > $v[ $key ]["max_y"]
+                || $value["y"] < $v[ $key ]["min_y"]
+            ) {
+                Response::out(302);
+                die();
+                return false;
+            }
+        }
+        Response::out(200);
+        return true;
 	}
 
 	/**官网-获取验证码类型
@@ -186,7 +180,7 @@ use App\Lib\Response;
 	*@return status.状态码 type.返回验证码类型
 	*/
 	public function GetVtype(){
-		Response::out(200,['type'=>Session::get("Vda.type")]);	
+		Response::out(200,["type"=>Session::get("code")["type"]]);	
 	}
 
 	/**官网-限制账号
@@ -249,12 +243,11 @@ use App\Lib\Response;
 			}
 			if(1==$checkdata){
 				$token=md5(rand(1000000,9999999).time());
-				$seach_data=[
-					"token"=>$token,
-					"time" =>time()+30*60,
-					"mail" =>$mail
-				];
-				Session::set("search",$seach_data);			
+				Cache::set([
+					"search_token"=>$token,
+					"search_time" =>time()+30*60,
+					"search_mail" =>$mail
+				]);		
 				$emailbody = "亲爱的".$user_nickname."，您好"."：<br/>请您点击以下链接进行找回密码，即可生效！<br/> 
 			（注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>     
 			<a href='http://127.0.0.1:8080/Enroll/Supdatepsw?verify=".$token."' target= 
@@ -280,18 +273,20 @@ use App\Lib\Response;
 	public function Supdatepsw($password,$password2)
 	{
 		$token = stripslashes(trim($_POST['verify']));
-		if(time()<=Session::get("search.time")){
-			if($token==Session::get("search.token"))
+		if(time()<=Cache::get("search_time")){
+			if($token==Cache::get("search_token"))
 			{
 				if($password==$password2)
 				{
-					$update_psw=User::where('mail','=',Session::get("search.mail"))->Update([
+					$update_psw=User::where('mail','=',Cache::get("search_mail"))->Update([
 						"password" =>$password
 						]);
 					if(1==$update_psw)
 					{
 						Response::out(200);
-						Session::remove("search");
+						Cache::delete("search_time");
+						Cache::delete("search_token");
+						Cache::delete("search_mail");
 					}else{
 						Response::out(415);
 					}

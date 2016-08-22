@@ -2,6 +2,7 @@
 namespace App\Controllers;
 use  App\Lib\Vcode;
 use App\Models\User;
+use App\Lib\Response;
 class Login
 {
 
@@ -9,11 +10,11 @@ class Login
    * 
    * @var array
    */
-    public static $error = [
-    611 => '密码错误！',
-    610 => '该用户被限制登录',
-    630 => '该邮箱尚未注册！',
-    640 => '验证码过期请刷新!'
+    public static $status = [
+    611 => 'password is wrong！',
+    610 => 'this user is Restricted landing!',
+    630 => 'this mail isn’t registed！',
+    640 => 'Verification code expires!'
     ];
     /**官网——登录接口
    *
@@ -38,37 +39,43 @@ class Login
                         unset($d[0]['password']); 
                          $d[0]['ip']=$_SERVER["REMOTE_ADDR"];
                         Session::set("user", $d[0]);//保存session
-                        $status=["status" => "200",'errmsg' => "",'data'=>$d[0]];
-                        response($status, "json");
+                     //   $status=["status" => "200",'errmsg' => "",'data'=>$d[0]];
+                        Response::out(200,$d[0]);
+                     //   response($status, "json");
 
                     }
                     else
                      {
-                        $status=["status" => "611",'errmsg' => Login::$error[611],'data'=>''];
-                        response($status, "json");
+                     //   $status=["status" => "611",'errmsg' => Login::$error[611],'data'=>''];
+                    //    response($status, "json");
+                         Response::out(611);
                     }
                 }
                 else{
-                     $status=["status" => "610",'errmsg' => Login::$error[610]，'data'=>''];
-                     response($status, "json");
+                  //   $status=["status" => "610",'errmsg' => Login::$error[610],'data'=>''];
+                    // response($status, "json");
+                      Response::out(610);
                 }
             }
             else
             {
-                $status=["status" => "630",'errmsg' =>Login::$error[630]，'data'=>''];
-                response($status, "json");
+             //   $status=["status" => "630",'errmsg' =>Login::$error[630],'data'=>''];
+               // response($status, "json");
+                 Response::out(630);
             }
            
         }
         else if(Session::get("Vda")==null)
         {
-            $status=["status" => "640",'errmsg' =>Login::$error[640],'data'=>''];
-            response($status, "json");  
+          //  $status=["status" => "640",'errmsg' =>Login::$error[640],'data'=>''];
+           // response($status, "json");  
+             Response::out(640);
         }
         else{
-            $status=["status" => "302",'msg' => config("common_status")['302'],'data'=>''];
+       //     $status=["status" => "302",'msg' => config("common_status")['302'],'data'=>''];
             Session::set("Vda",null); 
-            response($status, "json");
+        //    response($status, "json");
+             Response::out(302);
         }
     }
   /**官网——获取验证码类行
@@ -79,7 +86,7 @@ class Login
     public function Get_Vtype()
     {
         $data=Session::get("Vdata.type");     
-        response($data,'json');
+       Response::out(200,$data);
     }
  
 }
