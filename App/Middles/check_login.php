@@ -1,6 +1,7 @@
 <?php
 namespace App\Middles;
 use App\Controllers\Session;
+use App\Lib\Response;
 
 class Check_login implements MiddleWare
 {
@@ -13,8 +14,7 @@ class Check_login implements MiddleWare
     	}
     	else
     	{
-    		$status= ['status' => '300','errmsg'=>'Invalid login status.','data'=>''];
-            response($status, "json");
+    		Response::out(300);
     		return false;
     	}
         
