@@ -130,7 +130,7 @@ use App\Lib\Response;
 '_blank'>/http://127.0.0.1:8080/Enroll/Register?verify=".$token."</a><br/> 
     如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
 					Mail::to($mail)->title("WangYuanStudio")->content($emailbody);
-					Session::remove("Vda");
+					Session::remove("code");
 					Response::out(200);	
 					}	 		
 			}
@@ -145,11 +145,10 @@ use App\Lib\Response;
 	*/
 
 	public function Vphoto()
-	{		
-		$verify=new Vcode();	
-		$verify->show();
-		$Vdata=$verify->getData();		
-		Session::set("Vda",$Vdata);		
+	{				
+		$verify = new \App\Lib\Vcode('img', 2, 16, 200, 200, false, true, 30, 0, __ROOT__ . "/public/" . mt_rand(1, 6) . ".jpg");
+        Session::set("code", $verify->getData());
+        $verify->show();	
 	}
 
 	/**官网-获取验证
@@ -158,23 +157,22 @@ use App\Lib\Response;
 	*
 	*@return status.状态码
 	*/
-	public function CheckVerify($Vcheckdata=NULL)
+	public function CheckVerify($Vcheckdata)
 	{	
-		$verify=Session::get("Vda.text");		
-		if(is_null($Vcheckdata))
-		{
-			Response::out(405);
-		}
-		else{
-			if($verify==$Vcheckdata)
-			{		
-				Response::out(200);		
-				return true;				
-			}else{
-				Response::out(302);
-			}
-		}
-		return false;
+		$v = Session::get("code")["text"];
+        foreach ($Vcheckdata as $key => $value) {
+            if ($value["x"] > $v[ $key ]["max_x"]
+                || $value["x"] < $v[ $key ]["min_x"]
+                || $value["y"] > $v[ $key ]["max_y"]
+                || $value["y"] < $v[ $key ]["min_y"]
+            ) {
+                Response::out(302);
+                die();
+                return false;
+            }
+        }
+        Response::out(200);
+        return true;
 	}
 
 	/**官网-获取验证码类型
@@ -182,7 +180,7 @@ use App\Lib\Response;
 	*@return status.状态码 type.返回验证码类型
 	*/
 	public function GetVtype(){
-		Response::out(200,['type'=>Session::get("Vda.type")]);	
+		Response::out(200,["type"=>Session::get("code")["type"]]);	
 	}
 
 	/**官网-限制账号

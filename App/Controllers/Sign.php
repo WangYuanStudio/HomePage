@@ -40,7 +40,7 @@ class Sign
 	*@return status.状态码  
 	*/
 
-	public function Insertnews($uid,$name,$sid,$department,$class,$phone,$short_phone,$Vcheckdata=NULL)
+	public function Insertnews($uid,$name,$sid,$department,$class,$phone,$short_phone,$Vcheckdata)
 	{
 		$truedata=0;
 		//验证手机号
@@ -58,8 +58,18 @@ class Sign
 					Response::out(403);
 				}
 				else{
-					$verify=Session::get("Vda.text");
-					if($verify==$Vcheckdata){																					
+					$v = Session::get("code")["text"];
+       				 foreach ($Vcheckdata as $key => $value) {
+            			if ($value["x"] > $v[ $key ]["max_x"]
+                			|| $value["x"] < $v[ $key ]["min_x"]
+                			|| $value["y"] > $v[ $key ]["max_y"]
+                			|| $value["y"] < $v[ $key ]["min_y"]
+            				) {
+               				 Response::out(302);
+               				die();
+               			 	return false;
+            				}
+        			}       																										
 						$insert_news=Info::insert([
 						"uid" 		 	=>$uid,
 						"name" 			=>$name,
@@ -71,10 +81,7 @@ class Sign
 						"privilege"     =>0
 						]);
 						Response::out(200);
-						Session::remove("Vda");
-					}else{
-						Response::out(302);
-					}
+						Session::remove("code");					
 				}
 			}else{
 				Response::out(402);
