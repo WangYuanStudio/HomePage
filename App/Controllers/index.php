@@ -3,6 +3,7 @@ namespace App\Controllers;
 use App\Models\Member;
 use App\Models\Message;
 use App\Models\Article;
+use App\Lib\Response;
 
 
 class Index
@@ -24,15 +25,15 @@ class Index
    * 
    * @var array
    */
-    public static $error = [
-    601 => '暂无成员信息!',
-    602 => '暂无留言信息!',
-    603 => '留言失败,请重试!',
-    604 => '审核失败,请重试!',
-    605 => '删除失败',
-    606 => '发布动态失败',
-    607 => '暂无动态信息!',
-    608 => '修改失败!'
+    public static $status = [
+    601 => 'no member information',
+    602 => 'no message!',
+    603 => 'fail to leave a message',
+    604 => 'fail to checked your message',
+    605 => 'fail to delete',
+    606 => 'fail to send a dynamic',
+    607 => 'no dynamics',
+    608 => 'fail to edit'
     ];
     /**官网—成员展示系
    *
@@ -45,13 +46,14 @@ class Index
          
         if(sizeof($data)!=0)
         {
-            $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>$data];
-            response( $status, "json");
+          //  $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>$data];
+              Response::out(200,$data);
         }
         else
         {
-            $status=['status' => "601",'errmsg' => Index::$error[601],'data'=>''];
-            response($status, "json");
+          //  $status=['status' => "601",'errmsg' => Index::$error[601],'data'=>''];
+          //  response($status, "json");
+            Response::out(601);
         }
     }
      
@@ -65,13 +67,14 @@ class Index
        $d=Message::leftJoin('user', 'message.uid', '=', 'user.id')->where("auth","=","1")->orderBy('time desc')->select('message.*,user.nickname');
        if(sizeof($d)!=0)
        {
-            $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>$d];
-            response($status,"json");
+            //$status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>$d];
+           Response::out(200,$d);
        }
        else
        {
-           $status=['status' => "602",'errmsg' => Index::$error[602],'data'=>''];
-           response($status,"json");
+         //  $status=['status' => "602",'errmsg' => Index::$error[602],'data'=>''];
+        //   response($status,"json");
+         Response::out(602);
        }
     }
 
@@ -85,13 +88,15 @@ class Index
       $str= Message::insert(['uid'=>Session::get("user.id"),'content' => $message, 'time' => $time, 'auth' => false]);
       if($str==0)
       {
-         $status=["status" => "603",'errmsg' => Index::$error[603],'data'=>''];
-         response($status,"json");
+        // $status=["status" => "603",'errmsg' => Index::$error[603],'data'=>''];
+       //  response($status,"json");
+        Response::out(603);
       }
       else
       {
-         $status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-         response($status,"json");
+         //$status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
+       //  response($status,"json");
+            Response::out(200);
       }
     }
      /**官网—管理员审核留言
@@ -103,13 +108,13 @@ class Index
        $status=  Message::where('id','=',$id)->update(['auth' => true]);
        if($status==1)
        {
-         $status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-         response( $status,"json");
+        // $status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
+        Response::out(200);
        }
        else
        {
-        $status=["status" => "604",'errmsg' =>  Index::$error[604],'data'=>''];
-        response( $status,"json");
+      //  $status=["status" => "604",'errmsg' =>  Index::$error[604],'data'=>''];
+       Response::out(604);
        }
     }
 
@@ -122,13 +127,15 @@ class Index
       $statuss= Message::where('id', '=',$id)->delete();
       if($statuss==1)
       {
-        $status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-        response( $status,"json");
+      //  $status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
+      //  response( $status,"json");
+         Response::out(200);
       }
       else
       {
-         $status=["status" => "605",'errmsg' => Index::$error[605],'data'=>''];
-         response( $status,"json");
+       //  $status=["status" => "605",'errmsg' => Index::$error[605],'data'=>''];
+        // response( $status,"json");
+         Response::out(605);
       }
     }
       /**官网—发表网园动态
@@ -143,13 +150,14 @@ class Index
       $str= Article::insert(['title'=>$title,'content' => $content,'time'=>$time]);
       if($str==0)
       {
-         $status=["status" => "606",'errmsg' => Index::$error[606],'data'=>''];
-         response($status,"json");
+        // $status=["status" => "606",'errmsg' => Index::$error[606],'data'=>''];
+         Response::out(606);
       }
       else
       {
-         $status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-         response($status,"json");
+        // $status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
+        // response($status,"json");
+         Response::out(200);
       }
     }
         /**官网—删除网园动态
@@ -162,13 +170,15 @@ class Index
       $statuss= Article::where('id', '=',$id)->delete();
       if($statuss==1)
       {
-        $status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-        response( $status,"json");
+        //$status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
+      //  response( $status,"json");
+         Response::out(200);
       }
       else
       {
-         $status=["status" => "605",'errmsg' => Index::$error[605],'data'=>''];
-         response( $status,"json");
+       //  $status=["status" => "605",'errmsg' => Index::$error[605],'data'=>''];
+        // response( $status,"json");
+          Response::out(605);
       }
     }
         /**官网—获取网园动态信息
@@ -181,13 +191,15 @@ class Index
        $d=Article::orderBy('time desc')->select();
        if(sizeof($d)!=0)
        {
-            $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>$d];
-            response($status,"json");
+         //   $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>$d];
+         //   response($status,"json");
+       Response::out(200,$d);
        }
        else
        {
-           $status=['status' => "607",'errmsg' => Index::$error[607],'data'=>''];
-           response($status,"json");
+         //  $status=['status' => "607",'errmsg' => Index::$error[607],'data'=>''];
+       //    response($status,"json");
+        Response::out(607);
        }
     }
       /**官网—修改网园动态
@@ -202,13 +214,15 @@ class Index
         $statuss= Article::where('id', '=',$id)->update(['title' => $title, 'content' => $content]);
         if($statuss==1)
         {
-            $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-            response($status,"json");
+          //  $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>''];
+          //  response($status,"json");
+           Response::out(200);
         }
         else
         {
-           $status=['status' => "608",'errmsg' => Index::$error[608],'data'=>''];
-           response($status,"json");
+         //  $status=['status' => "608",'errmsg' => Index::$error[608],'data'=>''];
+        //   response($status,"json");
+           Response::out(608);
         }
     
     }
@@ -237,13 +251,15 @@ class Index
         ]);
         if($statuss==1)
         {
-            $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-            response($status,"json");
+        //    $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>''];
+          //  response($status,"json");
+            Response::out(200);
         }
         else
         {
-           $status=['status' => "608",'errmsg' => Index::$error[608],'data'=>''];
-           response($status,"json");
+         //  $status=['status' => "608",'errmsg' => Index::$error[608],'data'=>''];
+        //   response($status,"json");
+            Response::out(608);
         }
     
     }
@@ -258,13 +274,15 @@ class Index
         $statuss=Member::where('id', '=',$id)->delete();
       if($statuss==1)
       {
-        $status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-        response( $status,"json");
+     //   $status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
+      //  response( $status,"json");
+         Response::out(200);
       }
       else
       {
-         $status=["status" => "605",'errmsg' => Index::$error[605],'data'=>''];
-         response( $status,"json");
+        // $status=["status" => "605",'errmsg' => Index::$error[605],'data'=>''];
+      //   response( $status,"json");
+         Response::out(605);
       }
     
     }
@@ -281,13 +299,15 @@ class Index
         ]);
         if($statuss==1)
         {
-            $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-            response($status,"json");
+      //      $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>''];
+        //    response($status,"json");
+          Response::out(200);
         }
         else
         {
-           $status=['status' => "608",'errmsg' => Index::$error[608],'data'=>''];
-           response($status,"json");
+        //   $status=['status' => "608",'errmsg' => Index::$error[608],'data'=>''];
+       //    response($status,"json");
+           Response::out(608);
         }
     }
  
