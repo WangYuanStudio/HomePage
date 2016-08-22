@@ -1,8 +1,8 @@
 <?php
 /*
 *User: huizhe
-*Date: 2016/8/11
-*Time: 17:34
+*Date: 2016/8/22
+*Time: 11:30
 */
 
 namespace App\Controllers;
