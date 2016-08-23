@@ -11,7 +11,7 @@ use App\Lib\Response;
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-21 10:25
+ * Last modified time: 2016-08-24 01:31
  */
 class Hws_WorkSubmit implements MiddleWare
 {
@@ -19,8 +19,9 @@ class Hws_WorkSubmit implements MiddleWare
     {
     	// 获取角色ID
         $token = Session::get("user");
-        $role_id = $token['rold'];
+        $role_id = $token['role'];
 
+        // 注意：提交多部门作业由数据库控制
         if (isset($request['tid']) && $t = Hws_Task::where('id', '=', $request['tid'])->select()) {
             if (Authorization::isAuthorized($role_id, 'submit_'.$t[0]['department'].'_homeworks')) {
                 return true;
