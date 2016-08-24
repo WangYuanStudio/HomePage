@@ -167,8 +167,7 @@ use App\Lib\Response;
                 || $value["y"] < $v[ $key ]["min_y"]
             ) {
                 Response::out(302);
-                die();
-                return false;
+                die();              
             }
         }
         Response::out(200);

@@ -67,7 +67,6 @@ class Sign
             				) {
                				 Response::out(302);
                				die();
-               			 	return false;
             				}
         			}       																										
 						$insert_news=Info::insert([
