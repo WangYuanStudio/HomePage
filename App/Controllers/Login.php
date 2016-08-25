@@ -10,7 +10,6 @@ class Login
    * 
    * @var array
    */
-  public static $num=0;
     public static $status = [
     611 => 'password is wrong！',
     610 => 'this user is Restricted landing!',
@@ -24,8 +23,7 @@ class Login
     @param string $code 验证码
    * @return status.状态 errmsg.错误信息 data.成员信息包括id,name,sex,photo,department,habbit,position,blog,phone,introduction
    */
-  //  $mail,$password,$code
-    public function CheckLogin()
+    public function CheckLogin( $mail,$password,$code)
     {
       if(Session::get("errer_num")==null)
       {
@@ -74,9 +72,15 @@ class Login
             }
            
     }
+
+     /**官网——退出接口
+   *
+   * @return status.状态 errmsg.错误信息 data.成员信息包括id,name,sex,photo,department,habbit,position,blog,phone,introduction
+   */
     public function quitlogin()
     {
        Session::set("user", null);
+        Response::out(200);
     }
 
   
