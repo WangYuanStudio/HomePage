@@ -9,6 +9,9 @@ use App\Lib\Response;
 use App\Lib\PclZip;
 use App\Lib\Authorization;
 
+// test
+use App\Models\User;
+
 date_default_timezone_set('PRC');
 
 /*
@@ -74,7 +77,8 @@ class Homework
 	private $loginedUser;
 
 	public function __construct() {
-		$this->loginedUser = Session::get('user');
+		$test = User::where('id', '=', 1)->select();
+		$this->loginedUser = $test[0];//Session::get('user');
 	}
 
 	/*作业系统 - 获取优秀作业
