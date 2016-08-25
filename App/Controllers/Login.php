@@ -10,6 +10,7 @@ class Login
    * 
    * @var array
    */
+  public static $num=0;
     public static $status = [
     611 => 'password is wrong！',
     610 => 'this user is Restricted landing!',
@@ -23,12 +24,15 @@ class Login
     @param string $code 验证码
    * @return status.状态 errmsg.错误信息 data.成员信息包括id,name,sex,photo,department,habbit,position,blog,phone,introduction
    */
-    public function CheckLogin($mail,$password,$code)
+  //  $mail,$password,$code
+    public function CheckLogin()
     {
+      if(Session::get("errer_num")==null)
+      {
+         Session::set("errer_num", 0);
+      }
         //判断验证码的值和验证码的session是否为空
-        if($code==Session::get("Vdata.text")&&Session::get("Vdata.text")!=null)
-        {
-            Session::set("Vdata.text",null); //验证成功后删除验证码
+
             $d=User::where('mail', '=', $mail)->select();//判断邮箱是否存在
             if(sizeof($d)!=0)//邮箱存在
             {
@@ -40,15 +44,20 @@ class Login
                          $d[0]['ip']=$_SERVER["REMOTE_ADDR"];
                         Session::set("user", $d[0]);//保存session
                      //   $status=["status" => "200",'errmsg' => "",'data'=>$d[0]];
+                        Session::set("errer_num", 0);// 成功后置为0
                         Response::out(200,$d[0]);
                      //   response($status, "json");
+
 
                     }
                     else
                      {
                      //   $status=["status" => "611",'errmsg' => Login::$error[611],'data'=>''];
                     //    response($status, "json");
-                         Response::out(611);
+                        $p= Session::get("errer_num");
+                        $p++;
+                        Session::set("errer_num", $p);
+                        Response::out(611,Session::get("errer_num"));
                     }
                 }
                 else{
@@ -64,29 +73,12 @@ class Login
                  Response::out(630);
             }
            
-        }
-        else if(Session::get("Vda")==null)
-        {
-          //  $status=["status" => "640",'errmsg' =>Login::$error[640],'data'=>''];
-           // response($status, "json");  
-             Response::out(640);
-        }
-        else{
-       //     $status=["status" => "302",'msg' => config("common_status")['302'],'data'=>''];
-            Session::set("Vda",null); 
-        //    response($status, "json");
-             Response::out(302);
-        }
     }
-  /**官网——获取验证码类行
-   *
-   *
-   * @return data.返回验证码类型
-   */
-    public function Get_Vtype()
+    public function quitlogin()
     {
-        $data=Session::get("Vdata.type");     
-       Response::out(200,$data);
+       Session::set("user", null);
     }
+
+  
  
 }
