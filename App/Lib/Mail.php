@@ -29,7 +29,7 @@ class Mail
         'host'     => 'smtp.exmail.qq.com',
         'port'     => 465,
         'username' => 'Admin@WangYuan.Info',
-        'password' => 'Wyzxgzs#08',
+        'password' => 'ZgB8IqmKh6ZHM2LD',
         'secure'   => 'ssl'
     ];
 
