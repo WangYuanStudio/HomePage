@@ -74,6 +74,10 @@ class Login
             }
            
     }
+    public function quitlogin()
+    {
+       Session::set("user", null);
+    }
 
   
  
