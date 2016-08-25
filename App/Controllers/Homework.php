@@ -16,7 +16,7 @@ date_default_timezone_set('PRC');
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-24 18:30
+ * Last modified time: 2016-08-25 11:00
  */
 class Homework
 {
@@ -337,12 +337,16 @@ class Homework
 		$row = $n_unzip = 0;
 		$select = $raw->select();
 		foreach ($select as $value) {
-			if (substr(basename($value['file_path']), -4) == '.zip') {
+			$ext = substr(basename($value['file_path']), -4);
+			if ($ext == '.zip' || $ext == '.rar') {
 				// 作业未解压过
 				if (empty($value['unpack_path'])) {
 					// 解压作业
 					$dst = substr(basename($value['file_path']), 0, -4).'/';
-					$this->unZip($value['file_path'], self::HW_UNZIP_FOLDER.$dst);
+					if ($ext == '.zip')
+						$this->unZip($value['file_path'], self::HW_UNZIP_FOLDER.$dst);
+					else
+						$this->unRar($value['file_path'], self::HW_UNZIP_FOLDER.$dst);
 				} else {
 					$dst = $value['unpack_path'];
 				}
@@ -514,6 +518,38 @@ class Homework
 		}
 		return $list;
 		//$this->mult_iconv('gb2312', 'utf-8', $list);
+	}
+
+	/*Rar解压
+	 * 
+	 * @param string $path rar文件路径
+	 * @param string $dst 解压路径
+	 * @return array/boolean
+	 */
+	private function unRar($path, $dst) {
+		\RarException::setUsingExceptions(true);
+		try {
+			$rar = \RarArchive::open($path);
+			$list = $rar->getEntries();
+		} catch (\RarException $e) {
+			return false;
+		}
+	
+		// var_dump($list); 对象		
+		$result = [];
+
+		foreach($list as $file) {
+			$pattern = '/\".*\"/';    
+			preg_match($pattern, $file, $matches, PREG_OFFSET_CAPTURE);
+			$pathStr = $matches[0][0];
+			$pathStr = str_replace("\"", '', $pathStr);
+			array_push($result, $pathStr);
+			$entry = $rar->getEntry($pathStr);
+			if ($entry)
+				$entry->extract($dst); // extract to the current dir
+		}
+		$rar->close();
+		return $result;
 	}
 }
 ?>
