@@ -57,18 +57,7 @@ class Sign
 				{
 					Response::out(403);
 				}
-				else{
-					$v = Session::get("code")["text"];
-       				 foreach ($Vcheckdata as $key => $value) {
-            			if ($value["x"] > $v[ $key ]["max_x"]
-                			|| $value["x"] < $v[ $key ]["min_x"]
-                			|| $value["y"] > $v[ $key ]["max_y"]
-                			|| $value["y"] < $v[ $key ]["min_y"]
-            				) {
-               				 Response::out(302);
-               				die();
-            				}
-        			}       																										
+				else{																										
 						$insert_news=Info::insert([
 						"uid" 		 	=>$uid,
 						"name" 			=>$name,
