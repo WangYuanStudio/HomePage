@@ -35,12 +35,11 @@ class Sign
 	*@param string $class 		班级
 	*@param string $phone 		长号	
 	*@param string $short_phone 	短号
-	*@param string $Vcheckdata       验证码
 	*
 	*@return status.状态码  
 	*/
 
-	public function Insertnews($uid,$name,$sid,$department,$class,$phone,$short_phone,$Vcheckdata)
+	public function Insertnews($uid,$name,$sid,$department,$class,$phone,$short_phone)
 	{
 		$truedata=0;
 		//验证手机号
