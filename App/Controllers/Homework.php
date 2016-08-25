@@ -19,7 +19,7 @@ date_default_timezone_set('PRC');
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-25 21:23
+ * Last modified time: 2016-08-25 22:28
  */
 class Homework
 {
@@ -103,7 +103,7 @@ class Homework
 	 */
 	public function getExcellentWorksWhere($uid = null, $tid = null) {
 		Response::out(200, $this->getExcellentWorksRaw(
-			is_null($uid) ? $this->loginedUser['uid'] : $uid,
+			is_null($uid) ? $this->loginedUser['id'] : $uid,
 			is_null($tid) ? 0 : $tid
 		));
 	}
@@ -121,7 +121,7 @@ class Homework
 	 * @return status.状态码 data/id.作业ID data/tid.任务ID data/uid.提交用户ID data/time.提交时间 data/note.备注 data/score.评分 data/comment.评语 data/comment_uid.批改用户ID data/comment_time.批改时间 data/recommend.是否推荐
 	 */
 	public function getWorksFromLogined() {
-		Response::out(200, Hws_Record::where('uid', '=', $this->loginedUser['uid'])
+		Response::out(200, Hws_Record::where('uid', '=', $this->loginedUser['id'])
 			->select('id, tid, uid, time, note, score, comment, comment_uid, comment_time, recommend'));
 	}
 	
@@ -143,7 +143,7 @@ class Homework
 				//$src = substr($src, strlen($path));
 				if ($rid = Hws_Record::insert([
 					'tid' => $tid,
-					'uid' => 1,//$this->loginedUser['uid'], // 当前登录用户
+					'uid' => 1,//$this->loginedUser['id'], // 当前登录用户
 					'file_path' => $src,
 					'time' => date("Y-m-d H:i:s", time()),
 					'note' => $note
@@ -265,7 +265,7 @@ class Homework
 	 */
 	public function getAllWorks() {
 		// 获取登录用户对应所有权限
-		$permission = Authorization::getExistingPermission($this->loginedUser['role_id']);
+		$permission = Authorization::getExistingPermission($this->loginedUser['role']);
 		$department = [];
 
 		// 获取角色具有哪个部门的管理权限
@@ -315,7 +315,7 @@ class Homework
 			$row = Hws_Record::where('id', '=', $rid)->update([
 				'score' => $score,
 				'comment' => $comment,
-				'comment_uid' => $this->loginedUser['uid'],
+				'comment_uid' => $this->loginedUser['id'],
 				'comment_time' => date("Y-m-d H:i:s", time()),
 				'recommend' => ($recommend != 0) ? 1 : 0
 			]);
