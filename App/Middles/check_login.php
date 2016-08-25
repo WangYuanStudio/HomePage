@@ -1,20 +1,27 @@
 <?php
 namespace App\Middles;
 use App\Controllers\Session;
-
-class Check_login implements MiddleWare
+use App\Lib\Response;
+class check_login implements MiddleWare
 {
     public function before($request)
     {
     	$token = Session::get("user");
     	if($token!=null)
     	{
-    		return true;
+            if( Session::get("user.ip")==$_SERVER["REMOTE_ADDR"])
+            {
+    		      return true;
+            }
+            else
+            {
+                     Response::out(300);
+                     return false;
+            }
     	}
     	else
     	{
-    		$status= ['status' => '300','errmsg'=>'Invalid login status.','data'=>''];
-            response($status, "json");
+    	   Response::out(300);
     		return false;
     	}
         

@@ -2,7 +2,7 @@
 namespace App\Middles;
 use App\Controllers\Session;
 use App\Lib\Authorization;
-
+use App\Lib\Response;
 
 class Check_ManagerMember implements MiddleWare
 {
@@ -15,8 +15,7 @@ class Check_ManagerMember implements MiddleWare
     	}
     	else
     	{
-    	   $status=['status' => "301",'errmsg' =>  config("common_status")['301'],'data'=>''];
-           response($status,"json");
+    	   Response::out(301);
            return false;
     	}
         

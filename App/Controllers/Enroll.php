@@ -18,9 +18,10 @@ use App\Lib\Response;
  	public $middle = [
 		'UploadPhoto' => 'Check_login',
 		'Limituser' => 'Check_login',
-		'Relieve' => 'Check_login'
-		'Updatepsw' => 'Check_login'
-		'Updateuser' => 'Check_login'
+		'Relieve' => 'Check_login',
+		'Updatepsw' => 'Check_login',
+		'Updateuser' => 'Check_login',
+	 'Sendverify' => 'Check_login'
 		// 对所有方法判断登录
 	];
 
@@ -36,7 +37,7 @@ use App\Lib\Response;
 		413 => 'Time out.',
 		414 => 'Do not match the password input.',
 		415 => 'Change the password failure.',
-		416 => 'Password mistake.',
+	//	416 => 'Password mistake.',
 		417 => 'Modify personal information failure.'
 	];
 
@@ -115,7 +116,7 @@ use App\Lib\Response;
 			{
 				Response::out(408);
 			}else{
-				if($this->CheckVerify($Vcheckdata)){	
+				 if($this->CheckVerify($Vcheckdata)){	
 					$token=md5(rand(10000,99999).time());			
 					Cache::set([
 					"nickname"=>$nickname,
@@ -167,8 +168,7 @@ use App\Lib\Response;
                 || $value["y"] < $v[ $key ]["min_y"]
             ) {
                 Response::out(302);
-                die();
-                return false;
+                die();              
             }
         }
         Response::out(200);
@@ -305,38 +305,31 @@ use App\Lib\Response;
 	/**官网-修改密码
 	*
 	*@param int $uid 		用户id
-	*@param string $oldpassword		旧密码
 	*@param string $password1		新密码1
 	*@param string $password2		新密码2
+	*@param string $re_verify       验证码
 	*
 	*@return status.状态码
 	*/
-	public function Updatepsw($uid,$oldpassword,$password1,$password2)
+	public function Updatepsw($uid,$password1,$password2,$re_verify)
 	{
-		$checkdata=0;		
-		$data=User::where('id','=',$uid)
-			->andwhere('password','=',$oldpassword)
-			->select();
-		foreach($data as  $value){
-			if(in_array($oldpassword,$value)){
-				$checkdata=1;
-			}
-		}
-		if(1==$checkdata){
+		if($this->Updateverify($re_verify))
+		{
 			if($password1==$password2){
 				$update_psw=User::where('id','=',$uid)->Update([
-						"password" =>$password1
-						]);
+					"password" =>$password1
+					]);
 				if(1==$update_psw){
+					Cache::delete("send_verify");
 					Response::out(200);
 				}else{
 					Response::out(415);
 				}
 			}else{
 				Response::out(414);
-			}
+			}		
 		}else{
-			Response::out(416);
+			Response::out(302);
 		}
 	}
 
@@ -378,5 +371,30 @@ use App\Lib\Response;
 		}
 	}
 
-	
+	/**官网-修改密码之发送邮箱
+	*
+	*@param string $nickname     用户昵称
+	*@param string $mail         用户邮箱
+	*
+	*@return status.状态码
+	*/
+	public function Sendverify($nickname,$mail)
+	{
+		$verify=rand(100000,999999);
+		$emailbody = "亲爱的".$nickname."，您好"."：<br/>验证码为".$verify;   
+		Cache::set("send_verify",$verify);  					   
+		Mail::to($mail)->title("WangYuanStudio")->content($emailbody);	
+		Response::out(200);	
+	}
+
+	//修改密码之验证码验证
+	public function Updateverify($verify=NULL)
+	{
+		if($verify==Cache::get("send_verify"))
+		{
+			return true;
+		}else{
+			return false;
+		}
+	}
 }
