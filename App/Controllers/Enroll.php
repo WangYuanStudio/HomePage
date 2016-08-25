@@ -116,13 +116,13 @@ use App\Lib\Response;
 				Response::out(408);
 			}else{					
 					$token=md5(rand(10000,99999).time());			
-					Cache::set([
-					"nickname"=>$nickname,
-					"mail"=>$mail,
-					"password"=>$password,				
-					"register_token" =>$token,
-					"register_time"	=>time()+30*60
-					]);															
+					// Cache::set([
+					// "nickname"=>$nickname,
+					// "mail"=>$mail,
+					// "password"=>$password,				
+					// "register_token" =>$token,
+					// "register_time"	=>time()+30*60
+					// ]);															
 					$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
 					（注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>
     <a href='http://127.0.0.1:8080/Enroll/Register?verify=".$token."' target= 
@@ -137,48 +137,6 @@ use App\Lib\Response;
 		}		 
 	}
 
-	/**官网-获取验证码图片
-	*
-	*@return status.返回验证码图片
-	*/
-
-	public function Vphoto()
-	{				
-		$verify = new \App\Lib\Vcode('img', 2, 16, 200, 200, false, true, 30, 0, __ROOT__ . "/public/" . mt_rand(1, 6) . ".jpg");
-        Session::set("code", $verify->getData());
-        $verify->show();	
-	}
-
-	/**官网-获取验证
-	*
-	*@param string $Vcheckdata  输入的验证码
-	*
-	*@return status.状态码
-	*/
-	public function CheckVerify($Vcheckdata)
-	{	
-		$v = Session::get("code")["text"];
-        foreach ($Vcheckdata as $key => $value) {
-            if ($value["x"] > $v[ $key ]["max_x"]
-                || $value["x"] < $v[ $key ]["min_x"]
-                || $value["y"] > $v[ $key ]["max_y"]
-                || $value["y"] < $v[ $key ]["min_y"]
-            ) {
-                Response::out(302);
-                die();              
-            }
-        }
-        Response::out(200);
-        return true;
-	}
-
-	/**官网-获取验证码类型
-	*
-	*@return status.状态码 type.返回验证码类型
-	*/
-	public function GetVtype(){
-		Response::out(200,["type"=>Session::get("code")["type"]]);	
-	}
 
 	/**官网-限制账号
 	*

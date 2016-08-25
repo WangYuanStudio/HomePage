@@ -69,7 +69,7 @@ class Sign
 						"privilege"     =>0
 						]);
 						Response::out(200);
-						Session::remove("code");					
+						//Session::remove("code");					
 				}
 			}else{
 				Response::out(402);
