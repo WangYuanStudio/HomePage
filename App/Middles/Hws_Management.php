@@ -13,7 +13,7 @@ use Zereri\Lib\Register;
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-24 01:24
+ * Last modified time: 2016-08-24 18:31
  */
 class Hws_Management implements MiddleWare
 {

@@ -97,11 +97,10 @@ use App\Lib\Response;
 	*@param string $mail 	邮箱
 	*@param string $nickname		昵称
 	*@param string $password     密码  
-	*@param string $Vcheckdata 		验证码
 	*
 	*@return status.状态码 
 	*/
-	public function sendEmail($mail,$nickname,$password,$Vcheckdata=NULL)
+	public function sendEmail($mail,$nickname,$password)
 	{
 		$checkdata=0;
 		if(preg_match("/([\w\-]+\@[\w\-]+\.[\w\-]+)/",$mail))
@@ -115,8 +114,7 @@ use App\Lib\Response;
 			if(1==$checkdata)
 			{
 				Response::out(408);
-			}else{
-				 if($this->CheckVerify($Vcheckdata)){	
+			}else{					
 					$token=md5(rand(10000,99999).time());			
 					Cache::set([
 					"nickname"=>$nickname,
@@ -132,8 +130,7 @@ use App\Lib\Response;
     如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
 					Mail::to($mail)->title("WangYuanStudio")->content($emailbody);
 					Session::remove("code");
-					Response::out(200);	
-					}	 		
+					Response::out(200);								
 			}
 		}else{
 			Response::out(409);
