@@ -37,7 +37,7 @@ use App\Lib\Response;
 		413 => 'Time out.',
 		414 => 'Do not match the password input.',
 		415 => 'Change the password failure.',
-		416 => 'Password mistake.',
+	//	416 => 'Password mistake.',
 		417 => 'Modify personal information failure.'
 	];
 
