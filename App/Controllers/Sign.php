@@ -13,12 +13,12 @@ use App\Lib\Response;
 
 class Sign
 {
-	public $middle = [
-		'Insertnews' => 'Check_login',
-		'Updateuser' => 'Check_login',
-		'CheckPower' => 'Check_login'
-		// 对所有方法判断登录
-	];
+	// public $middle = [
+	// 	'Insertnews' => 'Check_login',
+	// 	'Updateuser' => 'Check_login',
+	// 	'CheckPower' => 'Check_login'
+	// 	// 对所有方法判断登录
+	// ];
 
 	public static $status=[
 		401 => 'Mobile phone trombone error.',

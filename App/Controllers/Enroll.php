@@ -15,15 +15,15 @@ use App\Lib\Response;
 
  class Enroll
  {
- 	public $middle = [
-		'UploadPhoto' => 'Check_login',
-		'Limituser' => 'Check_login',
-		'Relieve' => 'Check_login',
-		'Updatepsw' => 'Check_login',
-		'Updateuser' => 'Check_login',
-	 'Sendverify' => 'Check_login'
-		// 对所有方法判断登录
-	];
+ // 	public $middle = [
+	// 	'UploadPhoto' => 'Check_login',
+	// 	'Limituser' => 'Check_login',
+	// 	'Relieve' => 'Check_login',
+	// 	'Updatepsw' => 'Check_login',
+	// 	'Updateuser' => 'Check_login',
+	//  'Sendverify' => 'Check_login'
+	// 	// 对所有方法判断登录
+	// ];
 
  	public static $status=[
 		405 => 'Verification code is empty.',
