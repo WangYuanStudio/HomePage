@@ -123,7 +123,7 @@ class Vcode
     /**
      * Vcode constructor.
      *
-     * @param string $type            "mix" or "num", 混合模式或者数字模式
+     * @param string $type            "img" or "mix" or "num", 图文点击模式 或者 混合字模式 或者 数字模式
      * @param int    $num             验证码长度
      * @param int    $size            字体大小
      * @param null   $height          图片高度
@@ -134,8 +134,9 @@ class Vcode
      * @param int    $noise_line_num  干扰线
      * @param string $bg_img          背景图
      * @param string $font_family     字体文件
+     * @param array  $font_color      字体颜色
      */
-    public function __construct($type = "mix", $num = 5, $size = 16, $height = NULL, $width = NULL, $distortion = false, $border = false, $noise_point_num = 30, $noise_line_num = 3, $bg_img = "", $font_family = "")
+    public function __construct($type = "mix", $num = 5, $size = 16, $height = NULL, $width = NULL, $distortion = false, $border = false, $noise_point_num = 30, $noise_line_num = 3, $bg_img = "", $font_family = "", array $font_color = [])
     {
         $this->type = $type;
         $this->text_num = $num;
@@ -147,6 +148,7 @@ class Vcode
         $this->text_distortion = $distortion;
         $this->img_border = $border;
         $this->bg_color = $bg_img;
+        $this->font_color = $font_color;
         //字体自定义
         $this->font_family = $font_family ?: "c:\\windows\\fonts\SIMYOU.ttf";
 
@@ -187,7 +189,12 @@ class Vcode
     protected function initImg()
     {
         $this->image = imagecreatetruecolor($this->img_width, $this->img_height);
-        $this->font_color = imagecolorallocate($this->image, mt_rand(0, 100), mt_rand(0, 100), mt_rand(0, 100));
+
+        if ($this->font_color) {
+            $this->font_color = imagecolorallocate($this->image, $this->font_color[0], $this->font_color[1], $this->font_color[2]);
+        } else {
+            $this->font_color = imagecolorallocate($this->image, mt_rand(0, 100), mt_rand(0, 100), mt_rand(0, 100));
+        }
 
         if ($this->bg_color) {
             $this->bg_color = imagecreatefromjpeg($this->bg_color);
@@ -211,13 +218,51 @@ class Vcode
 
         foreach ($text_arr as $i => $text) {
             if ("img" === $this->type) {
-                imagettftext($this->image, $this->font_size, 0, $this->verify_text["text"][ $i ]["min_x"], $this->verify_text["text"][ $i ]["max_y"], $this->font_color, $this->font_family, $text);
+                $angle = [0, 90, 270][ mt_rand(0, 2) ];
+                $position = imagettftext($this->image, $this->font_size, $angle, mt_rand($this->font_size + 4, $this->img_width - $this->font_size - 4), mt_rand($this->font_size + 4, $this->img_height - $this->font_size - 4), $this->font_color, $this->font_family, $text);
+                $this->addImgVerifyText($angle, $position);
             } else {
                 imagettftext($this->image, $this->font_size, mt_rand(-1, 1) * mt_rand(1, 20), 5 + $i * floor($this->font_size * 1.3), floor($this->img_height * 0.75), $this->font_color, $this->font_family, $text);
             }
         }
 
         return $this;
+    }
+
+
+    /**添加坐标验证文本
+     *
+     * @param       $angle
+     * @param array $position
+     */
+    private function addImgVerifyText($angle, array $position)
+    {
+        switch ($angle) {
+            case 0:
+                $this->verify_text["text"][] = [
+                    "min_x" => $position[6],
+                    "max_x" => $position[2],
+                    "min_y" => $position[7],
+                    "max_y" => $position[3]
+                ];
+                break;
+            case 90:
+                $this->verify_text["text"][] = [
+                    "min_x" => $position[4],
+                    "max_x" => $position[0],
+                    "min_y" => $position[5],
+                    "max_y" => $position[1]
+                ];
+                break;
+            case 270:
+                $this->verify_text["text"][] = [
+                    "min_x" => $position[0],
+                    "max_x" => $position[4],
+                    "min_y" => $position[1],
+                    "max_y" => $position[5]
+                ];
+                break;
+        }
     }
 
 
@@ -251,18 +296,8 @@ class Vcode
      */
     private function getImgVerifyText(&$img_text)
     {
-        $unit = $this->font_size + 4;
         for ($i = 0; $i < $this->text_num; $i++) {
             $this->verify_text["type"][] = $img_text[] = $this->getRandText(2);
-
-            $x = mt_rand(0, $this->img_width - $unit);
-            $y = mt_rand($unit, $this->img_height);
-            $this->verify_text["text"][] = [
-                "min_x" => $x,
-                "max_x" => $x + $unit,
-                "min_y" => $y - $unit,
-                "max_y" => $y
-            ];
         }
     }
 
@@ -414,7 +449,9 @@ class Vcode
     protected function createBorder()
     {
         if ($this->img_border) {
-            imagerectangle($this->image, 0, 0, $this->img_width - 1, $this->img_height - 1, $this->font_color);
+            imagerectangle($this->image, 1, 1, $this->img_width - 1, $this->img_height - 1, $this->font_color);
+            imagerectangle($this->image, 1, 1, $this->img_width - 2, $this->img_height - 2, $this->font_color);
+            imagerectangle($this->image, 1, 1, $this->img_width - 3, $this->img_height - 3, $this->font_color);
         }
     }
 

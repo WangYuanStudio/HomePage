@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script type="text/javascript" src="jq.js"></script>
+	<script type="text/javascript">
+	 $(function(){
+	 	$("#myImage").on('load',function(){
+	 		$.get("Common/verifyType",function(data){
+	 			$("#answer").text("请依次点击图中的 '"+data[0]+"' 和 '"+data[1]+"'");
+	 			xy=new Array();
+	 			i=0;
+	 		},'json');
+	 	});
+	 })
+
+
+	 function test(e)
+	 {
+	 	e = e || window.event;
+        var offsetX = e.pageX - $("#myImage").offset().left;
+        var offsetY = e.pageY - $("#myImage").offset().top;
+        xy[i] = new Array(offsetX,offsetY);
+        i++;
+        if(i==2){
+        	$(function(){
+        		$.post("Common/verify",{"text":[{"x":xy[0][0],"y":xy[0][1]},{"x":xy[1][0],"y":xy[1][1]}]},function(data){
+        			if(data.status==200){
+        				alert("Pass");
+        			}else{
+        				alert("False");
+        			}
+        			$("#myImage").attr("src","Common/verifyImg");
+        		},'json');
+        	})
+        }
+	 }
+	
+	</script>
+</head>
+<body bgcolor="#87cefa">
+	<div>sadfdsfdf</div>
+	<hr/>
+	<img id="myImage" src="Common/verifyImg" onclick="test();" />
+
+	<span id="answer">
+		
+	</span>
+</body>
+</html>
