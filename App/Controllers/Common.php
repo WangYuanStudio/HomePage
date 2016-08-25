@@ -12,8 +12,8 @@ use App\Lib\Response;
 
 class Common
 {
-    /**
-     * 获取验证码图片
+    /**公共类-获取验证码图片
+     *
      */
     public function verifyImg()
     {
@@ -23,8 +23,8 @@ class Common
     }
 
 
-    /**
-     * 获取验证码的提示
+    /**公共类-获取验证码的提示
+     *
      */
     public function verifyType()
     {
@@ -32,7 +32,7 @@ class Common
     }
 
 
-    /**验证验证码
+    /**公共类-验证验证码
      *
      * @param array $text 验证码文本
      *
