@@ -2565,7 +2565,8 @@ namespace App\Lib;
     $p_header['offset'] = 0;
     $p_header['filename'] = $p_filename;
 // TBC : Removed    $p_header['stored_filename'] = $v_stored_filename;
-    $p_header['stored_filename'] = $p_filedescr['stored_filename'];
+    //$p_header['stored_filename'] = $p_filedescr['stored_filename'];
+    $p_header['stored_filename'] = mb_convert_encoding( $p_filedescr['stored_filename'],'gb2312','utf-8');
     $p_header['extra'] = '';
     $p_header['status'] = 'ok';
     $p_header['index'] = -1;
@@ -3243,7 +3244,7 @@ namespace App\Lib;
     $v_temp_path = PclZipUtilPathReduction($p_header['filename']);
     $p_info['filename'] = $v_temp_path;
     $v_temp_path = PclZipUtilPathReduction($p_header['stored_filename']);
-    $p_info['stored_filename'] = $v_temp_path;
+    $p_info['stored_filename'] = iconv('gb2312', 'utf-8//IGNORE', $v_temp_path);
     $p_info['size'] = $p_header['size'];
     $p_info['compressed_size'] = $p_header['compressed_size'];
     $p_info['mtime'] = $p_header['mtime'];
@@ -3671,6 +3672,7 @@ namespace App\Lib;
     // ----- Add the path
     if ($p_path != '') {
       $p_entry['filename'] = $p_path."/".$p_entry['filename'];
+      $p_entry['filename'] = mb_convert_encoding($p_entry['filename'], 'utf-8', 'gb2312');
     }
     
     // ----- Check a base_dir_restriction
