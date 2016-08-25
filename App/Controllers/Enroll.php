@@ -383,7 +383,8 @@ use App\Lib\Response;
 		$verify=rand(100000,999999);
 		$emailbody = "亲爱的".$nickname."，您好"."：<br/>验证码为".$verify;   
 		Cache::set("send_verify",$verify);  					   
-		Mail::to($mail)->title("WangYuanStudio")->content($emailbody);		
+		Mail::to($mail)->title("WangYuanStudio")->content($emailbody);	
+		Response::out(200);	
 	}
 
 	//修改密码之验证码验证
