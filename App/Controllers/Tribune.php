@@ -8,6 +8,7 @@
 
 namespace App\Controllers;
 
+use App\Lib\Mail;
 use App\Lib\Response;
 use App\Models\Post;
 use App\Models\Bbs;
@@ -17,17 +18,18 @@ class Tribune
 {
     public $middle = [
         //checkip
-        "publish"      => "check_login",
-        "response"     => "check_login",
-        "getPublished" => "check_login",
-        "getUnReadNum" => "check_login",
-        "searchPost"   => "check_login",
-        "deletePost"   => "check_login",
-        "deleteBbs"    => "check_login"
+//        "publish"      => "check_login",
+//        "response"     => "check_login",
+//        "getPublished" => "check_login",
+//        "getUnReadNum" => "check_login",
+//        "searchPost"   => "check_login",
+//        "deletePost"   => "check_login",
+//        "deleteBbs"    => "check_login"
     ];
 
     public static $status = [
-        700 => "Unavailable Key"
+        700 => "Unavailable Key",
+        701 => "Unavailable ID"
     ];
 
 
@@ -58,60 +60,79 @@ class Tribune
      * @param string $classify    分类
      * @param string $publish_key 发布帖子的key
      *
-     * @return post_id.返回插入的id,仅在200状态码返回
+     * @return post_id.返回插入的id
      */
     public function publish($title, $content, $classify, $publish_key)
     {
-        if (!Session::get("publish_key") || $publish_key != Session::get("publish_key")) {
-            Session::remove("publish_key");
+        $this->checkKey($publish_key, "publish_key");
 
-            Response::out(700);
-        } else {
-            $post_id = Post::insert([
-                "uid"      => 1,
-                "title"    => $title,
-                "content"  => $content,
-                "classify" => $classify,
-                "time"     => date("Y-m-d H:i:s")
-            ]);
+        $post_id = Post::insert([
+            "uid"      => 1,
+            "title"    => $title,
+            "content"  => $content,
+            "classify" => $classify,
+            "time"     => date("Y-m-d H:i:s")
+        ]);
 
-            Response::out(200, ["post_id" => $post_id, "publish_key" => $this->setCsrfKey("publish_key")]);
-        }
+        Response::out(200, ["post_id" => $post_id]);
+
     }
 
 
     /**论坛-发表回复
      *
-     * @param int    $pid          1 所属帖子的id
-     * @param string $content      1 回复内容
-     * @param int    $pointuid     1 回复指定楼层的层主id
-     * @param int    $pointfloor   1 回复指定楼层的楼层数,回复一楼则不填
-     * @param int    $masteruid    1 楼主的uid
-     * @param string $response_key 1 楼主的uid
+     * @param int    $pid          回复一楼的填写帖子id,否则填写0
+     * @param int    $bid          回复其他楼层的填写楼层id,否则填写0
+     * @param string $content      回复内容
+     * @param string $response_key 回复帖子的key
      *
-     * @return floor.返回回复的楼层,仅在200状态码返回
+     * @return floor.返回回复的楼层
      */
-    public function response($pid, $content, $pointuid, $pointfloor, $masteruid, $response_key)
+    public function response($pid = 0, $bid = 0, $content, $response_key)
     {
-        if (!Session::get("response_key") || $response_key != Session::get("response_key")) {
-            Session::remove("response_key");
+        $this->checkKey($response_key, "response_key");
 
-            Response::out(700);
-        } else {
-            $floor = Bbs::where("pid", "=", $pid)->count("sum")->select()[0]["sum"] + 2;
+        $data = "";
+        if ($pid > 0) {
+            $data = Post::where("id", "=", $pid)->select("id pid,response,uid");
+        } elseif ($bid > 0) {
+            $data = Bbs::where("bbs.id", "=", $bid)->leftJoin("post", "post.id", "=", "bbs.pid")->select("post.id pid,post.response,post.uid puid,bbs.*");
+        }
 
+        if (isset($data[0])) {
+            $data = $data[0];
             Bbs::insert([
-                "floor"       => $floor,
-                "pid"         => $pid,
+                "floor"       => $data["response"] + 1,
+                "pid"         => $data["pid"],
                 "uid"         => 1,
                 "content"     => $content,
                 "time"        => date("Y-m-d H:i:s"),
-                "point_uid"   => $pointuid,
-                "point_floor" => $pointfloor,
-                "master_uid"  => $masteruid
+                "point_uid"   => $data["uid"],
+                "point_floor" => isset($data["floor"]) ? $data["floor"] : 1,
+                "master_uid"  => isset($data["puid"]) ? $data["puid"] : $data["uid"]
             ]);
 
-            Response::out(200, ["floor" => $floor, "response_key" => $this->setCsrfKey("response_key")]);
+            Post::where("id", "=", $data["pid"])->increment("response");
+
+            Response::out(200, ["floor" => $data["response"] + 1]);
+        } else {
+            Response::out(701);
+        }
+    }
+
+
+    /**检查发帖、回复的key合法性
+     *
+     * @param $key
+     * @param $column
+     */
+    private function checkKey($key, $column)
+    {
+        if (!Session::get($column) || $key != Session::get($column)) {
+            Session::remove($column);
+            Response::out(700);
+
+            die();
         }
     }
 
@@ -121,13 +142,14 @@ class Tribune
      * @param int $pid 1 帖子的id
      * @param int $pid 0 回复的页数,默认值为1
      *
-     * @return first.楼主信息,仅加载第一页返回 bbs.其他楼层信息
+     * @return first.楼主信息,仅加载第一页返回 bbs.其他楼层信息 response_key.回复帖子的key
      */
     public function postInfo($pid, $page = 1)
     {
         $data = [];
 
         if (1 === $page) {
+            Post::where("id", "=", $pid)->increment("view");
             $data["first"] = Post::leftJoin('user', 'user.id', '=', 'post.uid')->where("post.id", "=", $pid)->select('user.nickname,user.mail,user.role,user.photo,post.*');
         }
         $data["bbs"] = Bbs::leftJoin('user', 'user.id', '=', 'bbs.uid')->where("bbs.pid", "=", $pid)->limit(($page - 1) * 8, 8)->select('user.nickname,user.mail,user.role,user.photo,bbs.*');
@@ -207,26 +229,18 @@ class Tribune
      *
      * @param string $key 关键字
      *
-     * @return post.符合条件的帖子 bbs.符合条件的回复
+     * @return post.符合条件的帖子
      */
     public function searchPost($key)
     {
-        //这里加个次数限制
-//        Cache::increment($_SERVER["REMOTE_ADDR"]);
-//        Cache::EXPIRE($_SERVER["REMOTE_ADDR"], 5);
-//        if (Cache::get($_SERVER["REMOTE_ADDR"]) > 10) {
-//            Cache::EXPIRE($_SERVER["REMOTE_ADDR"], 30);
-//            response(["status" => 403]);
-//        }
-
         $sphinx = new SphinxClient();
-        $sphinx->SetServer("localhost", 9312);
+        $sphinx->SetServer("sphinx", 9312);
         $sphinx->SetMatchMode(SPH_MATCH_ANY);
 
-        $post = $this->sphinxSearch($sphinx, $key, "post", "main");
-        $bbs = $this->sphinxSearch($sphinx, $key, "bbs", "bbs");
+        $post = $this->sphinxSearch($sphinx, $key, "post", "*");
+//        $bbs = $this->sphinxSearch($sphinx, $key, "bbs", "bbs");
 
-        Response::out(200, ["post" => $post, "bbs" => $bbs]);
+        Response::out(200, ["post" => $post]);
     }
 
 
@@ -277,33 +291,10 @@ class Tribune
     }
 
 
-    public function test()
+    public function redis()
     {
-        //576
-        $v = new \App\Lib\Vcode('img', 2, 16, 200, 200, false, true, 30, 0, "F:/phpstudy/WWW/wangyuan/public/1.jpg");
-        Session::set("code", $v->getData());
-        $v->show();
+        Cache::set("a", time());
+        Response::out(200, Cache::get("a"));
     }
 
-    public function a()
-    {
-        response(Session::get("code")["type"]);
-    }
-
-    public function b($text)
-    {
-        $v = Session::get("code")["text"];
-        foreach ($text as $key => $value) {
-            if ($value["x"] > $v[ $key ]["max_x"]
-                || $value["x"] < $v[ $key ]["min_x"]
-                || $value["y"] > $v[ $key ]["max_y"]
-                || $value["y"] < $v[ $key ]["min_y"]
-            ) {
-                Response::out(302);
-                die();
-            }
-        }
-
-        Response::out(200);
-    }
 }

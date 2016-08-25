@@ -22,10 +22,10 @@ return [
      */
     'database'  => [
         "drive"   => "mysql",
-        "host"    => "localhost",
+        "host"    => "mysql",
         "dbname"  => "wangyuan",
         "user"    => "root",
-        "pwd"     => "root",
+        "pwd"     => "Wyzxgzs#08",
         "charset" => "utf8"
     ],
 
@@ -80,7 +80,7 @@ return [
      * redis服务器配置
      */
     'redis'     => [
-        'server' => ["127.0.0.1", 6379]
+        'server' => ["redis", 6379, "Wyzxgzs#08_redis"]
     ],
 
 
@@ -98,7 +98,8 @@ return [
         200 => '',
         300 => 'Invalid login status.',
         301 => 'Permission denied.',
-        302 => 'Verify code was wrong.'
+        302 => 'Verify code was wrong.',
+        303 => 'Operations are too frequent'
     ]
 
 ];
