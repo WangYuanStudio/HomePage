@@ -121,7 +121,7 @@ class Tribune
     }
 
 
-    /**检查发帖、回复的key合法性
+    /* 检查发帖、回复的key合法性
      *
      * @param $key
      * @param $column
@@ -297,4 +297,10 @@ class Tribune
         Response::out(200, Cache::get("a"));
     }
 
+    public function test()
+    {
+        echo "<pre>";
+        print_r($_SERVER);
+        echo "</pre>";
+    }
 }

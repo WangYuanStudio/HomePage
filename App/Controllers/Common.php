@@ -53,7 +53,7 @@ class Common
             }
         }
 
-//        Cache::remove(Session::get("user.id") ?: $_SERVER["REMOTE_ADDR"]);
+        Cache::remove(Session::get("user.id") ?: $_SERVER["REMOTE_ADDR"]);
         Response::out(200);
     }
 }
