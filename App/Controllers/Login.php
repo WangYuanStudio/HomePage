@@ -20,10 +20,9 @@ class Login
    *
    * @param string $mail 邮箱地址
    * @param string $password  密码
-    @param string $code 验证码
    * @return status.状态 errmsg.错误信息 data.成员信息包括id,name,sex,photo,department,habbit,position,blog,phone,introduction
    */
-    public function CheckLogin( $mail,$password,$code)
+    public function CheckLogin( $mail,$password)
     {
       if(Session::get("errer_num")==null)
       {
