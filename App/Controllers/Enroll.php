@@ -1,8 +1,8 @@
 <?php
 /*
 *User: huizhe
-*Date: 2016/8/22
-*Time: 11:18
+*Date: 2016/8/26
+*Time: 14:22
 */
 
 namespace App\Controllers;
@@ -50,19 +50,19 @@ use App\Lib\Response;
 	public function Register($photo="avatar/head.gif")
 	{	
 		$token = stripslashes(trim($_POST['verify']));
-		if(time()<=Cache::get("register_time")){
-			if($token==Cache::get("register_token")){									
-				$password=Cache::get("password");
+		if(time()<=Cache::get($token."register_time")){
+			if($token==Cache::get($token."register_token")){									
+				$password=Cache::get($token."password");
 				$password=password_hash($password,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
 				$login_id=User::Insert([
-				"nickname" =>Cache::get("nickname"),
-				"mail" =>Cache::get("mail"),
+				"nickname" =>Cache::get($token."nickname"),
+				"mail" =>Cache::get($token."mail"),
 				"password"=>$password,
 				"photo" =>$photo,
 				"role" =>10,
 				"status"=>0
 				]);
-				Cache::delete(["nickname","mail","password","register_time","register_token"]);
+				Cache::delete([$token."nickname",$token."mail",$token."password",$token."register_time",$token."register_token"]);
 				Response::out(200,['login_id'=>$login_id]);					
 			}else{
 				Response::out(411);
@@ -117,11 +117,11 @@ use App\Lib\Response;
 			}else{					
 					$token=md5(rand(10000,99999).time());			
 					Cache::set([
-					"nickname"=>$nickname,
-					"mail"=>$mail,
-					"password"=>$password,				
-					"register_token" =>$token,
-					"register_time"	=>time()+30*60
+					$token."nickname"=>$nickname,
+					$token."mail"=>$mail,
+					$token."password"=>$password,				
+					$token."register_token" =>$token,
+					$token."register_time"	=>time()+30*60
 					]);															
 					$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
 					（注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>
@@ -199,9 +199,9 @@ use App\Lib\Response;
 			if(1==$checkdata){
 				$token=md5(rand(1000000,9999999).time());
 				Cache::set([
-					"search_token"=>$token,
-					"search_time" =>time()+30*60,
-					"search_mail" =>$mail
+					$token."search_token"=>$token,
+					$token."search_time" =>time()+30*60,
+					$token."search_mail" =>$mail
 				]);		
 				$emailbody = "亲爱的".$user_nickname."，您好"."：<br/>请您点击以下链接进行找回密码，即可生效！<br/> 
 			（注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>     
@@ -228,20 +228,18 @@ use App\Lib\Response;
 	public function Supdatepsw($password,$password2)
 	{
 		$token = stripslashes(trim($_POST['verify']));
-		if(time()<=Cache::get("search_time")){
-			if($token==Cache::get("search_token"))
+		if(time()<=Cache::get($token."search_time")){
+			if($token==Cache::get($token."search_token"))
 			{
 				if($password==$password2)
 				{
-					$update_psw=User::where('mail','=',Cache::get("search_mail"))->Update([
+					$update_psw=User::where('mail','=',Cache::get($token."search_mail"))->Update([
 						"password" =>$password
 						]);
 					if(1==$update_psw)
 					{
 						Response::out(200);
-						Cache::delete("search_time");
-						Cache::delete("search_token");
-						Cache::delete("search_mail");
+						Cache::delete([$token."search_time",$token."search_token",$token."search_mail"]);
 					}else{
 						Response::out(415);
 					}
@@ -352,5 +350,5 @@ use App\Lib\Response;
 			return false;
 		}
 	}
-
+	
 }
