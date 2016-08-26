@@ -116,13 +116,13 @@ use App\Lib\Response;
 				Response::out(408);
 			}else{					
 					$token=md5(rand(10000,99999).time());			
-					// Cache::set([
-					// "nickname"=>$nickname,
-					// "mail"=>$mail,
-					// "password"=>$password,				
-					// "register_token" =>$token,
-					// "register_time"	=>time()+30*60
-					// ]);															
+					Cache::set([
+					"nickname"=>$nickname,
+					"mail"=>$mail,
+					"password"=>$password,				
+					"register_token" =>$token,
+					"register_time"	=>time()+30*60
+					]);															
 					$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
 					（注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>
     <a href='http://127.0.0.1:8080/Enroll/Register?verify=".$token."' target= 
@@ -146,8 +146,8 @@ use App\Lib\Response;
 	*/
 	public function Limituser($uid){
 		$user_limit=User::where('id','=',$uid)->Update([
-			"status"=>1
-			]);	
+			"status"=> 1
+			]);			
 		if(1==$user_limit){
 			Response::out(200);
 		}else{
@@ -163,7 +163,7 @@ use App\Lib\Response;
 	*/
 	public function Relieve($uid){
 		$user_relieve=User::where('id','=',$uid)->Update([
-			"status"=>NULL
+			"status"=>0
 			]);	
 		if(1==$user_relieve){
 			Response::out(200);
@@ -352,4 +352,5 @@ use App\Lib\Response;
 			return false;
 		}
 	}
+
 }
