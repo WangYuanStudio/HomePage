@@ -75,7 +75,7 @@ class Login
 
      /**官网——退出接口
    *
-   * @return status.状态 errmsg.错误信息 data.成员信息包括id,name,sex,photo,department,habbit,position,blog,phone,introduction
+   * @return status.状态 errmsg.错误信息 
    */
     public function quitlogin()
     {
