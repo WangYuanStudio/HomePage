@@ -1,8 +1,8 @@
 <?php
 /*
 *User: huizhe
-*Date: 2016/8/26
-*Time: 14:22
+*Date: 2016/8/22
+*Time: 11:18
 */
 
 namespace App\Controllers;
@@ -27,8 +27,8 @@ use App\Lib\Response;
 
  	public static $status=[
 		405 => 'Verification code is empty.',
-		406 => 'Restricted account operation failed,Mysql operation failure.',
-		407 => 'Unlock account operation fails,Mysql operation failure.',
+		406 => 'Restricted account operation failed.',
+		407 => 'Unlock account operation fails.',
 		408 => 'Your email has been in existence.',
 		409 => 'Email format error.',
 		410 => 'Replace the face failure.',
@@ -38,18 +38,19 @@ use App\Lib\Response;
 		414 => 'Do not match the password input.',
 		415 => 'Change the password failure.',
 	//	416 => 'Password mistake.',
-		417 => 'Modify personal information failure.'
+		417 => 'Modify personal information failure.',
+		418 => 'Password length less than 6',
+		419 => 'Email has been sent, please wait a moment'
 	];
 
 	/**官网-实现注册
 	*       
-	*@param string $photo 	头像默认为avatar/head.gif
+	*@param string $token  邮箱链接的token   
 	*
 	*@return login_id.返回插入的id
 	*/
-	public function Register($photo="avatar/head.gif")
-	{	
-		$token = stripslashes(trim($_POST['verify']));
+	public function Register($photo="avatar/head.gif",$token=NULL)
+	{			
 		if(time()<=Cache::get($token."register_time")){
 			if($token==Cache::get($token."register_token")){									
 				$password=Cache::get($token."password");
@@ -62,7 +63,8 @@ use App\Lib\Response;
 				"role" =>10,
 				"status"=>0
 				]);
-				Cache::delete([$token."nickname",$token."mail",$token."password",$token."register_time",$token."register_token"]);
+				$mail=Cache::get($token."mail");
+				Cache::delete([$token."nickname",$token."mail",$token."password",$token."register_time",$token."register_token",$mail]);
 				Response::out(200,['login_id'=>$login_id]);					
 			}else{
 				Response::out(411);
@@ -96,7 +98,7 @@ use App\Lib\Response;
 	*
 	*@param string $mail 	邮箱
 	*@param string $nickname		昵称
-	*@param string $password     密码  
+	*@param string $password     密码 
 	*
 	*@return status.状态码 
 	*/
@@ -115,22 +117,30 @@ use App\Lib\Response;
 			{
 				Response::out(408);
 			}else{					
-					$token=md5(rand(10000,99999).time());			
-					Cache::set([
-					$token."nickname"=>$nickname,
-					$token."mail"=>$mail,
-					$token."password"=>$password,				
-					$token."register_token" =>$token,
-					$token."register_time"	=>time()+30*60
-					]);															
-					$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
+					if(strlen($password)>=6){
+						if(Cache::has($mail)){
+							Response::out(419);
+						}else{
+							$token=md5(rand(10000,99999).time());			
+							Cache::set([
+							$token."nickname"=>$nickname,
+							$token."mail"=>$mail,
+							$token."password"=>$password,				
+							$token."register_token" =>$token,
+							$token."register_time"	=>time()+30*60,	
+							$mail =>123					
+							],1800);															
+							$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
 					（注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>
     <a href='http://127.0.0.1:8080/Enroll/Register?verify=".$token."' target= 
 '_blank'>/http://127.0.0.1:8080/Enroll/Register?verify=".$token."</a><br/> 
     如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
-					Mail::to($mail)->title("WangYuanStudio")->content($emailbody);
-					//Session::remove("code");
-					Response::out(200);								
+							Mail::to($mail)->title("WangYuanStudio")->content($emailbody);							
+							Response::out(200);
+						}
+					}else{
+						Response::out(418);
+					}								
 			}
 		}else{
 			Response::out(409);
@@ -155,7 +165,7 @@ use App\Lib\Response;
 		}
 	}
 	
-	/**官网解除限制账号
+	/**官网-解除限制账号
 	*
 	*@param int $uid      用户id
 	*
@@ -197,12 +207,16 @@ use App\Lib\Response;
 				}
 			}
 			if(1==$checkdata){
-				$token=md5(rand(1000000,9999999).time());
+				if(Cache::has($mail)){
+					Response::out(419);
+				}else{
+					$token=md5(rand(1000000,9999999).time());
 				Cache::set([
 					$token."search_token"=>$token,
 					$token."search_time" =>time()+30*60,
-					$token."search_mail" =>$mail
-				]);		
+					$token."search_mail" =>$mail,
+					$mail=>"123"
+				],1800);		
 				$emailbody = "亲爱的".$user_nickname."，您好"."：<br/>请您点击以下链接进行找回密码，即可生效！<br/> 
 			（注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>     
 			<a href='http://127.0.0.1:8080/Enroll/Supdatepsw?verify=".$token."' target= 
@@ -210,6 +224,7 @@ use App\Lib\Response;
      如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
 				Mail::to($mail)->title("WangYuanStudio")->content($emailbody);
 				Response::out(200);
+				}
 			}else{
 			Response::out(412);
 			}
@@ -222,26 +237,32 @@ use App\Lib\Response;
 	*
 	*@param string $password    	密码1
 	*@param string $password2		密码2
+	*@param string $token           邮箱链接的token      
 	*
 	*@return status.状态码
 	*/
-	public function Supdatepsw($password,$password2)
+	public function Supdatepsw($password,$password2,$token=NULL)
 	{
-		$token = stripslashes(trim($_POST['verify']));
 		if(time()<=Cache::get($token."search_time")){
 			if($token==Cache::get($token."search_token"))
 			{
 				if($password==$password2)
 				{
-					$update_psw=User::where('mail','=',Cache::get($token."search_mail"))->Update([
+					if(strlen($password)>=6){
+						$password=password_hash($password,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
+						$update_psw=User::where('mail','=',Cache::get($token."search_mail"))->Update([
 						"password" =>$password
 						]);
-					if(1==$update_psw)
-					{
-						Response::out(200);
-						Cache::delete([$token."search_time",$token."search_token",$token."search_mail"]);
+						if(1==$update_psw)
+						{
+							Response::out(200);
+							$mail=Cache::get($token."search_mail");
+							Cache::delete([$token."search_time",$token."search_token",$token."search_mail",$mail]);
+						}else{
+							Response::out(415);
+						}
 					}else{
-						Response::out(415);
+						Response::out(418);
 					}
 				}else{
 					Response::out(414);
@@ -269,11 +290,12 @@ use App\Lib\Response;
 		if($this->Updateverify($re_verify))
 		{
 			if($password1==$password2){
+				$password1=password_hash($password1,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
 				$update_psw=User::where('id','=',$uid)->Update([
 					"password" =>$password1
 					]);
 				if(1==$update_psw){
-					Cache::delete("send_verify");
+					Cache::delete($re_verify."send_verify");
 					Response::out(200);
 				}else{
 					Response::out(415);
@@ -289,55 +311,44 @@ use App\Lib\Response;
 	/**官网-修改个人信息
 	*
 	*@param int $uid       用户id
-	*@param string $mail 	邮箱
 	*@param string $nickname		昵称
 	*
 	*@return status.状态码
 	*/
 
-	public function Updateuser($uid,$mail,$nickname){
-		$checkdata=0;
-		if(preg_match("/([\w\-]+\@[\w\-]+\.[\w\-]+)/",$mail))
-		{
-			$data=User::where('mail','=',$mail)->select('mail');
-			foreach($data as $value){
-				if(in_array($mail, $value)){
-					$checkdata=1;
-				}
-			}
-			if(1==$checkdata)
-			{
-				Response::out(408);
-			}else{
-				$update_user=User::where('id','=',$uid)->Update([
-					"mail" =>$mail,
-					"nickname" => $nickname
-					]);	
-				if(1==$update_user){			
-					Response::out(200);
-				}else{
-					Response::out(417);
-				}							 		
-			}
+	public function Updateuser($uid,$nickname)
+	{		
+		$update_user=User::where('id','=',$uid)->Update([					
+			"nickname" => $nickname
+				]);	
+		if(1==$update_user){			
+			Response::out(200);
 		}else{
-			Response::out(409);
-		}
+			Response::out(417);
+		}							 				
 	}
 
 	/**官网-修改密码之发送邮箱
 	*
-	*@param string $nickname     用户昵称
 	*@param string $mail         用户邮箱
 	*
 	*@return status.状态码
 	*/
-	public function Sendverify($nickname,$mail)
+	public function Sendverify($mail)
 	{
+		$nickname=Session::get("user");
 		$verify=rand(100000,999999);
 		$emailbody = "亲爱的".$nickname."，您好"."：<br/>验证码为".$verify;   
-		Cache::set($verify."send_verify",$verify);  					   
-		Mail::to($mail)->title("WangYuanStudio")->content($emailbody);	
-		Response::out(200);	
+		if(Cache::has($mail)){
+			Response::out(419);
+		}else{
+			Cache::set([
+			$verify."send_verify"=>$verify,
+			$mail=>123
+			],1800);  					   
+			Mail::to($mail)->title("WangYuanStudio")->content($emailbody);	
+			Response::out(200);
+		}	
 	}
 
 	//修改密码之验证码验证
@@ -350,5 +361,5 @@ use App\Lib\Response;
 			return false;
 		}
 	}
-	
+
 }
