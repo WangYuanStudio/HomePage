@@ -13,12 +13,12 @@ use App\Lib\Response;
 
 class Sign
 {
-	public $middle = [
-		'Insertnews' => 'Check_login',
-		'Updateuser' => 'Check_login',
-		'CheckPower' => 'Check_login'
-		// 对所有方法判断登录
-	];
+	// public $middle = [
+	// 	'Insertnews' => 'Check_login',
+	// 	'Updateuser' => 'Check_login',
+	// 	'CheckPower' => 'Check_login'
+	// 	// 对所有方法判断登录
+	// ];
 
 	public static $status=[
 		401 => 'Mobile phone trombone error.',
@@ -35,12 +35,11 @@ class Sign
 	*@param string $class 		班级
 	*@param string $phone 		长号	
 	*@param string $short_phone 	短号
-	*@param string $Vcheckdata       验证码
 	*
 	*@return status.状态码  
 	*/
 
-	public function Insertnews($uid,$name,$sid,$department,$class,$phone,$short_phone,$Vcheckdata)
+	public function Insertnews($uid,$name,$sid,$department,$class,$phone,$short_phone)
 	{
 		$truedata=0;
 		//验证手机号
@@ -57,18 +56,7 @@ class Sign
 				{
 					Response::out(403);
 				}
-				else{
-					$v = Session::get("code")["text"];
-       				 foreach ($Vcheckdata as $key => $value) {
-            			if ($value["x"] > $v[ $key ]["max_x"]
-                			|| $value["x"] < $v[ $key ]["min_x"]
-                			|| $value["y"] > $v[ $key ]["max_y"]
-                			|| $value["y"] < $v[ $key ]["min_y"]
-            				) {
-               				 Response::out(302);
-               				die();
-            				}
-        			}       																										
+				else{																										
 						$insert_news=Info::insert([
 						"uid" 		 	=>$uid,
 						"name" 			=>$name,
@@ -80,7 +68,7 @@ class Sign
 						"privilege"     =>0
 						]);
 						Response::out(200);
-						Session::remove("code");					
+						//Session::remove("code");					
 				}
 			}else{
 				Response::out(402);
