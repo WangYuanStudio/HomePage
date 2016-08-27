@@ -1,8 +1,8 @@
 <?php
 /*
 *User: huizhe
-*Date: 2016/8/22
-*Time: 11:18
+*Date: 2016/8/27
+*Time: 17:18
 */
 
 namespace App\Controllers;
@@ -76,13 +76,13 @@ use App\Lib\Response;
 	
 	/**官网-更换头像
 	*@param string $form_filename 头像上传组名
-	*@param string $path 头像路径默认为avatar/
-	*@param int    $id 用户ID
+	*@param string $path 0 头像路径默认为avatar/
 	*
 	*@return status.状态码
 	*/
-	public function UploadPhoto($form_filename,$path='avatar/',$id)
+	public function UploadPhoto($form_filename,$path='avatar/')
 	{
+		$id=Session::get("user.id");
 		$src = Document::Upload($form_filename, $path);
 		$check=User::where('id','=',$id)->Update([
 				"photo"=>$src
@@ -278,27 +278,31 @@ use App\Lib\Response;
 
 	/**官网-修改密码
 	*
-	*@param int $uid 		用户id
 	*@param string $password1		新密码1
 	*@param string $password2		新密码2
 	*@param string $re_verify       验证码
 	*
 	*@return status.状态码
 	*/
-	public function Updatepsw($uid,$password1,$password2,$re_verify)
+	public function Updatepsw($password1,$password2,$re_verify)
 	{
+		$uid = 	Session::get("user.id");
 		if($this->Updateverify($re_verify))
 		{
 			if($password1==$password2){
-				$password1=password_hash($password1,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
-				$update_psw=User::where('id','=',$uid)->Update([
+				if(strlen($password1)>=6){
+					$password1=password_hash($password1,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
+				 	$update_psw=User::where('id','=',$uid)->Update([
 					"password" =>$password1
 					]);
-				if(1==$update_psw){
-					Cache::delete($re_verify."send_verify");
-					Response::out(200);
+					if(1==$update_psw){
+						Cache::delete($re_verify."send_verify");
+						Response::out(200);
+					}else{
+						Response::out(415);
+					}
 				}else{
-					Response::out(415);
+					Response::out(418);
 				}
 			}else{
 				Response::out(414);
@@ -310,14 +314,14 @@ use App\Lib\Response;
 
 	/**官网-修改个人信息
 	*
-	*@param int $uid       用户id
 	*@param string $nickname		昵称
 	*
 	*@return status.状态码
 	*/
 
-	public function Updateuser($uid,$nickname)
-	{		
+	public function Updateuser($nickname)
+	{	
+		$uid = 	Session::get("user.id");
 		$update_user=User::where('id','=',$uid)->Update([					
 			"nickname" => $nickname
 				]);	
@@ -330,22 +334,19 @@ use App\Lib\Response;
 
 	/**官网-修改密码之发送邮箱
 	*
-	*@param string $mail         用户邮箱
-	*
 	*@return status.状态码
 	*/
-	public function Sendverify($mail)
-	{
-		$nickname=Session::get("user");
+	public function Sendverify()
+	{	
+		$mail=Session::get("user.mail");
+		$nickname=Session::get("user.nickname");
 		$verify=rand(100000,999999);
 		$emailbody = "亲爱的".$nickname."，您好"."：<br/>验证码为".$verify;   
 		if(Cache::has($mail)){
 			Response::out(419);
 		}else{
-			Cache::set([
-			$verify."send_verify"=>$verify,
-			$mail=>123
-			],1800);  					   
+			Cache::set($verify."send_verify",$verify,120);  
+			Cache::set($mail,$mail,60);					   
 			Mail::to($mail)->title("WangYuanStudio")->content($emailbody);	
 			Response::out(200);
 		}	
