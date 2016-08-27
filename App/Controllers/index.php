@@ -4,6 +4,7 @@ use App\Models\Member;
 use App\Models\Message;
 use App\Models\Article;
 use App\Lib\Response;
+use App\Lib\Document;
 
 
 class Index
@@ -33,69 +34,76 @@ class Index
     605 => 'fail to delete',
     606 => 'fail to send a dynamic',
     607 => 'no dynamics',
-    608 => 'fail to edit'
+    608 => 'fail to edit',
+    609 => 'fail to insert'
     ];
     /**官网—成员展示系
    *
    * @param string $department 部门名称
    * @return status.状态 errmsg.错误信息 data.二维数组包括该部门所有成员信息id,name,sex,photo,department,habbit,position,blog,phone,introduction
    */
-    public function ShowMember($department)
+    public function ShowMember($department,$page=1,$num)
     {
-        $data=Member::where("department","=",$department)->select();
+        $data=Member::where("department","=",$department)->limit(($page-1)*$num,$num)->select();
          
         if(sizeof($data)!=0)
         {
-          //  $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>$data];
               Response::out(200,$data);
         }
         else
         {
-          //  $status=['status' => "601",'errmsg' => Index::$error[601],'data'=>''];
-          //  response($status, "json");
             Response::out(601);
         }
     }
      
     /**官网—游客留言信息
    *
-   *
-   * @return status.状态 errmsg.错误信息 data.二维数组包括所有审核后的留言信息nickname,message,time,id
+   *@param int $auto 留言状态(1,为未审核,2为审核,3为所有)
+     *@param int $page 页数
+      *@param int $num 每一页的数量
+   * @return status.状态 errmsg.错误信息 data.二维数组包括所有留言信息nickname,message,time,id
    */
-    public function GetMessage()
+    public function GetMessage($auto,$page=1,$num)
     {
-       $d=Message::leftJoin('user', 'message.uid', '=', 'user.id')->where("auth","=","1")->orderBy('time desc')->select('message.*,user.nickname');
+       $auto--;
+       if($auto==0||$auto==1)
+       {
+       $d=Message::leftJoin('user', 'message.uid', '=', 'user.id')->where("auth","=",$auto)->orderBy('time desc')->limit(($page-1)*$num,$num)->select('message.*,user.nickname');
+       }
+       else if($auto==2)
+       {
+         $d=Message::leftJoin('user', 'message.uid', '=', 'user.id')->orderBy('time desc')->limit(($page-1)*$num,$num)->select('message.*,user.nickname');
+       }
+       else
+       {
+         Response::out(602);
+         return false;
+       }
        if(sizeof($d)!=0)
        {
-            //$status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>$d];
            Response::out(200,$d);
        }
        else
        {
-         //  $status=['status' => "602",'errmsg' => Index::$error[602],'data'=>''];
-        //   response($status,"json");
          Response::out(602);
        }
     }
 
-      /**官网—游客发表留言
+      /**官网—游客发表留言(字符串长度<600)
    ** @param string $message 留言信息
     * @return status.状态 errmsg.错误信息
    */
     public function Send_message($message)
     {
-      $time= date('y-m-d h:i:s',time());
-      $str= Message::insert(['uid'=>Session::get("user.id"),'content' => $message, 'time' => $time, 'auth' => false]);
+      $time= date('y-m-d H:i:s',time());
+      $str= Message::insert(['uid'=>Session::get("user.id"),'content' => $message, 'time' => $time, 'auth' => 0]);
       if($str==0)
       {
-        // $status=["status" => "603",'errmsg' => Index::$error[603],'data'=>''];
-       //  response($status,"json");
+
         Response::out(603);
       }
       else
       {
-         //$status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-       //  response($status,"json");
             Response::out(200);
       }
     }
@@ -105,15 +113,13 @@ class Index
    */
     public function check_mes($id)
     {
-       $status=  Message::where('id','=',$id)->update(['auth' => true]);
+       $status=  Message::where('id','=',$id)->update(['auth' => '1']);
        if($status==1)
        {
-        // $status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
         Response::out(200);
        }
        else
        {
-      //  $status=["status" => "604",'errmsg' =>  Index::$error[604],'data'=>''];
        Response::out(604);
        }
     }
@@ -127,36 +133,31 @@ class Index
       $statuss= Message::where('id', '=',$id)->delete();
       if($statuss==1)
       {
-      //  $status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-      //  response( $status,"json");
+
          Response::out(200);
       }
       else
       {
-       //  $status=["status" => "605",'errmsg' => Index::$error[605],'data'=>''];
-        // response( $status,"json");
+
          Response::out(605);
       }
     }
       /**官网—发表网园动态
       *
-   ** @param string $title 标题
+   ** @param string $title 标题(字符串长度<255)
     ** @param string $content 类容
     * @return status.状态 errmsg.错误信息
    */
     public function publish_article($title,$content)
     {
-      $time= date('y-m-d h:i:s',time());
+      $time= date('y-m-d H:i:s',time());
       $str= Article::insert(['title'=>$title,'content' => $content,'time'=>$time]);
       if($str==0)
       {
-        // $status=["status" => "606",'errmsg' => Index::$error[606],'data'=>''];
          Response::out(606);
       }
       else
       {
-        // $status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-        // response($status,"json");
          Response::out(200);
       }
     }
@@ -170,14 +171,10 @@ class Index
       $statuss= Article::where('id', '=',$id)->delete();
       if($statuss==1)
       {
-        //$status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-      //  response( $status,"json");
          Response::out(200);
       }
       else
       {
-       //  $status=["status" => "605",'errmsg' => Index::$error[605],'data'=>''];
-        // response( $status,"json");
           Response::out(605);
       }
     }
@@ -186,26 +183,22 @@ class Index
    *
    * @return status.状态 errmsg.错误信息 data.二维数组包括所有动态title,content,time,id
    */
-    public function get_article()
+    public function get_article($page=1,$num)
     {
-       $d=Article::orderBy('time desc')->select();
+       $d=Article::orderBy('time desc')->limit(($page-1)*$num,$num)->select();
        if(sizeof($d)!=0)
        {
-         //   $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>$d];
-         //   response($status,"json");
        Response::out(200,$d);
        }
        else
        {
-         //  $status=['status' => "607",'errmsg' => Index::$error[607],'data'=>''];
-       //    response($status,"json");
         Response::out(607);
        }
     }
       /**官网—修改网园动态
         *
    ** @param string $id 动态的id
-   ** @param string $title 动态的标题
+   ** @param string $title 动态的标题(字符串长度<255)
    ** @param string $content 动态的类容
     * @return status.状态 errmsg.错误信息
    */
@@ -214,31 +207,28 @@ class Index
         $statuss= Article::where('id', '=',$id)->update(['title' => $title, 'content' => $content]);
         if($statuss==1)
         {
-          //  $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-          //  response($status,"json");
            Response::out(200);
         }
         else
         {
-         //  $status=['status' => "608",'errmsg' => Index::$error[608],'data'=>''];
-        //   response($status,"json");
+
            Response::out(608);
         }
     
     }
     /**官网—修改成员信息
-        *
-   ** @param string $id 成员的id
-   ** @param string $name 成员姓名
+  ** @param string $id 成员id
+  ** @param string $name 成员姓名 (长度<10)
     ** @param string $sex 成员性别
-   ** @param string $departmentt 部门
-      ** @param string $habbit 爱好
-         ** @param string $position 职位
-         ** @param string $blog 博客
-          ** @param string $introduction 介绍
-    * @return status.状态 errmsg.错误信息
+   ** @param string $departmentt 部门 
+  ** @param string $habbit 爱好 (长度<255)
+  ** @param string $position 职位
+  ** @param string $blog 博客(地址)
+         ** @param string $phone 电话 (长度<=11)
+  ** @param string $introduction 介绍 (长度<255)
+  * @return status.状态 errmsg.错误信息
    */
-    public function edt_member($id,$name,$sex,$department,$habbit,$position,$blog,$introduction)
+    public function edt_member($id,$name,$sex,$department,$habbit,$position,$blog,$phone,$introduction)
     {
        $statuss= Member::where('id', '=',$id)->update(
         ['name' => $name, 
@@ -251,20 +241,16 @@ class Index
         ]);
         if($statuss==1)
         {
-        //    $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-          //  response($status,"json");
             Response::out(200);
         }
         else
         {
-         //  $status=['status' => "608",'errmsg' => Index::$error[608],'data'=>''];
-        //   response($status,"json");
             Response::out(608);
         }
     
     }
-            /**官网—删除成员信息
-        *
+     /**官网—删除成员信息
+    *
    ** @param string $id 成员的id
     * @return status.状态 errmsg.错误信息
    */
@@ -274,14 +260,11 @@ class Index
         $statuss=Member::where('id', '=',$id)->delete();
       if($statuss==1)
       {
-     //   $status=["status" => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-      //  response( $status,"json");
+
          Response::out(200);
       }
       else
       {
-        // $status=["status" => "605",'errmsg' => Index::$error[605],'data'=>''];
-      //   response( $status,"json");
          Response::out(605);
       }
     
@@ -299,19 +282,72 @@ class Index
         ]);
         if($statuss==1)
         {
-      //      $status=['status' => "200",'errmsg' => config("common_status")['200'],'data'=>''];
-        //    response($status,"json");
           Response::out(200);
         }
         else
         {
-        //   $status=['status' => "608",'errmsg' => Index::$error[608],'data'=>''];
-       //    response($status,"json");
            Response::out(608);
         }
     }
- 
 
 
+
+
+ /**官网—添加成员信息
+        *
+   ** @param string $form_name 头像上传组名(值为"no"默认头像)
+   ** @param string $name 成员姓名 (长度<10)
+    ** @param string $sex 成员性别
+   ** @param string $departmentt 部门 
+      ** @param string $habbit 爱好 (长度<255)
+         ** @param string $position 职位
+         ** @param string $blog 博客(地址)
+          ** @param string $introduction 介绍 (长度<255)
+            ** @param string $phone 电话 (长度<=11)
+    * @return status.状态 errmsg.错误信息
+   */
+    public function add_member($form_name,$name,$sex,$department,$habbit,$position,$blog,$phone,$introduction)
+    {
+      $path='avatar/';
+      if($form_name=="no")
+      {
+        $src="avatar/head.gif";
+      }
+      else
+      {
+        $src = Document::Upload($form_name, $path);
+      }
+      $str= Member::insert(['photo'=>$src,'name'=>$name,'sex' => $sex,'department'=>$department,'habbit'=>$habbit,'position'=>$position,'blog'=>$blog,'phone'=>$phone,'introduction'=>$introduction]);
+      if($str==0)
+      {
+        Response::out(609);
+      }
+      else
+      {
+        Response::out(200);
+      }
+    }
+    /**官网—修改成员头像
+  ** @param string $id 成员id
+  ** @param string $form_name  头像上传组名
+   * @return status.状态 errmsg.错误信息
+   */
+    public function edt_member_pho($id,$form_name)
+    {
+      $path='avatar/';
+      $src = Document::Upload($form_name, $path);
+      $statuss= Member::where('id', '=',$id)->update(
+        [
+        'photo'=>$src
+        ]);
+        if($statuss==1)
+        {
+          Response::out(200);
+        }
+        else
+        {
+           Response::out(608);
+        }
+    }
 
 }
