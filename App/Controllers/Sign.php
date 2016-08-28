@@ -15,8 +15,8 @@ class Sign
 {
 	// public $middle = [
 	// 	'Insertnews' => 'Check_login',
-	// 	'Updateuser' => 'Check_login',
-	// 	'CheckPower' => 'Check_login'
+	// 	'Updateuser' => ['Check_login','Check_ManagerMember'],
+	// 	'CheckPower' => ['Check_login','Check_ManagerMember']
 	// 	// 对所有方法判断登录
 	// ];
 

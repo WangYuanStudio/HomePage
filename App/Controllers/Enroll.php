@@ -17,8 +17,8 @@ use App\Lib\Response;
  {
  // 	public $middle = [
 	// 	'UploadPhoto' => 'Check_login',
-	// 	'Limituser' => 'Check_login',
-	// 	'Relieve' => 'Check_login',
+	// 	'Limituser' => ['Check_login','Check_ManagerMember'],
+	// 	'Relieve' => ['Check_login','Check_ManagerMember'],
 	// 	'Updatepsw' => 'Check_login',
 	// 	'Updateuser' => 'Check_login',
 	//  'Sendverify' => 'Check_login'
