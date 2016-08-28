@@ -91,14 +91,14 @@
 
     <fileset id="zeffee_tar" dir=".">
         <include name="App/**"/>
-        <include name="logs/**"/>
-        <include name="tests/**"/>
-        <include name="public/**"/>
-        <include name="vendor/**"/>
-        <include name="Zereri/**"/>
-        <include name="composer.json"/>
-        <include name="composer.lock"/>
-        <include name="*.ttc"/>
-        <include name="*.ttf"/>
+        <!--<include name="logs/**"/>-->
+        <!--<include name="tests/**"/>-->
+        <!--<include name="public/**"/>-->
+        <!--<include name="vendor/**"/>-->
+        <!--<include name="Zereri/**"/>-->
+        <!--<include name="composer.json"/>-->
+        <!--<include name="composer.lock"/>-->
+        <!--<include name="*.ttc"/>-->
+        <!--<include name="*.ttf"/>-->
     </fileset>
 </project>

@@ -18,6 +18,7 @@ class Tribune
 {
     public $middle = [
         //checkip
+        "index"=>"Check_Operation_Count"
 //        "publish"      => "check_login",
 //        "response"     => "check_login",
 //        "getPublished" => "check_login",
@@ -308,6 +309,6 @@ class Tribune
 
     public function update()
     {
-        echo Post::where("id", "=", "f")->update(["response" => "gg"]);
+//        echo Post::where("id", "=", 1)->update(["response" => ]);
     }
 }
