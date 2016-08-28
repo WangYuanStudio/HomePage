@@ -40,7 +40,8 @@ use App\Lib\Response;
 	//	416 => 'Password mistake.',
 		417 => 'Modify personal information failure.',
 		418 => 'Password length less than 6',
-		419 => 'Email has been sent, please wait a moment'
+		419 => 'Email has been sent, please wait a moment',
+		421 => 'Only allowed to upload pictures.'
 	];
 
 	/**官网-实现注册
@@ -50,7 +51,8 @@ use App\Lib\Response;
 	*@return login_id.返回插入的id
 	*/
 	public function Register($photo="avatar/head.gif",$token=NULL)
-	{			
+	{
+
 		if(time()<=Cache::get($token."register_time")){
 			if($token==Cache::get($token."register_token")){									
 				$password=Cache::get($token."password");
@@ -82,16 +84,26 @@ use App\Lib\Response;
 	*/
 	public function UploadPhoto($form_filename,$path='avatar/')
 	{
-		$id=Session::get("user.id");
-		$src = Document::Upload($form_filename, $path);
-		$check=User::where('id','=',$id)->Update([
+		//检查文件格式
+		$name=$_FILES[$form_filename]['name'];
+		$allowtype=array('png','gif','bmp','ipeg','jpg');
+		$aryStr=explode(".",$name);
+		$filetype=strtolower($aryStr[count($aryStr)-1]);
+		if(in_array(strtolower($filetype),$allowtype)){
+			$id=Session::get("user.id");
+			$src = Document::Upload($form_filename, $path);
+			$check=User::where('id','=',$id)->Update([
 				"photo"=>$src
 				]);
-		if(1==$check){
-			Response::out(200);
+			if(1==$check){
+				Response::out(200);
+			}else{
+				Response::out(410);
+			}	
 		}else{
-			Response::out(410);
-		}	
+				Response::out(421);
+		}
+
 	}
 	
 	/**官网-发送邮件
@@ -132,8 +144,8 @@ use App\Lib\Response;
 							],1800);															
 							$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
 					（注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>
-    <a href='http://127.0.0.1:8080/Enroll/Register?verify=".$token."' target= 
-'_blank'>/http://127.0.0.1:8080/Enroll/Register?verify=".$token."</a><br/> 
+    <a href='http://127.0.0.1:8080/Enroll/Register?token=".$token."' target= 
+'_blank'>/http://127.0.0.1:8080/Enroll/Register?token=".$token."</a><br/> 
     如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
 							Mail::to($mail)->title("WangYuanStudio")->content($emailbody);							
 							Response::out(200);
@@ -219,8 +231,8 @@ use App\Lib\Response;
 				],1800);		
 				$emailbody = "亲爱的".$user_nickname."，您好"."：<br/>请您点击以下链接进行找回密码，即可生效！<br/> 
 			（注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>     
-			<a href='http://127.0.0.1:8080/Enroll/Supdatepsw?verify=".$token."' target= 
-'_blank'>/http://127.0.0.1:8080/Enroll/Supdatepsw?verify=".$token."</a><br/> 			
+			<a href='http://127.0.0.1:8080/Enroll/Supdatepsw?token=".$token."' target= 
+'_blank'>/http://127.0.0.1:8080/Enroll/Supdatepsw?token=".$token."</a><br/> 			
      如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
 				Mail::to($mail)->title("WangYuanStudio")->content($emailbody);
 				Response::out(200);
