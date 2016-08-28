@@ -11,7 +11,7 @@ use App\Lib\Response;
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-24 18:31
+ * Last modified time: 2016-08-29 01:15
  */
 class Hws_WorkSubmit implements MiddleWare
 {
@@ -27,9 +27,11 @@ class Hws_WorkSubmit implements MiddleWare
                 return true;
             } else {
                 Response::out(301);
-                return false;
             }
+        } else {
+            Response::out(503);
         }
+        return false;   // 防止其他操作
     }
 
     public function after($request)
