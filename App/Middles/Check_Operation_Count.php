@@ -10,6 +10,7 @@ namespace App\Middles;
 
 use App\Controllers\Session;
 use App\Controllers\Cache;
+use App\Lib\Response;
 
 class Check_Operation_Count implements MiddleWare
 {

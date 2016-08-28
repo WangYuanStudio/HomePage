@@ -18,6 +18,7 @@ class Tribune
 {
     public $middle = [
         //checkip
+        "index"=>"Check_Operation_Count"
 //        "publish"      => "check_login",
 //        "response"     => "check_login",
 //        "getPublished" => "check_login",
@@ -278,6 +279,8 @@ class Tribune
     {
         Post::where('id', '=', $pid)->delete();
         Bbs::where('pid', '=', $pid)->delete();
+
+        Response::out(200);
     }
 
 
@@ -288,6 +291,8 @@ class Tribune
     public function deleteBbs($bid)
     {
         Bbs::where('id', '=', $bid)->delete();
+
+        Response::out(200);
     }
 
 
@@ -299,8 +304,11 @@ class Tribune
 
     public function test()
     {
-        echo "<pre>";
-        print_r($_SERVER);
-        echo "</pre>";
+        Mail::to("me@zeffee.com")->title("test")->content("testest");
+    }
+
+    public function update()
+    {
+//        echo Post::where("id", "=", 1)->update(["response" => ]);
     }
 }

@@ -28,7 +28,7 @@ class Common
      */
     public function verifyType()
     {
-        response(Session::get("vcode")["type"]);
+        response(Session::get("vcode.type"));
     }
 
 
@@ -40,20 +40,23 @@ class Common
      */
     public function verify($text)
     {
-        $v = Session::get("vcode")["text"];
-        Session::remove("vcode");
-        foreach ($text as $key => $value) {
-            if ($value["x"] > $v[ $key ]["max_x"]
-                || $value["x"] < $v[ $key ]["min_x"]
-                || $value["y"] > $v[ $key ]["max_y"]
-                || $value["y"] < $v[ $key ]["min_y"]
-            ) {
-                Response::out(302);
-                die();
+        if ($v = Session::get("vcode.text")) {
+            Session::remove("vcode");
+            foreach ($text as $key => $value) {
+                if ($value["x"] > $v[ $key ]["max_x"]
+                    || $value["x"] < $v[ $key ]["min_x"]
+                    || $value["y"] > $v[ $key ]["max_y"]
+                    || $value["y"] < $v[ $key ]["min_y"]
+                ) {
+                    Response::out(302);
+                    die();
+                }
             }
-        }
 
-        Cache::remove(Session::get("user.id") ?: $_SERVER["REMOTE_ADDR"]);
-        Response::out(200);
+            Cache::delete(Session::get("user.id") ?: $_SERVER["REMOTE_ADDR"]);
+            Response::out(200);
+        } else {
+            Response::out(302);
+        }
     }
 }
