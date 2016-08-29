@@ -18,7 +18,7 @@ date_default_timezone_set('PRC');
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-29 01:16
+ * Last modified time: 2016-08-29 14:27
  */
 class Homework
 {
@@ -29,7 +29,7 @@ class Homework
 		'zip', 'rar'
 	];
 	const HW_ALLOWDVIEW_FILEEXT = [	// 允许预览的文件扩展名
-		'php', 'txt', 'md', 'html', 'htm', 'css', 'js', 'aspx', 'asp'
+		'php', 'txt', 'md', 'html', 'htm', 'css', 'js', 'aspx', 'asp', 'sql'
 	];
 	const HW_DEPARTMEMT = ['backend', 'frontend', 'design', 'secret'];	// 部门标识符
 
@@ -220,9 +220,9 @@ class Homework
 	}
 
 	/**作业系统 - 获取优秀作业文件内容
-	 * TODO: 输出大小和修改时间
+	 * 
 	 * @param string $path 1 文件路径
-	 * @return status.状态码 data.文件内容
+	 * @return status.状态码 bytes.文件大小（单位字节） lines.文件总行数 modify_time.上次修改时间 text.文件内容
 	 */
 	public function getUnzipWorkFile($path) {
 		// Windows下要转换 中文目录名/中文文件名
@@ -241,8 +241,13 @@ class Homework
 				}
 				$contents = stream_get_contents($handle);
 				fclose($handle);
-				$contents = mb_convert_encoding($contents, 'UTF-8','ASCII, GB2312, GBK, UTF-8');
-				Response::out(200, $contents);
+				$contents = mb_convert_encoding($contents, 'UTF-8','UTF-8, GB2312, GBK, ASCII');
+				Response::out(200, [
+					'bytes' => filesize($path),
+					'lines' => count(file($path)),
+					'modify_time' => date("Y-m-d H:i:s", filemtime($path)),
+					'text' => $contents
+				]);
 			} else {
 				Response::out(511);
 			}
@@ -832,7 +837,7 @@ class Homework
 	}
 
 	/*Rar解压
-	 * TODO: 解压rar后中文乱码
+	 * 
 	 * @param string $path rar文件路径
 	 * @param string $dst 解压路径
 	 * @return array/boolean

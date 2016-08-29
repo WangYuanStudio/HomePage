@@ -11,15 +11,14 @@ use App\Lib\Response;
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-29 01:15
+ * Last modified time: 2016-08-29 13:52
  */
 class Hws_WorkSubmit implements MiddleWare
 {
     public function before($request)
     {
     	// 获取角色ID
-        $token = Session::get("user");
-        $role_id = $token['role'];
+        $role_id = Session::get("user.role");
 
         // 注意：提交多部门作业由数据库控制
         if (isset($request['tid']) && $t = Hws_Task::where('id', '=', $request['tid'])->select()) {
