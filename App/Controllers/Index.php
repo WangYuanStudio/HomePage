@@ -10,18 +10,18 @@ use App\Lib\Document;
 class Index
 {
   
-  // public $middle = [
+  public $middle = [
    
-  //   'Send_message' => 'Check_login',
-  //   'check_mes' => ['Check_login','Check_Managermes'],
-  //   'del_mes' => ['Check_login','Check_Managermes'] ,
-  //   'edt_message' =>['Check_login','Check_Managermes'],
-  //   'edt_article' => ['Check_login','Check_Managerarticle'],
-  //   'del_article' => ['Check_login','Check_Managerarticle'] ,
-  //   'publish_article' => ['Check_login','Check_Managerarticle'],
-  //   'del_member' => ['Check_login','Check_ManagerMember'] ,
-  //   'edt_member' =>['Check_login','Check_ManagerMember'] 
-  // ];
+    'Send_message' => ['Check_login','Check_Operation_Count'],
+    'check_mes' => ['Check_login','Check_Managermes'],
+    'del_mes' => ['Check_login','Check_Managermes'] ,
+    'edt_message' =>['Check_login','Check_Managermes'],
+    'edt_article' => ['Check_login','Check_Managerarticle'],
+    'del_article' => ['Check_login','Check_Managerarticle'] ,
+    'publish_article' => ['Check_login','Check_Managerarticle','Check_Operation_Count'],
+    'del_member' => ['Check_login','Check_ManagerMember'] ,
+    'edt_member' =>['Check_login','Check_ManagerMember'] 
+  ];
   /*错误代码 && 错误信息
    * 
    * @var array

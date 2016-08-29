@@ -6,12 +6,12 @@ namespace App\Models;
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-24 00:38
+ * Last modified time: 2016-08-29 00:57
  */
 class Hws_Task extends Model
 {
-	protected $getWork = [
-		"Hws_Record" => ["Hws_Record.tid", "Hws_Task.id"]
-	];
+	// protected $getWork = [
+	// 	"Hws_Record" => ["Hws_Record.tid", "Hws_Task.id"]
+	// ];
 }
 ?>

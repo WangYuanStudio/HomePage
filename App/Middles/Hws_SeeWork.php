@@ -11,15 +11,14 @@ use Zereri\Lib\Register;
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-24 18:30
+ * Last modified time: 2016-08-29 13:52
  */
 class Hws_SeeWork implements MiddleWare
 {
     public function before($request)
     {
     	// 获取角色ID
-        $token = Session::get("user");
-        $role_id = $token['role'];
+        $role_id = Session::get("user.role");
 
         // 除外：获取全部任务
         if (Register::get("method") == 'getAllTasks' || 

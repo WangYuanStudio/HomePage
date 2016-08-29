@@ -9,7 +9,7 @@ class Check_ManagerMember implements MiddleWare
     public function before($request)
     {
     	$role_id = Session::get("user.role");
-    	if(Authorization::isAuthorized($role_id,"成员管理"))
+    	if(Authorization::isAuthorized($role_id,"manage_member"))
     	{
     		return true;
     	}

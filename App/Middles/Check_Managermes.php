@@ -9,7 +9,7 @@ class Check_Managermes implements MiddleWare
     public function before($request)
     {
     	$role_id = Session::get("user.role");
-    	if(Authorization::isAuthorized($role_id,"留言管理"))
+    	if(Authorization::isAuthorized($role_id,"manage_msg"))
     	{
     		return true;
     	}
