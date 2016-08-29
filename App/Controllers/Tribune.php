@@ -8,8 +8,10 @@
 
 namespace App\Controllers;
 
+use App\Lib\Authorization;
 use App\Lib\Mail;
 use App\Lib\Response;
+use App\Lib\Html;
 use App\Models\Post;
 use App\Models\Bbs;
 use App\Lib\SphinxClient;
@@ -17,36 +19,46 @@ use App\Lib\SphinxClient;
 class Tribune
 {
     public $middle = [
-        //checkip
-        "index"=>"Check_Operation_Count"
-//        "publish"      => "check_login",
-//        "response"     => "check_login",
-//        "getPublished" => "check_login",
-//        "getUnReadNum" => "check_login",
-//        "searchPost"   => "check_login",
-//        "deletePost"   => "check_login",
-//        "deleteBbs"    => "check_login"
+//        "publish"      => ["Check_login", "Check_Operation_Count"],
+//        "response"     => ["Check_login", "Check_Operation_Count"],
+//        "getPublished" => "Check_login",
+//        "getUnReadNum" => "Check_login",
+//        "searchPost"   => ["Check_login", "Check_Operation_Count"],
+//        "deletePost"   => ["Check_login", "Tribune_delete"],
+//        "deleteBbs"    => ["Check_login", "Tribune_delete"]
     ];
 
     public static $status = [
         700 => "Unavailable Key",
-        701 => "Unavailable ID"
+        701 => "Unavailable ID",
+        702 => "Unavailable Department",
+        703 => "Out Of Index"
     ];
 
 
     /**论坛-首页加载-获取帖子数据
      *
-     * @param int $page 页码
+     * @param string $department 部门(编程、前端、设计、文秘)
+     * @param int    $page       页码
      *
-     * @return post.指定页的帖子数据 publish_key.发布帖子的key
+     * @return post.指定页的帖子数据 page_count.页码总数 publish_key.发布帖子的key
      */
-    public function index($page = 1)
+    public function index($department, $page = 1)
     {
         $data = [];
+
+        $page_size = 7;
+
+        $data["page_count"] = ceil(Post::leftJoin('user', 'user.id', '=', 'post.uid')
+                ->whereIn("post.department", [$department, "全部"])
+                ->count("count")
+                ->select("")[0]["count"] / $page_size);
+
         $data["post"] = Post::leftJoin('user', 'user.id', '=', 'post.uid')
+            ->whereIn("post.department", [$department, "全部"])
             ->orderBy("post.time desc")
-            ->limit(($page - 1) * 10, 10)
-            ->select('user.nickname,user.mail,user.role,user.photo,post.*');
+            ->limit(($page - 1) * $page_size, $page_size)
+            ->select('user.nickname,user.photo,post.id,post.title,post.short_content,post.time,post.last_time,post.view,post.response,post.img');
 
         $data["publish_key"] = $this->setCsrfKey("publish_key");
 
@@ -58,25 +70,39 @@ class Tribune
      *
      * @param string $title       标题
      * @param string $content     内容
-     * @param string $classify    分类
+     * @param string $department  部门(编程、前端、设计、文秘)
      * @param string $publish_key 发布帖子的key
      *
      * @return post_id.返回插入的id
      */
-    public function publish($title, $content, $classify, $publish_key)
+    public function publish($title, $content, $department, $publish_key)
     {
         $this->checkKey($publish_key, "publish_key");
 
+        if (!in_array($department, ["编程", "前端", "设计", "文秘"])) {
+            Response::out(702);
+
+            die();
+        }
+
+        //管理员发布全部门帖子
+        if (Authorization::isAuthorized(Session::get("user.role"), "manage_news")) {
+            $department = "全部";
+        }
+
+        $time = date("Y-m-d H:i:s");
         $post_id = Post::insert([
-            "uid"      => 1,
-            "title"    => $title,
-            "content"  => $content,
-            "classify" => $classify,
-            "time"     => date("Y-m-d H:i:s")
+            "uid"           => Session::get("user.id"),
+            "title"         => Html::removeSpecialChars($title),
+            "content"       => Html::removeXss($content),
+            "department"    => $department,
+            "time"          => $time,
+            "last_time"     => $time,
+            "short_content" => substr(Html::removeSpecialChars($content), 0, 60),
+            "img"           => Html::getFirstImg($content)
         ]);
 
         Response::out(200, ["post_id" => $post_id]);
-
     }
 
 
@@ -93,29 +119,39 @@ class Tribune
     {
         $this->checkKey($response_key, "response_key");
 
+        //获取被回复帖子的数据
         $data = "";
         if ($pid > 0) {
             $data = Post::where("id", "=", $pid)->select("id pid,response,uid");
         } elseif ($bid > 0) {
-            $data = Bbs::where("bbs.id", "=", $bid)->leftJoin("post", "post.id", "=", "bbs.pid")->select("post.id pid,post.response,post.uid puid,bbs.*");
+            $data = Bbs::leftJoin("post", "post.id", "=", "bbs.pid")
+                ->leftJoin("user", "user.id", "=", "bbs.uid")
+                ->where("bbs.id", "=", $bid)
+                ->select("user.nickname,post.id pid,post.response,post.uid puid,bbs.*");
         }
 
         if (isset($data[0])) {
             $data = $data[0];
+
+            $time = date("Y-m-d H:i:s");
             Bbs::insert([
-                "floor"       => $data["response"] + 1,
-                "pid"         => $data["pid"],
-                "uid"         => 1,
-                "content"     => $content,
-                "time"        => date("Y-m-d H:i:s"),
-                "point_uid"   => $data["uid"],
-                "point_floor" => isset($data["floor"]) ? $data["floor"] : 1,
-                "master_uid"  => isset($data["puid"]) ? $data["puid"] : $data["uid"]
+                "floor"          => $data["response"] + 2,
+                "pid"            => $data["pid"],
+                "uid"            => Session::get("user.id"),
+                "content"        => Html::removeSpecialChars($content),
+                "time"           => $time,
+                "point_uid"      => $data["uid"],
+                "point_floor"    => isset($data["floor"]) ? $data["floor"] : 1,
+                "master_uid"     => isset($data["puid"]) ? $data["puid"] : $data["uid"],
+                "point_nickname" => isset($data["nickname"]) ? $data["nickname"] : NULL
             ]);
 
+            //回复+1
             Post::where("id", "=", $data["pid"])->increment("response");
+            //更新最后回复时间
+            Post::where("id", "=", $data["pid"])->update(["last_time" => $time]);
 
-            Response::out(200, ["floor" => $data["response"] + 1]);
+            Response::out(200, ["floor" => $data["response"] + 2]);
         } else {
             Response::out(701);
         }
@@ -140,20 +176,32 @@ class Tribune
 
     /**论坛-打开某个帖子-获取信息
      *
-     * @param int $pid 1 帖子的id
-     * @param int $pid 0 回复的页数,默认值为1
+     * @param int $pid  1 帖子的id
+     * @param int $page 0 回复的页数,默认值为1
      *
      * @return first.楼主信息,仅加载第一页返回 bbs.其他楼层信息 response_key.回复帖子的key
      */
     public function postInfo($pid, $page = 1)
     {
         $data = [];
+        $page_size = 7;
 
-        if (1 === $page) {
+        if (1 == $page) {
             Post::where("id", "=", $pid)->increment("view");
-            $data["first"] = Post::leftJoin('user', 'user.id', '=', 'post.uid')->where("post.id", "=", $pid)->select('user.nickname,user.mail,user.role,user.photo,post.*');
+
+            $data["first"] = Post::leftJoin('user', 'user.id', '=', 'post.uid')
+                ->where("post.id", "=", $pid)
+                ->select('user.nickname,user.photo,post.*');
         }
-        $data["bbs"] = Bbs::leftJoin('user', 'user.id', '=', 'bbs.uid')->where("bbs.pid", "=", $pid)->limit(($page - 1) * 8, 8)->select('user.nickname,user.mail,user.role,user.photo,bbs.*');
+
+        $data["bbs"] = Bbs::leftJoin('user', 'user.id', '=', 'bbs.uid')
+            ->leftJoin('role', 'role.id', '=', 'user.role')
+            ->where("bbs.pid", "=", $pid)
+            ->limit(($page - 1) * $page_size, $page_size)
+            ->select('role.name role,user.nickname,user.photo,bbs.*');
+
+        $data["page_count"] = ceil(Bbs::where("pid", "=", $pid)->count("count")->select("")[0]["count"] / $page_size);
+
         $data["response_key"] = $this->setCsrfKey("response_key");
 
         Response::out(200, $data);
@@ -309,6 +357,6 @@ class Tribune
 
     public function update()
     {
-//        echo Post::where("id", "=", 1)->update(["response" => ]);
+        echo Html::getFirstImg("<b>asdfasdf</b>22< Javascript />aa" . "<a href=\"#\" onclick=\"alert(1);\">aaaaaaaaa</a>javascript<P><IMG SRC=javascript:alert('XSS')><javascript>alert('a')</javascript><IMG src=\"abc.jpg\"><IMG><P>Test</P><IMG src=\"abcdddd.jpg\"><IMG>");
     }
 }
