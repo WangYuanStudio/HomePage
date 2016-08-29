@@ -18,7 +18,7 @@ date_default_timezone_set('PRC');
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-29 14:27
+ * Last modified time: 2016-08-29 23:36
  */
 class Homework
 {
@@ -228,6 +228,8 @@ class Homework
 		// Windows下要转换 中文目录名/中文文件名
 		// $path = iconv('utf-8', 'gb2312', $path);
 		$path = self::HW_UNZIP_FOLDER.$path;
+		$path = str_replace('../', '', $path);
+		$path = str_replace('./', '', $path);
 		if (is_file($path)) {
 			$arr = explode('.', $path);
 			$ext = end($arr);
