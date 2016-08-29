@@ -1,8 +1,8 @@
 <?php
 /*
 *User: huizhe
-*Date: 2016/8/27
-*Time: 16:30
+*Date: 2016/8/29
+*Time: 17:18
 */
 
 namespace App\Controllers;
@@ -15,8 +15,8 @@ class Sign
 {
 	// public $middle = [
 	// 	'Insertnews' => 'Check_login',
-	// 	'Updateuser' => ['Check_login','Check_ManagerMember'],
-	// 	'CheckPower' => ['Check_login','Check_ManagerMember']
+	// 	'Signupreview' => ['Check_login','Check_ManagerMember'],
+	// 	'CheckPower' =>['Check_login','Check_ManagerMember']
 	// 	// 对所有方法判断登录
 	// ];
 
@@ -32,14 +32,17 @@ class Sign
 	*@param string $name    	名字
 	*@param string $sid          学号
 	*@param string $department 	部門
-	*@param string $class 		班级
+	*@param string $class 		年级
 	*@param string $phone 		长号	
 	*@param string $short_phone 	短号
+	*@param string $sex    			性别
+	*@param string $college      学院
+	*@param string $major        专业
 	*
 	*@return status.状态码  
 	*/
 
-	public function Insertnews($name,$sid,$department,$class,$phone,$short_phone)
+	public function Insertnews($name,$sid,$department,$class,$phone,$short_phone,$sex,$college,$major)
 	{
 		$uid=Session::get("user.id");
 		$truedata=0;
@@ -78,7 +81,10 @@ class Sign
 						"class"			=>$class,
 						"phone"			=>$phone,
 						"short_phone"	=>$short_phone,
-						"privilege"     =>0
+						"privilege"     =>0,
+						"sex"			=>$sex,
+						"college"       =>$college,
+						"major"			=>$major
 						]);
 						Response::out(200);
 						//Session::remove("code");	
