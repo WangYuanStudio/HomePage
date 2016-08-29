@@ -14,6 +14,7 @@ use App\Lib\Response;
 use App\Lib\Html;
 use App\Models\Post;
 use App\Models\Bbs;
+use App\Models\User;
 use App\Lib\SphinxClient;
 
 class Tribune
@@ -22,7 +23,7 @@ class Tribune
 //        "publish"      => ["Check_login", "Check_Operation_Count"],
 //        "response"     => ["Check_login", "Check_Operation_Count"],
 //        "getPublished" => "Check_login",
-//        "getUnReadNum" => "Check_login",
+//        "getMsg" => "Check_login",
 //        "searchPost"   => ["Check_login", "Check_Operation_Count"],
 //        "deletePost"   => ["Check_login", "Tribune_delete"],
 //        "deleteBbs"    => ["Check_login", "Tribune_delete"]
@@ -223,99 +224,165 @@ class Tribune
     }
 
 
-    /**论坛-查看个人中心-获取曾经发布的帖子和回复
+    /**论坛-个人中心-历史帖子
      *
-     * @param int $uid 0 用户id,默认值为登录者uid
+     * @param int $page 0 页码，默认第一页
+     * @param int $uid  0 用户id,默认值为登录者uid
      *
-     * @return post.帖子信息 bbs.被回复的信息,访问自己个人中心才有 unread.未读信息,访问自己个人中心才有
+     * @return post.帖子信息
      */
-    public function getPublished($uid = -1)
+    public function getPublished($page = 1, $uid = -1)
     {
-        $data = [];
+        $uid = $this->getUid($uid);
+        $page_size = 5;
 
-        if (-1 === $uid) {
-            $uid = 2;
+        $data = Post::where("uid", "=", $uid)
+            ->orderBy("time desc")
+            ->limit(($page - 1) * $page_size, $page_size)
+            ->select();
 
-            if ($data['unread'] = $this->getUnReadMsg($uid)) {
-                Bbs::where('point_uid', '=', $uid)->update(["is_read" => 1]);
-                Bbs::where('master_uid', '=', $uid)->update(["master_read" => 1]);
-            } else {
-                $data['bbs'] = Bbs::leftJoin("user", "user.id", "=", "bbs.uid")->where("bbs.point_uid", "=", $uid)->orderBy('time desc')->limit(0, 10)->select('user.nickname,user.mail,user.role,user.photo,bbs.*');
-            }
-        }
-        $data['post'] = Post::where("post.uid", "=", $uid)->orderBy('time desc')->limit(0, 5)->select();
+        $page_count = ceil(Post::where("uid", "=", $uid)
+                ->count("count")
+                ->select("")[0]["count"] / $page_size);
 
-        Response::out(200, $data);
+        Response::out(200, ["post" => $data, "page_count" => $page_count]);
     }
 
 
-    /**论坛-获取未读信息条数
+    /**论坛-我的消息-获取登录者的被回复信息
      *
-     * @return num.未读信息条数
+     * @param int $page 0 页码，默认第一页
+     *
+     * @return bbs.被回复的消息 page_count.总页数
      */
-    public function getUnReadNum()
+    public function getMsg($page = 1)
     {
-        Response::out(200, ["num" => count($this->getUnReadMsg(2))]);
+        $uid = Session::get("user.id");
+        $page_size = 6;
+
+        $data = Bbs::leftJoin("user author", "author.id", "=", "bbs.uid")
+            ->leftJoin("user point", "point.id", "=", "bbs.point_uid")
+            ->where("bbs.uid", "<>", $uid)
+            ->_and()
+            ->whereOrWhere(["bbs.point_uid", "=", $uid], ["bbs.master_uid", "=", $uid])
+            ->orderBy("bbs.time desc")
+            ->limit(($page - 1) * $page_size, $page_size)
+            ->select("bbs.*,author.nickname author_nickname,author.photo author_photo,point.nickname point_nickname,point.photo point_photo");
+
+        $page_count = ceil(Bbs::where("uid", "<>", $uid)
+                ->_and()
+                ->whereOrWhere(["point_uid", "=", $uid], ["master_uid", "=", $uid])
+                ->count("count")
+                ->select("")[0]["count"] / $page_size);
+
+        Response::out(200, ["bbs" => $data, "page_count" => $page_count]);
     }
 
 
-    /* 获取指定用户的未读信息
+    /**论坛-在指定用户的帖子里进行搜索
+     *
+     * @param string $key  关键字
+     * @param int    $page 页码，默认第一页
+     * @param int    $uid  用户id
+     *
+     * @return post.符合条件的帖子 page_count.总页数
+     */
+    public function searchUserPost($key, $page = 1, $uid = -1)
+    {
+        $uid = $this->getUid($uid);
+        $match_id = $this->sphinxSearch($key, "*");
+        $page_size = 5;
+
+        $post = Post::whereIn('id', $match_id)
+            ->andWhere("uid", "=", $uid)
+            ->orderBy('field(id,' . implode(",", $match_id) . ')')
+            ->limit(($page - 1) * $page_size, $page_size)
+            ->select();
+
+        $page_count = ceil(Post::whereIn('id', $match_id)
+                ->andWhere("uid", "=", $uid)
+                ->count("count")
+                ->select("")[0]["count"] / $page_size);
+
+        Response::out(200, ["post" => $post, "page_count" => $page_count]);
+    }
+
+
+    /* 获取uid
      *
      * @param $uid
      *
      * @return mixed
      */
-    private function getUnReadMsg($uid)
+    private function getUid($uid)
     {
-        return Bbs::raw(
-            '(select bbs.*,author.nickname author_nickname,author.photo author_photo,point.nickname point_nickname,point.photo point_photo from bbs left join user author on author.id=bbs.uid left join user point on point.id=bbs.point_uid where point_uid=? and is_read=0 and uid<>?) union (select bbs.*,author.nickname author_nickname,author.photo author_photo,point.nickname point_nickname,point.photo point_photo from bbs left join user author on author.id=bbs.uid left join user point on point.id=bbs.point_uid where master_uid=? and master_read=0 and uid<>?) order by time desc',
-            [$uid, $uid, $uid, $uid]
-        );
+        if (-1 === $uid) {
+            $uid = Session::get("user.id");
+        }
+
+        return $uid;
     }
 
 
     /**论坛-搜索指定内容的帖子或回复
      *
-     * @param string $key 关键字
+     * @param string $key  关键字
+     * @param int    $page 页码，默认第一页
      *
-     * @return post.符合条件的帖子
+     * @return post.符合条件的帖子 page_count.总页数
      */
-    public function searchPost($key)
+    public function searchPost($key, $page = 1)
     {
-        $sphinx = new SphinxClient();
-        $sphinx->SetServer("sphinx", 9312);
-        $sphinx->SetMatchMode(SPH_MATCH_ANY);
+        $match_id = $this->sphinxSearch($key, "*");
+        $page_size = 7;
 
-        $post = $this->sphinxSearch($sphinx, $key, "post", "*");
-//        $bbs = $this->sphinxSearch($sphinx, $key, "bbs", "bbs");
+        $post = Post::leftJoin('user', 'user.id', '=', 'post.uid')
+            ->whereIn('post.id', $match_id)
+            ->orderBy('field(post.id,' . implode(",", $match_id) . ')')
+            ->limit(($page - 1) * $page_size, $page_size)
+            ->select("user.nickname,user.photo,post.id,post.title,post.short_content,post.time,post.last_time,post.view,post.response,post.img");
 
-        Response::out(200, ["post" => $post]);
+        $page_count = ceil(Post::whereIn('id', $match_id)
+                ->count("count")
+                ->select("")[0]["count"] / $page_size);
+
+        Response::out(200, ["post" => $post, "page_count" => $page_count]);
     }
 
 
     /* 搜索关键字
      *
-     * @param $sphinx
      * @param $key
      * @param $table
      * @param $index
      *
      * @return mixed
      */
-    private function sphinxSearch(&$sphinx, $key, $table, $index)
+    private function sphinxSearch($key, $index)
     {
+        $sphinx = new SphinxClient();
+        $sphinx->SetServer("sphinx", 9312);
+        $sphinx->SetMatchMode(SPH_MATCH_ANY);
+
         $search = $sphinx->Query($key, $index);
         if (isset($search["matches"])) {
-            $match_id = array_keys($search["matches"]);
-
-            switch ($table) {
-                //no break at all
-                case "post":
-                    return Post::whereIn('id', $match_id)->orderBy('field(id,' . implode(",", $match_id) . ')')->select();
-                case "bbs":
-                    return Bbs::leftJoin("user", "user.id", "=", "bbs.uid")->whereIn('bbs.id', $match_id)->orderBy('field(bbs.id,' . implode(",", $match_id) . ')')->select("user.nickname,user.mail,user.role,user.photo,bbs.*");
-            }
+            return array_keys($search["matches"]);
         }
+    }
+
+
+    /**论坛-获取用户的基本资料
+     *
+     * @param int $uid 用户id
+     *
+     * @return data.用户资料
+     */
+    public function getUserInfo($uid = -1)
+    {
+        $uid = $this->getUid($uid);
+        $data = User::leftJoin("role", "role.id", "=", "user.role")->where("user.id", "=", $uid)->select("user.nickname,user.photo,role.name role")[0];
+
+        Response::out(200, $data);
     }
 
 
