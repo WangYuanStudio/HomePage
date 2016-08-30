@@ -10,6 +10,7 @@ namespace App\Controllers;
 use App\Models\Info;
 use App\Models\User;
 use App\Lib\Response;
+use App\Lib\Html;
 
 class Sign
 {
@@ -74,18 +75,19 @@ class Sign
 					Response::out(420);
 					}else{																										
 						$insert_news=Info::insert([
-						"uid" 		 	=>$uid,
-						"name" 			=>$name,
-						"sid"			=>$sid,
-						"department" 	=>$department,
-						"class"			=>$class,
-						"phone"			=>$phone,
-						"short_phone"	=>$short_phone,
-						"privilege"     =>0,
-						"sex"			=>$sex,
-						"college"       =>$college,
-						"major"			=>$major
+						"uid" 		 	=> $uid,
+						"name" 			=> Html::removeSpecialChars($name),
+						"sid"			=> Html::removeSpecialChars($sid),
+						"department" 	=> Html::removeSpecialChars($department),
+						"class"			=> Html::removeSpecialChars($class),
+						"phone"			=> Html::removeSpecialChars($phone),
+						"short_phone"	=> Html::removeSpecialChars($short_phone),
+						"privilege"     => 0,
+						"sex"			=> Html::removeSpecialChars($sex),
+						"college"       => Html::removeSpecialChars($college),
+						"major"			=> Html::removeSpecialChars($major)
 						]);
+						
 						Response::out(200);
 						//Session::remove("code");	
 					}				

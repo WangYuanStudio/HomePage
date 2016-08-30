@@ -12,6 +12,7 @@ use App\Lib\Document;
 use App\Lib\Mail;
 use App\Lib\Vcode;
 use App\Lib\Response;
+use App\Lib\Html;
 
  class Enroll
  {
@@ -56,6 +57,7 @@ use App\Lib\Response;
 		if(time()<=Cache::get($token."register_time")){
 			if($token==Cache::get($token."register_token")){									
 				$password=Cache::get($token."password");
+				$password=Html::removeSpecialChars($password);
 				$password=password_hash($password,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
 				$login_id=User::Insert([
 				"nickname" =>Cache::get($token."nickname"),
@@ -132,10 +134,11 @@ use App\Lib\Response;
 					if(strlen($password)>=6){
 						if(Cache::has($mail)){
 							Response::out(419);
-						}else{
+						}else{														
+							
 							$token=md5(rand(10000,99999).time());			
 							Cache::set([
-							$token."nickname"=>$nickname,
+							$token."nickname"=>Html::removeSpecialChars($nickname),
 							$token."mail"=>$mail,
 							$token."password"=>$password,				
 							$token."register_token" =>$token,
@@ -261,6 +264,7 @@ use App\Lib\Response;
 				if($password==$password2)
 				{
 					if(strlen($password)>=6){
+						$password=Html::removeSpecialChars($password);						
 						$password=password_hash($password,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
 						$update_psw=User::where('mail','=',Cache::get($token."search_mail"))->Update([
 						"password" =>$password
@@ -303,6 +307,7 @@ use App\Lib\Response;
 		{
 			if($password1==$password2){
 				if(strlen($password1)>=6){
+					$password1=Html::removeSpecialChars($password1);											
 					$password1=password_hash($password1,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
 				 	$update_psw=User::where('id','=',$uid)->Update([
 					"password" =>$password1
@@ -333,9 +338,9 @@ use App\Lib\Response;
 
 	public function Updateuser($nickname)
 	{	
-		$uid = 	Session::get("user.id");
+		$uid = 	Session::get("user.id");					
 		$update_user=User::where('id','=',$uid)->Update([					
-			"nickname" => $nickname
+			"nickname" => Html::removeSpecialChars($nickname)
 				]);	
 		if(1==$update_user){			
 			Response::out(200);
@@ -374,5 +379,5 @@ use App\Lib\Response;
 			return false;
 		}
 	}
-
+	
 }
