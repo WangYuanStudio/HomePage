@@ -424,6 +424,6 @@ class Tribune
 
     public function update()
     {
-        echo Html::getFirstImg("<b>asdfasdf</b>22< Javascript />aa" . "<a href=\"#\" onclick=\"alert(1);\">aaaaaaaaa</a>javascript<P><IMG SRC=javascript:alert('XSS')><javascript>alert('a')</javascript><IMG src=\"abc.jpg\"><IMG><P>Test</P><IMG src=\"abcdddd.jpg\"><IMG>");
+        Common::setInform(1, "论坛", "你收到一条回复", "www.wangyuan.info");
     }
 }
