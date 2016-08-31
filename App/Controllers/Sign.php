@@ -30,15 +30,15 @@ class Sign
 	];
 
 	/**报名系统-实现报名
-	*@param string $name    	名字
+	*@param string $name    	名字(10内)
 	*@param string $sid          学号
 	*@param string $department 	部門
 	*@param string $class 		年级
 	*@param string $phone 		长号	
 	*@param string $short_phone 	短号
 	*@param string $sex    			性别
-	*@param string $college      学院
-	*@param string $major        专业
+	*@param string $college      学院(16内)
+	*@param string $major        专业(16内)
 	*
 	*@return status.状态码  
 	*/

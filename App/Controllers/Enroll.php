@@ -111,7 +111,7 @@ use App\Lib\Html;
 	/**官网-发送邮件
 	*
 	*@param string $mail 	邮箱
-	*@param string $nickname		昵称
+	*@param string $nickname		昵称(16内)
 	*@param string $password     密码 
 	*
 	*@return status.状态码 
@@ -331,7 +331,7 @@ use App\Lib\Html;
 
 	/**官网-修改个人信息
 	*
-	*@param string $nickname		昵称
+	*@param string $nickname		昵称(16内)
 	*
 	*@return status.状态码
 	*/
