@@ -9,6 +9,7 @@
 namespace App\Controllers;
 
 use App\Lib\Response;
+use App\Models\Inform;
 
 class Common
 {
@@ -58,5 +59,60 @@ class Common
         } else {
             Response::out(302);
         }
+    }
+
+
+    /* 添加用户通知
+     *
+     * @param int    $uid      用户id
+     * @param string $classify 分类(论坛，报名，作业，官网)
+     * @param string $content  通知的内容(简述)
+     * @param string $url      跳转地址
+     *
+     * @return bool
+     */
+    public static function setInform($uid, $classify, $content, $url)
+    {
+        Inform::insert([
+            "uid"      => $uid,
+            "classify" => $classify,
+            "content"  => $content,
+            "url"      => $url,
+            "time"     => date("Y-m-d H:i:s")
+        ]);
+
+        return true;
+    }
+
+
+    /**获取我的通知列表
+     *
+     */
+    public function getInform()
+    {
+        if ($data = Inform::whereAndWhere(["uid", "=", Session::get("user.id")], ["is_read", "=", 0])
+            ->orderBy("time desc")
+            ->select()
+        ) {
+            Inform::whereAndWhere(["uid", "=", Session::get("user.id")], ["is_read", "=", 0])
+                ->update([
+                    "is_read" => 1
+                ]);
+        }
+
+        Response::out(200, $data);
+    }
+
+
+    /**获取我的通知数目
+     *
+     */
+    public function getInformNum()
+    {
+        $num = Inform::whereAndWhere(["uid", "=", Session::get("user.id")], ["is_read", "=", 0])
+            ->count("count")
+            ->select("")[0]["count"];
+
+        Response::out(200, ["num" => $num]);
     }
 }

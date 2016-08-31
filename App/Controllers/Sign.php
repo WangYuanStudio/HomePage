@@ -10,6 +10,7 @@ namespace App\Controllers;
 use App\Models\Info;
 use App\Models\User;
 use App\Lib\Response;
+use App\Lib\Html;
 
 class Sign
 {
@@ -29,15 +30,15 @@ class Sign
 	];
 
 	/**报名系统-实现报名
-	*@param string $name    	名字
+	*@param string $name    	名字(10内)
 	*@param string $sid          学号
 	*@param string $department 	部門
 	*@param string $class 		年级
 	*@param string $phone 		长号	
 	*@param string $short_phone 	短号
 	*@param string $sex    			性别
-	*@param string $college      学院
-	*@param string $major        专业
+	*@param string $college      学院(16内)
+	*@param string $major        专业(16内)
 	*
 	*@return status.状态码  
 	*/
@@ -74,18 +75,19 @@ class Sign
 					Response::out(420);
 					}else{																										
 						$insert_news=Info::insert([
-						"uid" 		 	=>$uid,
-						"name" 			=>$name,
-						"sid"			=>$sid,
-						"department" 	=>$department,
-						"class"			=>$class,
-						"phone"			=>$phone,
-						"short_phone"	=>$short_phone,
-						"privilege"     =>0,
-						"sex"			=>$sex,
-						"college"       =>$college,
-						"major"			=>$major
+						"uid" 		 	=> $uid,
+						"name" 			=> Html::removeSpecialChars($name),
+						"sid"			=> Html::removeSpecialChars($sid),
+						"department" 	=> Html::removeSpecialChars($department),
+						"class"			=> Html::removeSpecialChars($class),
+						"phone"			=> Html::removeSpecialChars($phone),
+						"short_phone"	=> Html::removeSpecialChars($short_phone),
+						"privilege"     => 0,
+						"sex"			=> Html::removeSpecialChars($sex),
+						"college"       => Html::removeSpecialChars($college),
+						"major"			=> Html::removeSpecialChars($major)
 						]);
+						
 						Response::out(200);
 						//Session::remove("code");	
 					}				
