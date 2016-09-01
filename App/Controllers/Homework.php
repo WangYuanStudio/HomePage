@@ -10,6 +10,7 @@ use App\Lib\PclZip;
 use App\Lib\Authorization;
 use App\Models\User;
 use App\Models\Info;
+use App\Controllers\Common;
 
 date_default_timezone_set('PRC');
 
@@ -18,7 +19,7 @@ date_default_timezone_set('PRC');
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-29 23:36
+ * Last modified time: 2016-09-01 20:46
  */
 class Homework
 {
@@ -72,8 +73,8 @@ class Homework
 	private $loginedUser;
 
 	public function __construct() {
-		$test = User::where('id', '=', 2)->select();	// test: 1管理员 2编程部成员 3前端成员 4编程部实习生 5游客
-		$this->loginedUser = $test[0];//Session::get('user');
+		//$test = User::where('id', '=', 2)->select();	// test: 1管理员 2编程部成员 3前端成员 4编程部实习生 5游客
+		$this->loginedUser = Session::get('user');
 	}
 
 	/**作业系统 - 获取某用户/某任务优秀作业
@@ -450,6 +451,8 @@ class Homework
 				'comment_uid' => $this->loginedUser['id'],
 				'comment_time' => date("Y-m-d H:i:s", time())
 			]);
+			// 消息通知
+			Common::setInform($t[0]['uid'], "作业", "您于".$t[0]['time']."提交的作业已被批改，快去看看！", "");
 			Response::out(200);
 		} else {
 			// rid无效
@@ -499,6 +502,8 @@ class Homework
 					'recommend' => 1,
 					'unpack_path' => $dst
 				]);
+				// 消息通知
+				Common::setInform($value['uid'], "作业", "您于".$value['time']."提交的作业已被设置为优秀作业，快去看看！", "");
 				Response::out(200);
 			} else {
 				// 解压失败
@@ -506,10 +511,13 @@ class Homework
 				Response::out(507);
 			}
 		} else {
-			if ($t[0]['recommend'] == 0)
+			if ($t[0]['recommend'] == 0) {
 				Hws_Record::where('id', '=', $value['id'])->update([
 					'recommend' => 1
 				]);
+				// 消息通知
+				Common::setInform($value['uid'], "作业", "您于".$value['time']."提交的作业已被设置为优秀作业，快去看看！", "");
+			}
 			Response::out(200);
 		}
 	}
