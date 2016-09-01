@@ -74,7 +74,7 @@ class Sign
 					if(1==$check_uid){
 					Response::out(420);
 					}else{
-						if(strlen(Html::removeSpecialChars($name))>30||strlen($sid)>11||strlen($department)>15||strlen($class)>20||strlen($sex)>3||strlen($college)>50||strlen($major)>50||strlen($phone)>11||strlen($short_phone)>6)	
+						if(strlen(Html::removeSpecialChars($name))>30||strlen($sid)>11||strlen($department)>15||strlen(Html::removeSpecialChars($class))>20||strlen($sex)>3||strlen(Html::removeSpecialChars($college))>50||strlen(Html::removeSpecialChars($major))>50||strlen($phone)>11||strlen($short_phone)>6)	
 						{
 							Response::out(304);
 						}else{
