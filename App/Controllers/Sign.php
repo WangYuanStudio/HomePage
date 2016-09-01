@@ -73,23 +73,27 @@ class Sign
 				else{
 					if(1==$check_uid){
 					Response::out(420);
-					}else{																										
-						$insert_news=Info::insert([
-						"uid" 		 	=> $uid,
-						"name" 			=> Html::removeSpecialChars($name),
-						"sid"			=> Html::removeSpecialChars($sid),
-						"department" 	=> Html::removeSpecialChars($department),
-						"class"			=> Html::removeSpecialChars($class),
-						"phone"			=> Html::removeSpecialChars($phone),
-						"short_phone"	=> Html::removeSpecialChars($short_phone),
-						"privilege"     => 0,
-						"sex"			=> Html::removeSpecialChars($sex),
-						"college"       => Html::removeSpecialChars($college),
-						"major"			=> Html::removeSpecialChars($major)
-						]);
-						
-						Response::out(200);
-						//Session::remove("code");	
+					}else{
+						if(strlen(Html::removeSpecialChars($name))>30||strlen($sid)>11||strlen($department)>15||strlen($class)>20||strlen($sex)>3||strlen($college)>50||strlen($major)>50||strlen($phone)>11||strlen($short_phone)>6)	
+						{
+							Response::out(304);
+						}else{
+							$insert_news=Info::insert([
+							"uid" 		 	=> $uid,
+							"name" 			=> Html::removeSpecialChars($name),
+							"sid"			=> $sid,
+							"department" 	=> Html::removeSpecialChars($department),
+							"class"			=> Html::removeSpecialChars($class),
+							"phone"			=> $phone,
+							"short_phone"	=> $short_phone,
+							"privilege"     => 0,
+							"sex"			=> $sex,
+							"college"       => Html::removeSpecialChars($college),
+							"major"			=> Html::removeSpecialChars($major)
+							]);
+							Response::out(200);
+							//Session::remove("code");	
+						}
 					}				
 				}
 			}else{
