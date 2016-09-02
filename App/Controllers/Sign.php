@@ -151,7 +151,11 @@ class Sign
 		]);
 		if(1==$check&&1==$check_info){
 			// 消息通知
-			Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
+			if(1==$privilege){
+				Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
+			}else{
+				Common::setInform($uid, "报名", "报名失败", "您于".date("Y-m-d H:i:s")."报名审核不通过，快去看看！", "");
+			}
 			Response::out(200);
 		}else{
 			Response::out(404);
