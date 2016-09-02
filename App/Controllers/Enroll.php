@@ -113,10 +113,11 @@ use App\Lib\Html;
 	*@param string $mail 	邮箱
 	*@param string $nickname		昵称(16内)
 	*@param string $password     密码 
+	*@param string $password2    密码2
 	*
 	*@return status.状态码 
 	*/
-	public function sendEmail($mail,$nickname,$password)
+	public function sendEmail($mail,$nickname,$password,$password2)
 	{
 		$checkdata=0;
 		if(preg_match("/([\w\-]+\@[\w\-]+\.[\w\-]+)/",$mail))
@@ -131,31 +132,38 @@ use App\Lib\Html;
 			{
 				Response::out(408);
 			}else{					
-					if(strlen($password)>=6){
-						if(Cache::has($mail)){
-							Response::out(419);
-						}else{														
-							
-							$token=md5(rand(10000,99999).time());			
-							Cache::set([
-							$token."nickname"=>Html::removeSpecialChars($nickname),
-							$token."mail"=>$mail,
-							$token."password"=>$password,				
-							$token."register_token" =>$token,
-							$token."register_time"	=>time()+30*60,	
-							$mail =>123					
-							],1800);															
-							$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
+				if($password!=$password2){
+					Response::out(414);
+				}else{
+					if(strlen(Html::removeSpecialChars($nickname))>51||strlen($mail)>51||strlen(Html::removeSpecialChars($password))>60){
+						Response::out(304);
+					}else{
+						if(strlen($password)>=6){
+							if(Cache::has($mail)){
+								Response::out(419);
+							}else{														
+								$token=md5(rand(10000,99999).time());			
+								Cache::set([
+								$token."nickname"=>Html::removeSpecialChars($nickname),
+								$token."mail"=>$mail,
+								$token."password"=>$password,				
+								$token."register_token" =>$token,
+								$token."register_time"	=>time()+30*60,	
+								$mail =>123					
+								],1800);															
+								$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
 					（注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>
     <a href='http://127.0.0.1:8080/Enroll/Register?token=".$token."' target= 
 '_blank'>/http://127.0.0.1:8080/Enroll/Register?token=".$token."</a><br/> 
     如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
-							Mail::to($mail)->title("WangYuanStudio")->content($emailbody);							
-							Response::out(200);
-						}
-					}else{
-						Response::out(418);
-					}								
+								Mail::to($mail)->title("WangYuanStudio")->content($emailbody);				
+								Response::out(200);
+							}
+						}else{
+							Response::out(418);
+						}	
+					}
+				}							
 			}
 		}else{
 			Response::out(409);
@@ -264,27 +272,31 @@ use App\Lib\Html;
 				if($password==$password2)
 				{
 					if(strlen($password)>=6){
-						$password=Html::removeSpecialChars($password);						
-						$password=password_hash($password,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
-						$update_psw=User::where('mail','=',Cache::get($token."search_mail"))->Update([
-						"password" =>$password
-						]);
-						if(1==$update_psw)
+						if(strlen(Html::removeSpecialChars($password))>60)
 						{
-							Response::out(200);
-							$mail=Cache::get($token."search_mail");
-							Cache::delete([$token."search_time",$token."search_token",$token."search_mail",$mail]);
+							Response::out(304);
 						}else{
-							Response::out(415);
-						}
+							$password=Html::removeSpecialChars($password);						
+							$password=password_hash($password,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
+							$update_psw=User::where('mail','=',Cache::get($token."search_mail"))->Update([
+							"password" =>$password
+							]);
+							if(1==$update_psw)
+							{
+								Response::out(200);
+								$mail=Cache::get($token."search_mail");
+								Cache::delete([$token."search_time",$token."search_token",$token."search_mail",$mail]);
+							}else{
+								Response::out(415);
+							}
+						}					
 					}else{
 						Response::out(418);
 					}
 				}else{
 					Response::out(414);
 				}
-			}else
-			{
+			}else{
 				Response::out(411);
 			}
 		}else{
@@ -307,16 +319,20 @@ use App\Lib\Html;
 		{
 			if($password1==$password2){
 				if(strlen($password1)>=6){
-					$password1=Html::removeSpecialChars($password1);											
-					$password1=password_hash($password1,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
-				 	$update_psw=User::where('id','=',$uid)->Update([
-					"password" =>$password1
-					]);
-					if(1==$update_psw){
-						Cache::delete($re_verify."send_verify");
-						Response::out(200);
+					if(strlen(Html::removeSpecialChars($password))>60){
+						Response::out(304);
 					}else{
-						Response::out(415);
+						$password1=Html::removeSpecialChars($password1);											
+						$password1=password_hash($password1,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
+				 		$update_psw=User::where('id','=',$uid)->Update([
+						"password" =>$password1
+						]);
+						if(1==$update_psw){
+							Cache::delete($re_verify."send_verify");
+							Response::out(200);
+						}else{
+							Response::out(415);
+						}
 					}
 				}else{
 					Response::out(418);
@@ -337,15 +353,19 @@ use App\Lib\Html;
 	*/
 
 	public function Updateuser($nickname)
-	{	
-		$uid = 	Session::get("user.id");					
-		$update_user=User::where('id','=',$uid)->Update([					
-			"nickname" => Html::removeSpecialChars($nickname)
-				]);	
-		if(1==$update_user){			
-			Response::out(200);
+	{
+		if(strlen(Html::removeSpecialChars($nickname))>51){	
+			Response::out(304);
 		}else{
-			Response::out(417);
+			$uid = 	Session::get("user.id");					
+			$update_user=User::where('id','=',$uid)->Update([					
+				"nickname" => Html::removeSpecialChars($nickname)
+				]);	
+			if(1==$update_user){			
+				Response::out(200);
+			}else{
+				Response::out(417);
+			}
 		}							 				
 	}
 

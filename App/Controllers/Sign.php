@@ -11,6 +11,7 @@ use App\Models\Info;
 use App\Models\User;
 use App\Lib\Response;
 use App\Lib\Html;
+use App\Controllers\Common;
 
 class Sign
 {
@@ -73,23 +74,27 @@ class Sign
 				else{
 					if(1==$check_uid){
 					Response::out(420);
-					}else{																										
-						$insert_news=Info::insert([
-						"uid" 		 	=> $uid,
-						"name" 			=> Html::removeSpecialChars($name),
-						"sid"			=> Html::removeSpecialChars($sid),
-						"department" 	=> Html::removeSpecialChars($department),
-						"class"			=> Html::removeSpecialChars($class),
-						"phone"			=> Html::removeSpecialChars($phone),
-						"short_phone"	=> Html::removeSpecialChars($short_phone),
-						"privilege"     => 0,
-						"sex"			=> Html::removeSpecialChars($sex),
-						"college"       => Html::removeSpecialChars($college),
-						"major"			=> Html::removeSpecialChars($major)
-						]);
-						
-						Response::out(200);
-						//Session::remove("code");	
+					}else{
+						if(strlen(Html::removeSpecialChars($name))>30||strlen($sid)>11||strlen($department)>15||strlen(Html::removeSpecialChars($class))>20||strlen($sex)>3||strlen(Html::removeSpecialChars($college))>50||strlen(Html::removeSpecialChars($major))>50||strlen($phone)>11||strlen($short_phone)>6)	
+						{
+							Response::out(304);
+						}else{
+							$insert_news=Info::insert([
+							"uid" 		 	=> $uid,
+							"name" 			=> Html::removeSpecialChars($name),
+							"sid"			=> $sid,
+							"department" 	=> Html::removeSpecialChars($department),
+							"class"			=> Html::removeSpecialChars($class),
+							"phone"			=> $phone,
+							"short_phone"	=> $short_phone,
+							"privilege"     => 0,
+							"sex"			=> $sex,
+							"college"       => Html::removeSpecialChars($college),
+							"major"			=> Html::removeSpecialChars($major)
+							]);
+							Response::out(200);
+							//Session::remove("code");	
+						}
 					}				
 				}
 			}else{
@@ -145,6 +150,12 @@ class Sign
 					"privilege"=>$privilege
 		]);
 		if(1==$check&&1==$check_info){
+			// 消息通知
+			if(1==$privilege){
+				Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
+			}else{
+				Common::setInform($uid, "报名", "报名失败", "您于".date("Y-m-d H:i:s")."报名审核不通过，快去看看！", "");
+			}
 			Response::out(200);
 		}else{
 			Response::out(404);
@@ -175,5 +186,5 @@ class Sign
         }       
         Response::out(200,['data'=>$data]);
 	}
-	
+
 }
