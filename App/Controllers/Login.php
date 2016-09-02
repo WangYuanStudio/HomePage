@@ -35,6 +35,12 @@ class Login
         {
           Session::set("errer_num", 0);
         }
+      if(Session::get("errer_num")>3)
+      {
+         if(!Verify::auth()){
+            return false;
+         }
+      }
         $d=User::where('mail', '=', $mail)->select();//判断邮箱是否存在
         if(sizeof($d)!=0)//邮箱存在
         {
@@ -73,7 +79,7 @@ class Login
                 $p= Session::get("errer_num");
                 $p++;
                 Session::set("errer_num", $p);
-                if($p>=3)
+                if($p>3)
                 {
                   Response::out(650);
                 }
@@ -89,6 +95,7 @@ class Login
              Response::out(610);
           }
         }
+      }
         else
         {
           Response::out(630);
