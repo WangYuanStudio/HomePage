@@ -120,7 +120,7 @@ class Tribune
     {
         $this->checkKey($response_key, "response_key");
 
-        //获取被回复帖子的数据
+        //获取被回复帖子或楼层的数据
         $data = "";
         if ($pid > 0) {
             $data = Post::where("id", "=", $pid)->select("id pid,response,uid");
@@ -151,6 +151,15 @@ class Tribune
             Post::where("id", "=", $data["pid"])->increment("response");
             //更新最后回复时间
             Post::where("id", "=", $data["pid"])->update(["last_time" => $time]);
+            //添加消息列表
+            if (isset($data["puid"]) && $data["puid"] !== $data["uid"]) {
+                //回复其他楼层
+                Common::setInform($data["puid"], "论坛消息", "收到回复", "您的帖子收到一条回复，请点击查看！", "wangyuan.info");
+                Common::setInform($data["uid"], "论坛消息", "收到回复", "您收到一条回复，请点击查看！", "wangyuan.info");
+            } else {
+                //回复楼主
+                Common::setInform($data["uid"], "论坛消息", "收到回复", "您的帖子收到一条回复，请点击查看！", "wangyuan.info");
+            }
 
             Response::out(200, ["floor" => $data["response"] + 2]);
         } else {
@@ -424,6 +433,6 @@ class Tribune
 
     public function update()
     {
-        Common::setInform(1, "论坛", "你收到一条回复", "www.wangyuan.info");
+        //Common::setInform(1, "论坛", "你收到一条回复", "www.wangyuan.info");
     }
 }
