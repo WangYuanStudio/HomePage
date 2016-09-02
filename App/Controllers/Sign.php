@@ -11,6 +11,7 @@ use App\Models\Info;
 use App\Models\User;
 use App\Lib\Response;
 use App\Lib\Html;
+use App\Controllers\Common;
 
 class Sign
 {
@@ -149,6 +150,8 @@ class Sign
 					"privilege"=>$privilege
 		]);
 		if(1==$check&&1==$check_info){
+			// 消息通知
+			Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
 			Response::out(200);
 		}else{
 			Response::out(404);
@@ -179,5 +182,5 @@ class Sign
         }       
         Response::out(200,['data'=>$data]);
 	}
-	
+
 }
