@@ -21,12 +21,25 @@ return [
      * 数据库配置
      */
     'database'  => [
-        "drive"   => "mysql",
-        "host"    => "mysql",
-        "dbname"  => "wangyuan",
-        "user"    => "root",
-        "pwd"     => "Wyzxgzs#08",
-        "charset" => "utf8"
+        'master' => [
+            "drive"   => "mysql",
+            "host"    => "mysql",
+            "dbname"  => "wangyuan",
+            "user"    => "root",
+            "pwd"     => "Wyzxgzs#08",
+            "charset" => "utf8"
+        ],
+
+        'slave' => [
+            [
+                "drive"   => "mysql",
+                "host"    => "123.207.240.115",
+                "dbname"  => "wangyuan",
+                "user"    => "root",
+                "pwd"     => "Wyzxgzs#08",
+                "charset" => "utf8"
+            ]
+        ]
     ],
 
 
@@ -99,8 +112,7 @@ return [
         300 => 'Invalid login status.',
         301 => 'Permission denied.',
         302 => 'Verify code was wrong.',
-        303 => 'Operations are too frequent.',
-        304 => 'Beyond the word limit.'
+        303 => 'Operations are too frequent'
     ]
 
 ];
