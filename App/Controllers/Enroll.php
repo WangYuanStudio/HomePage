@@ -13,6 +13,7 @@ use App\Lib\Mail;
 use App\Lib\Vcode;
 use App\Lib\Response;
 use App\Lib\Html;
+use App\lib\Verify;
 
  class Enroll
  {
@@ -141,23 +142,25 @@ use App\Lib\Html;
 						if(strlen($password)>=6){
 							if(Cache::has($mail)){
 								Response::out(419);
-							}else{														
-								$token=md5(rand(10000,99999).time());			
-								Cache::set([
-								$token."nickname"=>Html::removeSpecialChars($nickname),
-								$token."mail"=>$mail,
-								$token."password"=>$password,				
-								$token."register_token" =>$token,
-								$token."register_time"	=>time()+30*60,	
-								$mail =>123					
-								],1800);															
-								$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
+							}else{
+								if(Verify::auth()){														
+									$token=md5(rand(10000,99999).time());			
+									Cache::set([
+									$token."nickname"=>Html::removeSpecialChars($nickname),
+									$token."mail"=>$mail,
+									$token."password"=>$password,				
+									$token."register_token" =>$token,
+									$token."register_time"	=>time()+30*60,	
+									$mail =>123					
+									],1800);															
+									$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
 					（注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>
     <a href='http://127.0.0.1:8080/Enroll/Register?token=".$token."' target= 
 '_blank'>/http://127.0.0.1:8080/Enroll/Register?token=".$token."</a><br/> 
     如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
-								Mail::to($mail)->title("WangYuanStudio")->content($emailbody);				
-								Response::out(200);
+									Mail::to($mail)->title("WangYuanStudio")->content($emailbody);				
+									Response::out(200);
+								}
 							}
 						}else{
 							Response::out(418);
