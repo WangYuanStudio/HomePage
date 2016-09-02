@@ -54,7 +54,11 @@ class Common
                 }
             }
 
+            //删除记录次数
             Cache::delete(Session::get("user.id") ?: $_SERVER["REMOTE_ADDR"]);
+            //标记验证过关
+            Session::set("verify_auth", 1);
+
             Response::out(200);
         } else {
             Response::out(302);
@@ -66,17 +70,19 @@ class Common
      *
      * @param int    $uid      用户id
      * @param string $classify 分类(论坛，报名，作业，官网)
+     * @param string $title    标题
      * @param string $content  通知的内容(简述)
      * @param string $url      跳转地址
      *
      * @return bool
      */
-    public static function setInform($uid, $classify, $content, $url)
+    public static function setInform($uid, $classify, $title, $content, $url)
     {
         Inform::insert([
             "uid"      => $uid,
             "classify" => $classify,
             "content"  => $content,
+            "title"    => $title,
             "url"      => $url,
             "time"     => date("Y-m-d H:i:s")
         ]);
