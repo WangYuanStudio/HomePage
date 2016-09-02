@@ -19,7 +19,7 @@ date_default_timezone_set('PRC');
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-09-01 20:46
+ * Last modified time: 2016-09-02 17:29
  */
 class Homework
 {
@@ -452,7 +452,7 @@ class Homework
 				'comment_time' => date("Y-m-d H:i:s", time())
 			]);
 			// 消息通知
-			Common::setInform($t[0]['uid'], "作业", "您于".$t[0]['time']."提交的作业已被批改，快去看看！", "");
+			Common::setInform($t[0]['uid'], "作业消息", "作业已被批改", "您于".$t[0]['time']."提交的作业已被批改，快去看看！", "");
 			Response::out(200);
 		} else {
 			// rid无效
@@ -503,7 +503,7 @@ class Homework
 					'unpack_path' => $dst
 				]);
 				// 消息通知
-				Common::setInform($value['uid'], "作业", "您于".$value['time']."提交的作业已被设置为优秀作业，快去看看！", "");
+				Common::setInform($value['uid'], "作业消息", "作业被设置为优秀作业", "您于".$value['time']."提交的作业已被设置为优秀作业，快去看看！", "");
 				Response::out(200);
 			} else {
 				// 解压失败
@@ -516,7 +516,7 @@ class Homework
 					'recommend' => 1
 				]);
 				// 消息通知
-				Common::setInform($value['uid'], "作业", "您于".$value['time']."提交的作业已被设置为优秀作业，快去看看！", "");
+				Common::setInform($value['uid'], "作业消息", "作业被设置为优秀作业", "您于".$value['time']."提交的作业已被设置为优秀作业，快去看看！", "");
 			}
 			Response::out(200);
 		}
