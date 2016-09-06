@@ -89,9 +89,9 @@ class Index
        }
     }
 
-      /**官网—游客发表留言(字符串长度<600)
-   ** @param string $message 留言信息
-    * @return status.状态 errmsg.错误信息
+  /**官网—游客发表留言(字符串长度<600)
+   * @param string $message 留言信息
+   * @return status.状态 errmsg.错误信息
    */
     public function Send_message($message)
     {
@@ -163,9 +163,9 @@ class Index
     }
   /**官网—删除网园动态
     *
-   ** @param string $id 动态的id
+    * @param string $id 动态的id
     * @return status.状态 errmsg.错误信息
-   */
+    */
     public function del_article($id)  
     {
       $statuss= Article::where('id', '=',$id)->delete();
