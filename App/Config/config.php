@@ -119,7 +119,8 @@ return [
         307 => 'no role list',
         308 => 'fail to delete',
         309 => 'fail to update',
-        310 => 'permission is already assign'
+        310 => 'permission is already assign'，
+        311 => 'Did not find relevant content.'
         ]
 
 ];
