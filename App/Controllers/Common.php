@@ -10,9 +10,9 @@ namespace App\Controllers;
 
 use App\Lib\Response;
 use App\Models\Inform;
-use APP\Models\Permission;
 use App\Models\Role;
 use App\Models\Role_Permission;
+use App\Models\Permission;
 
 class Common
 {
@@ -125,16 +125,16 @@ class Common
         Response::out(200, ["num" => $num]);
     }
 
-    /* 添加权限
+    /**公共类-添加权限
      *
      * @param string $name 权限的名称(英文)
      * @param string $description    权限的中文描述
-     * @return bool
+     * @return status.状态 errmsg.错误信息
      */
     public function add_permission($name,$description)
     {
-         $str= Permission::where("name","=",$name)->select();
-         if(sizeof($st)==0)
+         $str=Permission::where("name","=",$name)->select();
+         if(sizeof($str)==0)
          {
               $str1= Permission::insert(['name'=>$name,'description' => $description]);
               if($str1!=0)
@@ -147,7 +147,7 @@ class Common
              Response::out(304);
          }
     }
-    /* 添加角色
+    /**公共类-添加角色
      *
      * @param string $name 角色名称(英文)
      * @param string $description    角色的中文描述
@@ -156,7 +156,7 @@ class Common
     public function add_role($name,$description)
     {
          $str= Role::where("name","=",$name)->select();
-         if(sizeof($st)==0)
+         if(sizeof($str)==0)
          {
               $str1= Role::insert(['name'=>$name,'description' => $description]);
               if($str1!=0)
@@ -169,7 +169,7 @@ class Common
              Response::out(305);
          }
     }
-    /* 查看权限
+    /** 公共类-查看权限
      *
      * @return status.状态 errmsg.错误信息 data.数组包括数据库中所有权限(id),(name)名称,(description)中文描述
      */
@@ -185,7 +185,7 @@ class Common
             Response::out(306);
         }
     }
-    /* 查看j角色
+    /** 公共类-查看角色
      *
      * @return status.状态 errmsg.错误信息 data.数组包括数据库中所有角色(id),(name)名称,(description)中文描述
      */
@@ -201,7 +201,7 @@ class Common
             Response::out(307);
         }
     }
-    /* 删除权限
+    /** 公共类-删除权限
      * @param string $id 权限id
      * @return status.状态 errmsg.错误信息
      */
@@ -218,7 +218,7 @@ class Common
              Response::out(308);
         }
     }
-    /* 删除角色
+    /** 公共类-删除角色
      * @param string $id 角色id
      * @return status.状态 errmsg.错误信息
      */
@@ -235,7 +235,7 @@ class Common
              Response::out(308);
         }
     }
-    /* 更改角色名称，描述
+    /** 公共类-更改角色名称，描述
      * @param string $id 角色id
      * @param string $name 角色中文名称
      * @param string $description 角色描述
@@ -257,7 +257,7 @@ class Common
            Response::out(309);
         }
     }
-    /* 更新权限名称描述
+    /** 公共类-更改权限名称描述
      * @param string $id 权限id
      * @param string $name 权限中文名称
      * @param string $description 权限描述
@@ -279,7 +279,7 @@ class Common
            Response::out(309);
         }
     }
-    /* 为角色设置权限
+    /** 公共类-为角色设置权限
      * @param string $rid 角色的id
      * @param string $pid 权限的id
      * @return status.状态 errmsg.错误信息
@@ -297,7 +297,7 @@ class Common
             Response::out(310);
        }
     }
-    /* 删除角色的权限
+    /** 公共类-删除角色的权限
      * @param string $rid 角色的id
      * @param string $pid 权限的id
      * @return status.状态 errmsg.错误信息
@@ -307,7 +307,7 @@ class Common
         $statuss= Role_Permission::where('rid', '=', $rid)->andWhere('pid', '=', $pid)->select();
        if(sizeof($statuss)!=0)
        {
-            Role_Permission::where('rid', '=',$rid)->andWhere('pid', '=', $pid)->delete();
+           $str= Role_Permission::where('rid', '=',$rid)->andWhere('pid', '=', $pid)->delete();
              if($str==1)
              {
               Response::out(200);
@@ -318,7 +318,7 @@ class Common
              }
        }
     }
-    /* 显示角色拥有的权限
+    /** 公共类-显示角色拥有的权限
      * @param string $rid 角色的id
      * @return status.状态 errmsg.错误信息 data.数组包括角色中所有权限(id),(name)名称,(description)中文描述
      */
