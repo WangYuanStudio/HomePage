@@ -13,9 +13,19 @@ use App\Models\Inform;
 use App\Models\Role;
 use App\Models\Role_Permission;
 use App\Models\Permission;
+use App\Models\User;
 
 class Common
 {
+   public $middle = [
+    'add_permission' =>['Check_login','Check_adminstrator'], 
+    'add_role' =>['Check_login','Check_adminstrator'], 
+    'del_permission' =>['Check_login','Check_adminstrator'], 
+    'del_role' =>['Check_login','Check_adminstrator'], 
+    'takeback_permission' =>['Check_login','Check_adminstrator'], 
+    'assign_permission' =>['Check_login','Check_adminstrator'], 
+    'update_userRole' =>['Check_login','Check_adminstrator']
+  ];
     /**公共类-获取验证码图片
      *
      */
@@ -133,6 +143,11 @@ class Common
      */
     public function add_permission($name,$description)
     {
+        if(Session::get("user.role")!=1)
+        {
+             Response::out(301);
+             return false;
+        }
          $str=Permission::where("name","=",$name)->select();
          if(sizeof($str)==0)
          {
@@ -155,6 +170,11 @@ class Common
      */
     public function add_role($name,$description)
     {
+        if(Session::get("user.role")!=1)
+        {
+             Response::out(301);
+             return false;
+        }
          $str= Role::where("name","=",$name)->select();
          if(sizeof($str)==0)
          {
@@ -243,6 +263,7 @@ class Common
      */
     public function update_role($id,$name,$description)
     {
+
         $statuss= role::where('id', '=',$id)->update(
         [
         'name'=> $name,
@@ -265,6 +286,7 @@ class Common
      */
     public function update_permission($id,$name,$description)
     {
+
         $statuss= Permission::where('id', '=',$id)->update(
         [
         'name'=> $name,
@@ -334,5 +356,26 @@ class Common
             Response::out(306);
         }
     }
+    /** 公共类-改变用户角色
+     * @param string $rid 角色的id
+     * @param string $uid 用户的id
+     * @return status.状态 errmsg.错误信息
+     */
+    public function update_userRole($rid,$uid)
+    {
+        $statuss= User::where('id', '=',$uid)->update(
+        [
+        'role' => $rid
+        ]);
+        if($statuss==1)
+        {
+            Response::out(200);
+        }
+        else
+        {
+            Response::out(309);
+        }
+    }
+
 
 }
