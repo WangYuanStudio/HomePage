@@ -26,11 +26,10 @@ class Mail
      */
     private $config = [
         'name'     => '网园资讯工作室',
-        'host'     => 'smtp.ym.163.com',
-        'port'     => 994,
-        'username' => 'Admin@WangYuan.Info',
-        'password' => 'wangyuanINFO308',
-        'secure'   => 'ssl'
+        'host'     => 'mail.wangyuan.info',
+        'port'     => 25,
+        'username' => 'admin@WangYuan.Info',
+        'password' => 'wyzxgzs'
     ];
 
 
