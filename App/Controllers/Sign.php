@@ -79,21 +79,22 @@ class Sign
 						{
 							Response::out(304);
 						}else{
-							$insert_news=Info::insert([
-							"uid" 		 	=> $uid,
-							"name" 			=> Html::removeSpecialChars($name),
-							"sid"			=> $sid,
-							"department" 	=> Html::removeSpecialChars($department),
-							"class"			=> Html::removeSpecialChars($class),
-							"phone"			=> $phone,
-							"short_phone"	=> $short_phone,
-							"privilege"     => 0,
-							"sex"			=> $sex,
-							"college"       => Html::removeSpecialChars($college),
-							"major"			=> Html::removeSpecialChars($major)
-							]);
-							Response::out(200);
-							//Session::remove("code");	
+							if(Verify::auth()){
+								$insert_news=Info::insert([
+								"uid" 		 	=> $uid,
+								"name" 			=> Html::removeSpecialChars($name),
+								"sid"			=> $sid,
+								"department" 	=> Html::removeSpecialChars($department),
+								"class"			=> Html::removeSpecialChars($class),
+								"phone"			=> $phone,
+								"short_phone"	=> $short_phone,
+								"privilege"     => 0,
+								"sex"			=> $sex,
+								"college"       => Html::removeSpecialChars($college),
+								"major"			=> Html::removeSpecialChars($major)
+								]);
+								Response::out(200);
+							}	
 						}
 					}				
 				}

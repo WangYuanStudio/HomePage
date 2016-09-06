@@ -112,7 +112,14 @@ return [
         300 => 'Invalid login status.',
         301 => 'Permission denied.',
         302 => 'Verify code was wrong.',
-        303 => 'Operations are too frequent'
-    ]
+        303 => 'Operations are too frequent',
+        304 => 'permission is existed',
+        305 => 'role is existed',
+        306 => 'no permission list',
+        307 => 'no role list',
+        308 => 'fail to delete',
+        309 => 'fail to update',
+        310 => 'permission is already assign'
+        ],
 
 ];
