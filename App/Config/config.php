@@ -120,5 +120,6 @@ return [
         308 => 'fail to delete',
         309 => 'fail to update',
         310 => 'permission is already assign'
+        ],
 
 ];
