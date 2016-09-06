@@ -29,7 +29,7 @@ class Check_login implements MiddleWare
     	{
             if(isset($_COOKIE['token']))//判断存在token值
             {
-                   $d=user::where("token","=",$_COOKIE['token'])->select();//寻找数据库与token值对应的数据
+                   $d=User::where("token","=",$_COOKIE['token'])->select();//寻找数据库与token值对应的数据
                     if(sizeof($d)!=0)//找到
                      {
                              if(strtotime(date("y-m-d H:i:s",time()))<strtotime($d[0]['overdue']))//判断是否过期token

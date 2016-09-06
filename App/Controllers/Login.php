@@ -24,10 +24,11 @@ class Login
     640 => 'Verification code expires!',
     650 => 'password is wrong 3 times or more'
     ];
-    /**官网——登录接口
+  /**官网——登录接口
    *
    * @param string $mail 邮箱地址
    * @param string $password  密码
+   * @param string $log  判断是否保存用户(1为保存,0为不保存)
    * @return status.状态(609要求验证码) errmsg.错误信息 data.成员信息包括id,nickname,mail,role,ip,photo
    */
     public function CheckLogin($mail,$password,$log)
@@ -104,7 +105,7 @@ class Login
            
     }
 
-     /**官网——退出接口
+  /**官网——退出接口
    *
    * @return status.状态 errmsg.错误信息
    */

@@ -37,9 +37,9 @@ class Index
     608 => 'fail to edit',
     609 => 'fail to insert'
     ];
-    /**官网—成员展示系
+  /**官网—成员展示系
    *
-   * @param string $department 部门名称
+   * @param string $department 部门名称 (frontend,backend,secretary)
    * @return status.状态 errmsg.错误信息 data.二维数组包括该部门所有成员信息id,name,sex,photo,department,habbit,position,blog,phone,introduction
    */
     public function ShowMember($department,$page=1,$num)
@@ -59,8 +59,8 @@ class Index
     /**官网—游客留言信息
    *
    *@param int $auto 留言状态(1,为未审核,2为审核,3为所有)
-     *@param int $page 页数
-      *@param int $num 每一页的数量
+   *@param int $page 页数
+   *@param int $num 每一页的数量
    * @return status.状态 errmsg.错误信息 data.二维数组包括所有留言信息nickname,message,time,id
    */
     public function GetMessage($auto,$page=1,$num)
@@ -107,8 +107,8 @@ class Index
             Response::out(200);
       }
     }
-     /**官网—管理员审核留言
-   ** @param int $id 留言id
+  /**官网—管理员审核留言
+   **@param int $id 留言id
    * @return status.状态 errmsg.错误信息
    */
     public function check_mes($id)
@@ -124,8 +124,8 @@ class Index
        }
     }
 
-        /**官网—管理员删除留言
-   ** @param int $id 留言id
+  /**官网—管理员删除留言
+   * @param int $id 留言id
    * @return status.状态 errmsg.错误信息
    */
     public function del_mes($id)
@@ -142,8 +142,8 @@ class Index
          Response::out(605);
       }
     }
-      /**官网—发表网园动态
-      *
+  /**官网—发表网园动态
+    *
    ** @param string $title 标题(字符串长度<255)
     ** @param string $content 类容
     * @return status.状态 errmsg.错误信息
@@ -161,8 +161,8 @@ class Index
          Response::out(200);
       }
     }
-        /**官网—删除网园动态
-        *
+  /**官网—删除网园动态
+    *
    ** @param string $id 动态的id
     * @return status.状态 errmsg.错误信息
    */
@@ -178,9 +178,9 @@ class Index
           Response::out(605);
       }
     }
-        /**官网—获取网园动态信息
-   *
-   *
+  /**官网—获取网园动态信息
+   *@param int $page 页数
+   *@param int $num 每一页的数量
    * @return status.状态 errmsg.错误信息 data.二维数组包括所有动态title,content,time,id
    */
     public function get_article($page=1,$num)
@@ -195,8 +195,8 @@ class Index
         Response::out(607);
        }
     }
-      /**官网—修改网园动态
-        *
+  /**官网—修改网园动态
+    *
    ** @param string $id 动态的id
    ** @param string $title 动态的标题(字符串长度<255)
    ** @param string $content 动态的类容
@@ -216,15 +216,15 @@ class Index
         }
     
     }
-    /**官网—修改成员信息
+ /*官网—修改成员信息
   ** @param string $id 成员id
   ** @param string $name 成员姓名 (长度<10)
-    ** @param string $sex 成员性别
-   ** @param string $departmentt 部门 
+  ** @param string $sex 成员性别
+  ** @param string $departmentt 部门 
   ** @param string $habbit 爱好 (长度<255)
   ** @param string $position 职位
   ** @param string $blog 博客(地址)
-         ** @param string $phone 电话 (长度<=11)
+  ** @param string $phone 电话 (长度<=11)
   ** @param string $introduction 介绍 (长度<255)
   * @return status.状态 errmsg.错误信息
    */
@@ -249,11 +249,11 @@ class Index
         }
     
     }
-     /**官网—删除成员信息
+   /**官网—删除成员信息
     *
-   ** @param string $id 成员的id
+    * @param string $id 成员的id
     * @return status.状态 errmsg.错误信息
-   */
+    */
     public function del_member($id)
     {
       
@@ -269,10 +269,10 @@ class Index
       }
     
     }
-                /**官网—修改留言信息
-        *
+  /**官网—修改留言信息
+   *
    ** @param string $id 留言的id
-    * @return status.状态 errmsg.错误信息
+   * @return status.状态 errmsg.错误信息
    */
     public function edt_message($id,$content)
     {
@@ -293,18 +293,18 @@ class Index
 
 
 
- /**官网—添加成员信息
-        *
+  /**官网—添加成员信息
+   *
    ** @param string $form_name 头像上传组名(值为"no"默认头像)
    ** @param string $name 成员姓名 (长度<10)
-    ** @param string $sex 成员性别
-   ** @param string $departmentt 部门 
-      ** @param string $habbit 爱好 (长度<255)
-         ** @param string $position 职位
-         ** @param string $blog 博客(地址)
-          ** @param string $introduction 介绍 (长度<255)
-            ** @param string $phone 电话 (长度<=11)
-    * @return status.状态 errmsg.错误信息
+   ** @param string $sex 成员性别
+   ** @param string $departmentt 部门 (frontend,backend,secretary)
+   ** @param string $habbit 爱好 (长度<255)
+   ** @param string $position 职位
+   ** @param string $blog 博客(地址)
+   ** @param string $introduction 介绍 (长度<255)
+   ** @param string $phone 电话 (长度<=11)
+   * @return status.状态 errmsg.错误信息
    */
     public function add_member($form_name,$name,$sex,$department,$habbit,$position,$blog,$phone,$introduction)
     {
@@ -327,9 +327,9 @@ class Index
         Response::out(200);
       }
     }
-    /**官网—修改成员头像
-  ** @param string $id 成员id
-  ** @param string $form_name  头像上传组名
+  /**官网—修改成员头像
+   * @param string $id 成员id
+   * @param string $form_name  头像上传组名
    * @return status.状态 errmsg.错误信息
    */
     public function edt_member_pho($id,$form_name)
@@ -349,5 +349,7 @@ class Index
            Response::out(608);
         }
     }
+    
+    
 
 }
