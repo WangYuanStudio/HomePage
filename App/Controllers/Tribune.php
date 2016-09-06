@@ -428,11 +428,16 @@ class Tribune
 
     public function test()
     {
-        Mail::to("me@zeffee.com")->title("test")->content("testest");
+        Mail::to("wangyuaninfo@163.com")->title("帅哥来嘛")->content("吻我第 <b>1</b> 遍！");
+//        for($i=0;$i<40;$i++){
+//            Mail::to("wangyuaninfo@163.com")->title("帅哥来嘛")->content("吻我第 <b>$i</b> 遍！");
+//            echo $i."<br>";
+//            sleep(2);
+//        }
     }
 
     public function update()
     {
-        //Common::setInform(1, "论坛", "你收到一条回复", "www.wangyuan.info");
+        Common::setInform(1, "论坛", "你收到一条回复", "www.wangyuan.info", "www.wangyuan.info");
     }
 }
