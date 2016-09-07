@@ -93,36 +93,41 @@ class Sign
 				$check_uid=1;
 			}
 		}
+		//学号
 		if(1==$truedata)
 		{
 			Response::out(403);
-		}else{
-			if(1==$check_uid){
-			Response::out(420);
-			}else{
-				if(strlen(Html::removeSpecialChars($name))>30||strlen($sid)>11||strlen($department)>15||strlen(Html::removeSpecialChars($grade))>20||strlen($sex)>3||strlen(Html::removeSpecialChars($college))>50||strlen(Html::removeSpecialChars($major))>50||strlen($phone)>11||strlen($short_phone)>6)	
-				{
-					Response::out(312);
-				}else{
-					if(Verify::auth()){
-						$insert_news=Info::insert([
-						"uid" 		 	=> $uid,
-						"name" 			=> Html::removeSpecialChars($name),
-						"sid"			=> $sid,
-						"department" 	=> Html::removeSpecialChars($department),
-						"grade"			=> Html::removeSpecialChars($grade),
-						"phone"			=> $phone,
-						"short_phone"	=> $short_phone,
-						"privilege"     => 0,
-						"sex"			=> $sex,
-						"college"       => Html::removeSpecialChars($college),
-						"major"			=> Html::removeSpecialChars($major)
-						]);
-						Response::out(200);
-					}	
-				}
-			}				
+			return false;
 		}
+		//已报名
+		if(1==$check_uid){
+			Response::out(420);
+			return false;
+		}	
+		//长度判断
+		if(strlen(Html::removeSpecialChars($name))>30||strlen($sid)>11||strlen($department)>15||strlen(Html::removeSpecialChars($grade))>20||strlen($sex)>3||strlen(Html::removeSpecialChars($college))>50||strlen(Html::removeSpecialChars($major))>50||strlen($phone)>11||strlen($short_phone)>6)	
+		{
+			Response::out(312);
+			return false;
+		}
+		if(Verify::auth()){
+			$insert_news=Info::insert([
+			"uid" 		 	=> $uid,
+			"name" 			=> Html::removeSpecialChars($name),
+			"sid"			=> $sid,
+			"department" 	=> Html::removeSpecialChars($department),
+			"grade"			=> Html::removeSpecialChars($grade),
+			"phone"			=> $phone,
+			"short_phone"	=> $short_phone,
+			"privilege"     => 0,
+			"sex"			=> $sex,
+			"college"       => Html::removeSpecialChars($college),
+			"major"			=> Html::removeSpecialChars($major)
+			]);
+			Response::out(200);
+		}	
+		
+			
 	}
 
 	/**报名系统-确认报名审核通过或不通过
