@@ -9,18 +9,18 @@ use App\Lib\Document;
 
 class Index
 {
-  
   public $middle = [
    
-    'Send_message' => ['Check_login','Check_Operation_Count'],
-    'check_mes' => ['Check_login','Check_Managermes'],
-    'del_mes' => ['Check_login','Check_Managermes'] ,
-    'edt_message' =>['Check_login','Check_Managermes'],
-    'edt_article' => ['Check_login','Check_Managerarticle'],
-    'del_article' => ['Check_login','Check_Managerarticle'] ,
-    'publish_article' => ['Check_login','Check_Managerarticle','Check_Operation_Count'],
-    'del_member' => ['Check_login','Check_ManagerMember'] ,
-    'edt_member' =>['Check_login','Check_ManagerMember'] 
+    // 'Send_message' => ['Check_login','Check_Operation_Count'],
+    // 'check_mes' => ['Check_login','Check_Managermes'],
+    // 'del_mes' => ['Check_login','Check_Managermes'] ,
+    // 'edt_message' =>['Check_login','Check_Managermes'],
+    // 'edt_article' => ['Check_login','Check_Managerarticle'],
+    // 'del_article' => ['Check_login','Check_Managerarticle'] ,
+    // 'publish_article' => ['Check_login','Check_Managerarticle','Check_Operation_Count'],
+    // 'del_member' => ['Check_login','Check_ManagerMember'] ,
+    // 'edt_member' =>['Check_login','Check_ManagerMember'],
+     // 'del_allmes'=>['Check_login','Check_Managermes']
   ];
   /*错误代码 && 错误信息
    * 
@@ -39,13 +39,19 @@ class Index
     ];
   /**官网—成员展示系
    *
-   * @param string $department 部门名称 (frontend,backend,secretary)
+   * @param string $department 部门名称 (frontend,backend,secretary,all)
    * @return status.状态 errmsg.错误信息 data.二维数组包括该部门所有成员信息id,name,sex,photo,department,habbit,position,blog,phone,introduction
    */
     public function ShowMember($department,$page=1,$num)
     {
-        $data=Member::where("department","=",$department)->limit(($page-1)*$num,$num)->select();
-         
+        if($department=='all')
+        {
+          $data=Member::limit(($page-1)*$num,$num)->select();
+        }
+        else
+        {
+          $data=Member::where("department","=",$department)->limit(($page-1)*$num,$num)->select();
+        }
         if(sizeof($data)!=0)
         {
               Response::out(200,$data);
@@ -56,12 +62,12 @@ class Index
         }
     }
      
-    /**官网—游客留言信息
+  /**官网—游客留言信息
    *
    *@param int $auto 留言状态(1,为未审核,2为审核,3为所有)
    *@param int $page 页数
    *@param int $num 每一页的数量
-   * @return status.状态 errmsg.错误信息 data.二维数组包括所有留言信息nickname,message,time,id
+   * @return status.状态 errmsg.错误信息 data.二维数组包括所有留言信息nickname,message,time,id,auto(审核状态0:未审核，1:已审核)
    */
     public function GetMessage($auto,$page=1,$num)
     {
@@ -89,9 +95,9 @@ class Index
        }
     }
 
-  /**官网—游客发表留言(字符串长度<600)
-   * @param string $message 留言信息
-   * @return status.状态 errmsg.错误信息
+      /**官网—游客发表留言(字符串长度<600)
+   ** @param string $message 留言信息
+    * @return status.状态 errmsg.错误信息
    */
     public function Send_message($message)
     {
@@ -163,9 +169,9 @@ class Index
     }
   /**官网—删除网园动态
     *
-    * @param string $id 动态的id
+   ** @param string $id 动态的id
     * @return status.状态 errmsg.错误信息
-    */
+   */
     public function del_article($id)  
     {
       $statuss= Article::where('id', '=',$id)->delete();
@@ -349,7 +355,132 @@ class Index
            Response::out(608);
         }
     }
-    
+  /**官网—一键审核留言
+   * @param string $list  一个包含要审核留言的id数组
+   * @return status.状态 errmsg.错误信息
+   */
+    public function del_allmes($list)
+    {
+      foreach ($list as $key => $id)
+      {
+         $status=  Message::where('id','=',$id)->update(['auth' => '1']);
+      }
+      Response::out(200);
+    }
+  /**官网—获取总页数(分页时使用)
+   * @param string $title 在(member,message,article)中选择一个值
+   * @param int $auto  留言状态(1,为未审核留言,2为审核,3为所有)只当第一个参数title选择为message时需设置，否则不设置。
+   * @param string $department  部门名称(frontend,backend,secretary,all)只当第一个参数title选择为member时需设置，否则不设置。
+   * @param int $num  每页的条数
+   * @return status.状态 errmsg.错误信息 data.数据总页数
+   */
+    public function total_message($title,$auto=1,$department='all',$num)
+    {
+      if($title=='message')
+      {
+       $auto--;
+       if($auto==0||$auto==1)
+       {
+      
+        Response::out(200,ceil(count(Message::leftJoin('user', 'message.uid', '=', 'user.id')->where("auth","=",$auto)->select('message.uid'))/$num));
+       }
+       else if($auto==2)
+       {
+          Response::out(200,ceil(count(Message::leftJoin('user', 'message.uid', '=', 'user.id')->orderBy('time desc')->select('message.uid'))/$num));
+       }
+       else
+       {
+         Response::out(602);
+         return false;
+       }
+     }
+     else if($title=='member')
+     {
+        if($department=='all')
+        {
+            Response::out(200,ceil(count(Member::select('id'))/$num));
+        }
+        else
+        {
+           Response::out(200,ceil(count(Member::where("department","=",$department)->select('id'))/$num));
+        }
+     }
+     else 
+     {
+         Response::out(200,ceil(count(article::select('id'))/$num));
+     }
+
+    }
+  /**官网—获取搜索关键字的总页数(分页时使用)
+   * @param string $key  关键字
+   * @param string $title 在(member,message,article)中选择一个值
+   * @param int $num  每页的条数
+   * @return status.状态 errmsg.错误信息 data.数据总页数
+   */
+    public function search_page($key,$title,$num)
+    {
+      if($title=='member')
+      {
+        $d=ceil(count(TB('')->raw('select id from member where name like "%'.$key.'%"',[1]))/$num);
+        Response::out(200,TB('')->raw('select * from member where name like "%'.$key.'%"',[1]));
+      }  
+      if($title=='message')
+      {
+         $d=ceil(count(TB('')->raw('select id from message where content like "%'.$key.'%"',[1]))/$num);
+         Response::out(200,TB('')->raw('select * from message where content like "%'.$key.'%"',[1]));
+      }
+      if($title=='article')
+      {
+         $d=ceil(count(TB('')->raw('select id from article where title like "%'.$key.'%" or content like "%'.$key.'%"',[1]))/$num);
+         Response::out(200,TB('')->raw('select * from article where title like "%'.$key.'%" or content like "%'.$key.'%"',[1]));
+      }
+    }
+
+  /**官网—获取搜索内容
+   * @param string $title 在(member,message,article)中选择一个值
+   *@param string $key 关键字
+   *@param int $auto 留言状态(1,为未审核,2为审核,3为所有)只当第一个参数title选择为message时需设置，否则不设置。
+   *@param int $page 页数
+   *@param int $num 每页的条数
+   * @return status.状态 errmsg.错误信息 data.（member,message,article)数据
+   */
+    public function search_data($title,$key,$page=1,$num,$auto=2)
+    {
+      if($title=='article')
+      {
+       $d=TB('')->raw ("select *  from article  where title  like '%".$key."%' or content like '%".$key."%'  order by time desc limit ".($page-1)*$num.",".$num."",[1]);
+       Response::out(200,$d);
+      }
+      if($title=='message')
+      {
+        $auto--;
+        if($auto==2)
+        {
+            $d=TB('')->raw ("select message.*,user.nickname from message left join user on message.uid=user.id  where message.content  like '%".$key."%' order by message.time desc limit ".($page-1)*$num.",".$num."",[1]);
+        }
+        else
+        {
+        $d=TB('')->raw ("select message.*,user.nickname from message left join user on message.uid=user.id  where message.content  like '%".$key."%' and message.auth = ".$auto." order by message.time desc limit ".($page-1)*$num.",".$num."",[1]);
+        }
+        Response::out(200,$d);
+      }
+      if($title=='member')
+      {
+       $d=TB('')->raw ("select *  from member  where name  like '%".$key."%'  limit ".($page-1)*$num.",".$num."",[1]);
+       Response::out(200,$d);
+      }
+    }
+
+
+  /**官网—获取未审核留言的条数(消息提示)
+   * @return status.状态 errmsg.错误信息 data.数据条数
+   */
+    public function getnocheckmessage()
+    {
+      $d=Message::leftJoin('user', 'message.uid', '=', 'user.id')->where("auth","=",0)->orderBy('time desc')->select('message.*,user.nickname');
+      Response::out(200,sizeof($d));
+    }
+
     
 
 }
