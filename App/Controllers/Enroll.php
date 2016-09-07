@@ -199,7 +199,7 @@ use App\lib\Verify;
 '_blank'>/http://127.0.0.1:8080/Enroll/Register?token=".$token."</a><br/> 
 如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
 			Mail::to($mail)->title("WangYuanStudio")->content($emailbody);				
-			Response::out(200,['asd'=>$token]);			
+			Response::out(200);			
 		}							 
 	}
 
@@ -287,7 +287,7 @@ use App\lib\Verify;
 	'_blank'>/http://127.0.0.1:8080/Enroll/Supdatepsw?token=".$token."</a><br/> 			
 	如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
 		Mail::to($mail)->title("WangYuanStudio")->content($emailbody);
-		Response::out(200,['asd'=>$array["token"]]);
+		Response::out(200);
 			
 	}
 
