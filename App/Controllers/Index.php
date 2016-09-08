@@ -5,7 +5,7 @@ use App\Models\Message;
 use App\Models\Article;
 use App\Lib\Response;
 use App\Lib\Document;
-
+use App\Lib\Html;
 
 class Index
 {
@@ -102,7 +102,7 @@ class Index
     public function Send_message($message)
     {
       $time= date('y-m-d H:i:s',time());
-      $str= Message::insert(['uid'=>Session::get("user.id"),'content' => $message, 'time' => $time, 'auth' => 0]);
+      $str= Message::insert(['uid'=>Session::get("user.id"),'content' => Html::removeSpecialChars($message), 'time' => $time, 'auth' => 0]);
       if($str==0)
       {
 
