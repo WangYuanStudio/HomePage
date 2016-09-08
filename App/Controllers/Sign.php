@@ -197,7 +197,7 @@ class Sign
 	/**报名系统-获取报名列表
 	*
 	*@param int $page 0   页码
-	*@param string $department 0 部门
+	*@param enum $department 0 部门名称{'backend','frontend','design','secret'}
 	*@param int $privilege 0 审核判断,默认为0未审核,1通过,2为不通过
 	*
 	@return status.状态码 data.指定页的审核数据
@@ -235,15 +235,15 @@ class Sign
 			//获取部门
 			$department=$data_value['department'];											
 			//修改角色
-			if('页面部设计'==$department){		
+			if('design'==$department){		
 				User::where('id','=',$uid)->update([
 						"role"	=>8
 				]);				
-			}elseif('页面部前端'==$department){
+			}elseif('frontend'==$department){
 				User::where('id','=',$uid)->update([
 						"role"	=>7
 				]);				
-			}elseif('编程部'==$department){
+			}elseif('backend'==$department){
 				User::where('id','=',$uid)->update([
 						"role"	=>9
 				]);
