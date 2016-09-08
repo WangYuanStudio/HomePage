@@ -16,19 +16,20 @@ use App\Controllers\Common;
 
 class Sign
 {
-	public $middle = [
-		'Insertnews' => 'Check_login',
-		'Signupreview' => ['Check_login','Check_ManagerMember'],
-		'CheckPower' =>['Check_login','Check_ManagerMember'],
-		'Allpass' =>['Check_login','Check_ManagerMember'],
-		'Alldelete' =>['Check_login','Check_ManagerMember'],
-		'Elimination' =>['Check_login','Check_ManagerMember'],
-		'Content_search'=>['Check_login','Check_ManagerMember'],
-		'Addsigntime'=>['Check_login','Check_ManagerMember'],
-		'Getsigntime'=>['Check_login','Check_ManagerMember'],
-		'Deletesigntime'=>['Check_login','Check_ManagerMember'],
-		// 对所有方法判断登录
-	];
+	const HW_DEPARTMEMT = ['backend', 'frontend', 'design', 'secret'];	// 部门标识符
+	// public $middle = [
+	// 	'Insertnews' => 'Check_login',
+	// 	'Signupreview' => ['Check_login','Check_ManagerMember'],
+	// 	'CheckPower' =>['Check_login','Check_ManagerMember'],
+	// 	'Allpass' =>['Check_login','Check_ManagerMember'],
+	// 	'Alldelete' =>['Check_login','Check_ManagerMember'],
+	// 	'Elimination' =>['Check_login','Check_ManagerMember'],
+	// 	'Content_search'=>['Check_login','Check_ManagerMember'],
+	// 	'Addsigntime'=>['Check_login','Check_ManagerMember'],
+	// 	'Getsigntime'=>['Check_login','Check_ManagerMember'],
+	// 	'Deletesigntime'=>['Check_login','Check_ManagerMember'],
+	// 	// 对所有方法判断登录
+	// ];
 
 	public static $status=[
 		401 => 'Mobile phone trombone error.',
@@ -38,14 +39,15 @@ class Sign
 		420 => 'You have successfully registered.',
 		422 => 'Registration deadline.',
 		// 截止时间应大于现在和起始时间
-		505 => 'The deadline should be greater than nowtime and start time.'
+		505 => 'The deadline should be greater than nowtime and start time.',
+		500 => 'Illegal department.',	// 不存在该部门
 	];
 
 	/**报名系统-实现报名
 	*@param string $name    	名字(10内)
 	*@param string $sid          学号
-	*@param string $department 	部門
-	*@param string $grade 		年级
+	*@param enum $department 	部门名称{'backend','frontend','design','secret'}
+	*@param enum $grade 		年级{'2014年级','2015年级'}
 	*@param string $phone 		长号	
 	*@param string $short_phone 	短号
 	*@param string $sex    			性别
@@ -57,6 +59,10 @@ class Sign
 
 	public function Insertnews($name,$sid,$department,$grade,$phone,$short_phone,$sex,$college,$major)
 	{
+		if (!in_array($department, self::HW_DEPARTMEMT)) {
+			Response::out(500);
+			return false;
+		}
 		$uid=Session::get("user.id");
 		$truedata=0;
 		$check_uid=0;
@@ -110,7 +116,7 @@ class Sign
 			Response::out(312);
 			return false;
 		}
-		if(Verify::auth()){
+		//if(Verify::auth()){
 			$insert_news=Info::insert([
 			"uid" 		 	=> $uid,
 			"name" 			=> Html::removeSpecialChars($name),
@@ -125,7 +131,7 @@ class Sign
 			"major"			=> Html::removeSpecialChars($major)
 			]);
 			Response::out(200);
-		}	
+		//}	
 		
 			
 	}
@@ -154,15 +160,15 @@ class Sign
 				}
 			}
 		}		
-		if('页面部设计'==$department){		
+		if('design'==$department){		
 			$check=	User::where('id','=',$uid)->update([
 					"role"	=>8
 		]);
-		}elseif('页面部前端'==$department){
+		}elseif('frontend'==$department){
 			$check= User::where('id','=',$uid)->update([
 					"role"	=>7
 		]);
-		}elseif('编程部'==$department){
+		}elseif('backend'==$department){
 			$check= User::where('id','=',$uid)->update([
 					"role"	=>9
 		]);
