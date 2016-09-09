@@ -28,6 +28,16 @@ class ComposerStaticInit2e059e95692905d46fa6e6c72875a5cf
         ),
     );
 
+    public static $prefixesPsr0 = array (
+        'P' => 
+        array (
+            'PHPExcel' => 
+            array (
+                0 => __DIR__ . '/..' . '/phpoffice/phpexcel/Classes',
+            ),
+        ),
+    );
+
     public static $classMap = array (
         'Nette\\ArgumentOutOfRangeException' => __DIR__ . '/..' . '/nette/utils/src/Utils/exceptions.php',
         'Nette\\Bridges\\MailDI\\MailExtension' => __DIR__ . '/..' . '/nette/mail/src/Bridges/MailDI/MailExtension.php',
@@ -87,6 +97,7 @@ class ComposerStaticInit2e059e95692905d46fa6e6c72875a5cf
         return \Closure::bind(function () use ($loader) {
             $loader->prefixLengthsPsr4 = ComposerStaticInit2e059e95692905d46fa6e6c72875a5cf::$prefixLengthsPsr4;
             $loader->prefixDirsPsr4 = ComposerStaticInit2e059e95692905d46fa6e6c72875a5cf::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit2e059e95692905d46fa6e6c72875a5cf::$prefixesPsr0;
             $loader->classMap = ComposerStaticInit2e059e95692905d46fa6e6c72875a5cf::$classMap;
 
         }, null, ClassLoader::class);

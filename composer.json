@@ -2,7 +2,8 @@
   "name": "zereri",
   "description": "The Zereri Framework.",
   "require": {
-    "nette/mail": "*"
+    "nette/mail": "*",
+    "PHPOffice/PHPExcel": "1.8.0"
   },
   "autoload": {
     "classmap": [

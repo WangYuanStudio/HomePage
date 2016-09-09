@@ -97,7 +97,7 @@ class Login
              Response::out(610);
           }
         }
-      }
+      
         else
         {
           Response::out(630);
