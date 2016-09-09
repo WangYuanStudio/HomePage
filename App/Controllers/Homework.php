@@ -19,7 +19,7 @@ date_default_timezone_set('PRC');
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-09-02 17:29
+ * Last modified time: 2016-09-08 21:08
  */
 class Homework
 {
@@ -33,10 +33,16 @@ class Homework
 		'php', 'txt', 'md', 'html', 'htm', 'css', 'js', 'aspx', 'asp', 'sql'
 	];
 	const HW_DEPARTMEMT = ['backend', 'frontend', 'design', 'secret'];	// 部门标识符
+	const HW_DEPARTMEMT_ZH = [
+		'backend' => '编程部',
+		'frontend' => '页面部前端',
+		'design' => '页面部设计',
+		'secret' => '文秘部'
+	];	// 部门对应中文名
 
 	public $middle = [
-		'uploadWork' => ['Hws_WorkSubmit', 'Check_Operation_Count'],
-		'all' => ['Check_login', 'Hws_SeeWork'] // 对所有方法判断登录
+		// 'uploadWork' => ['Hws_WorkSubmit', 'Check_Operation_Count'],
+		// 'all' => ['Check_login', 'Hws_SeeWork'] // 对所有方法判断登录
 	];
 
 	/*错误代码 && 错误信息
@@ -63,7 +69,9 @@ class Homework
 		513 => 'File upload error.',	// 文件上传失败
 		514 => 'This file extension is not allow to upload.',	// 该类扩展名文件不允许上传
 		515 => 'File should be uploaded.',	// 没有上传文件
-		516 => 'Cannot open the file.'	// 文件无法打开
+		516 => 'Cannot open the file.',	// 文件无法打开
+		517 => 'Invalid filename.',	// 非法的文件名
+		518 => 'Invalid type.'
 	];
 
 	/*登录用户Session数据
@@ -73,8 +81,8 @@ class Homework
 	private $loginedUser;
 
 	public function __construct() {
-		//$test = User::where('id', '=', 2)->select();	// test: 1管理员 2编程部成员 3前端成员 4编程部实习生 5游客
-		$this->loginedUser = Session::get('user');
+		$test = User::where('id', '=', 1)->select();	// test: 1管理员 2编程部成员 3前端成员 4编程部实习生 5游客
+		//$this->loginedUser = Session::get('user');
 	}
 
 	/**作业系统 - 获取某用户/某任务优秀作业
@@ -226,11 +234,18 @@ class Homework
 	 * @return status.状态码 bytes.文件大小（单位字节） lines.文件总行数 modify_time.上次修改时间 text.文件内容
 	 */
 	public function getUnzipWorkFile($path) {
+		// 非法字符检测
+		$invalidArr = str_split(':*?"<>|');
+		foreach ($invalidArr as $invalid) {
+			if (strstr($path, '../') || strstr($path, $invalid)) {
+				Response::out(517);
+				return;
+			}
+		}
+
 		// Windows下要转换 中文目录名/中文文件名
 		// $path = iconv('utf-8', 'gb2312', $path);
 		$path = self::HW_UNZIP_FOLDER.$path;
-		$path = str_replace('../', '', $path);
-		$path = str_replace('./', '', $path);
 		if (is_file($path)) {
 			$arr = explode('.', $path);
 			$ext = end($arr);
@@ -592,7 +607,7 @@ class Homework
 	 * @param enum $department 1 归属部门{'backend','frontend','design','secret'}
 	 * @param timestamp $end_time 1 截止时间（13位时间戳）
 	 * @param timestamp $start_time 0 起始时间（13位时间戳）
-	 * @param string $attachments_field 0 附件上传字段名
+	 * @param string $attachments_field 0 附件上传字段名（需要上传时才传）
 	 * @param file $(附件字段名) 0 文件
 	 * @return status.状态码 errmsg.错误信息 tid.新增任务ID
 	 */
@@ -876,6 +891,127 @@ class Homework
 		}
 		$rar->close();
 		return $result;
+	}
+
+	/**导出新生信息/实习生作业成绩
+	 * 
+	 * @param int $type 导出类型{1: 新生信息, 2: 实习生作业成绩}
+	 * @return status.状态码 data.Excel二进制数据（如果成功没有status，直接返回二进制数据，引导页面下载| 实习生作业成绩暂时有bug）
+	 */
+	public function exportData($type = 2) {
+		if ($type != 1 && $type != 2) {
+			// 无效的type
+			Response::out(518);
+		}
+
+		if ($type == 1) {
+			// 导出新生信息
+			// 获取新生用户数据
+			$newlyInfo = Info::leftJoin('user', 'info.uid', '=', 'user.id')
+				->where('privilege', '=', 1)
+				->orderBy('department', 'sid', 'grade')
+				->select();
+
+			$objReader = new \PHPExcel_Reader_Excel2007();	// 读取模板
+			$templateInfo = $objReader->load("../vendor/template_info.xlsx");
+			// $resultPHPExcel = new PHPExcel(); 
+
+			// 设值
+			for ($i = 0; $i < count($newlyInfo); $i++) {
+				$n = $i + 3;	// TODO: 第一行输出行行数
+				$templateInfo->getActiveSheet()->setCellValue('A'.$n, $newlyInfo[$i]['sid']);
+				$templateInfo->getActiveSheet()->setCellValue('B'.$n, $newlyInfo[$i]['name']);
+				$templateInfo->getActiveSheet()->setCellValue('C'.$n, 
+					($newlyInfo[$i]['sex'] == 1 ? '男' : ($newlyInfo[$i]['sex'] == 2 ? '女' : NULL))
+				);
+				$templateInfo->getActiveSheet()->setCellValue('D'.$n, $newlyInfo[$i]['mail']);
+				$templateInfo->getActiveSheet()->setCellValue('E'.$n, self::HW_DEPARTMEMT_ZH[$newlyInfo[$i]['department']]);
+				$templateInfo->getActiveSheet()->setCellValue('F'.$n, $newlyInfo[$i]['grade']);
+				$templateInfo->getActiveSheet()->setCellValue('G'.$n, $newlyInfo[$i]['college']);
+				$templateInfo->getActiveSheet()->setCellValue('H'.$n, $newlyInfo[$i]['major']);
+				$templateInfo->getActiveSheet()->setCellValue('I'.$n, $newlyInfo[$i]['phone']);
+				$templateInfo->getActiveSheet()->setCellValue('J'.$n, $newlyInfo[$i]['short_phone']);
+			}
+			$tableName = '新生信息导出表';
+			$fileName = 'newlyinfo_'.date("YmdHis", time()).'.xlsx';
+
+
+		} else if ($type == 2) {
+
+
+			// 导出实习生作业成绩
+			// 获取实习生用户数据
+			$traineeInfo = Info::leftJoin('user', 'info.uid', '=', 'user.id')
+				->where('privilege', '=', 1)
+				->orderBy('department', 'sid', 'grade')
+				->select('uid, sid, name, sex, department');
+
+			// 获取任务信息
+			$taskInfo = Hws_Task::orderBy('department, id')->select('id, title');
+			
+			foreach ($traineeInfo as $key => $trainee) {
+				// 初始化实习生空作业成绩数组
+				foreach ($taskInfo as $val) {
+					$traineeInfo[$key]['homeworks'][$val['id']] = null;
+				}
+
+				// 查询用户对应作业
+				$recordInfo = Hws_Record::leftJoin('hws_task', 'hws_record.tid', '=', 'hws_task.id')
+					->whereNotNull('hws_record.score')
+					->andWhere('hws_record.uid', '=', $trainee['uid'])
+					->orderBy('hws_task.department, hws_task.id, hws_record.id desc')
+					->select();
+				// 覆盖数组中实习生的空作业成绩
+				foreach ($recordInfo as $val) {
+					if (is_null($traineeInfo[$key]['homeworks'][$val['tid']]))
+						$traineeInfo[$key]['homeworks'][$val['tid']] = $val['score'];
+				}
+			}
+
+			// Excel处理导出
+			$objReader = new \PHPExcel_Reader_Excel2007();	// 读取模板
+			$templateInfo = $objReader->load("../vendor/template_score.xlsx");
+			// 各任务标题导出
+			for ($i = 0; $i < count($taskInfo); $i++) {
+				$first = ord('E') + $i;
+				$showFirst = chr($first);
+				if ($first > 90) {
+					$showFirst = chr(ord('A')+(($first-65)%26)-1).$showFirst;
+				}
+				$templateInfo->getActiveSheet()->setCellValue($showFirst.'2', $taskInfo[$i]['title']);
+				$templateInfo->getActiveSheet()->getColumnDimension($showFirst)->setWidth(20);
+			}
+
+			// 设值
+			for ($i = 0; $i < count($traineeInfo); $i++) {
+				$n = $i + 3;	// TODO: 第一行输出行行数
+				$templateInfo->getActiveSheet()->setCellValue('A'.$n, $traineeInfo[$i]['sid']);
+				$templateInfo->getActiveSheet()->setCellValue('B'.$n, $traineeInfo[$i]['name']);
+				$templateInfo->getActiveSheet()->setCellValue('C'.$n, 
+					($traineeInfo[$i]['sex'] == 1 ? '男' : ($traineeInfo[$i]['sex'] == 2 ? '女' : NULL))
+				);
+				$templateInfo->getActiveSheet()->setCellValue('D'.$n, self::HW_DEPARTMEMT_ZH[$traineeInfo[$i]['department']]);
+
+				for ($j = 0; $j < count($taskInfo); $j++) {
+					$first = ord('E') + $j;
+					$showFirst = chr($first);
+					if ($first > 90) {
+						$showFirst = chr(ord('A')+(($first-65)%26)-1).$showFirst;
+					}
+					$templateInfo->getActiveSheet()->setCellValue($showFirst.$n, $traineeInfo[$i]['homeworks'][$taskInfo[$j]['id']]);
+				}
+			}
+			$tableName = '成绩导出表';
+			$fileName = 'score_'.date("YmdHis", time()).'.xlsx';
+		}
+		$templateInfo->getActiveSheet()->setTitle($tableName);
+		$templateInfo->setActiveSheetIndex(0);
+		// $objWriter->save('test.xlsx');
+		header('Content-Type: application/vnd.ms-excel');
+		header('Content-Disposition: attachment;filename="'.$fileName.'"');
+		header('Cache-Control: max-age=0');
+		$objWriter = \PHPExcel_IOFactory::createWriter($templateInfo, 'Excel2007');
+		$objWriter->save('php://output');	// Warning: 可能出现缓冲区不足
 	}
 }
 ?>
