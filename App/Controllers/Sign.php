@@ -47,7 +47,7 @@ class Sign
 	*@param string $name    	名字(10内)
 	*@param string $sid          学号
 	*@param enum $department 	部门名称{'backend','frontend','design','secret'}
-	*@param enum $grade 		年级{'2014年级','2015年级'}
+	*@param enum $grade 		年级{'2015级','2016级'}
 	*@param string $phone 		长号	
 	*@param string $short_phone 	短号
 	*@param string $sex    			性别

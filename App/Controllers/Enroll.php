@@ -19,15 +19,15 @@ use App\lib\Verify;
  {
  	const En_Photo_UPLOAD='avatar/';
  	const En_Photo_REGISTER='avatar/head.gif';
- 	public $middle = [
-		'UploadPhoto' => 'Check_login',
-		'Limituser' => ['Check_login','Check_ManagerMember'],
-		'Relieve' => ['Check_login','Check_ManagerMember'],
-		'Updatepsw' => 'Check_login',
-		'Updateuser' => 'Check_login',
-	 	'Sendverify' => 'Check_login'
-		// 对所有方法判断登录
-	];
+ // 	public $middle = [
+	// 	'UploadPhoto' => 'Check_login',
+	// 	'Limituser' => ['Check_login','Check_ManagerMember'],
+	// 	'Relieve' => ['Check_login','Check_ManagerMember'],
+	// 	'Updatepsw' => 'Check_login',
+	// 	'Updateuser' => 'Check_login',
+	//  	'Sendverify' => 'Check_login'
+	// 	// 对所有方法判断登录
+	// ];
 
  	public static $status=[
 		405 => 'Verification code is empty.',
@@ -176,12 +176,12 @@ use App\lib\Verify;
 			return false;
 		}
 		//检查是否已发送邮件			
-		if(Cache::has($mail)){
+		if(Cache::has(md5($mail))){
 			Response::out(419);
 			return false;
 		}
- 		if(Verify::auth()){														
-			$token=md5(rand(10000,99999).time());
+ 		//if(Verify::auth()){														
+			$token=md5($mail);
 			$array=[
 				"nickname" =>Html::removeSpecialChars($nickname),
 				"mail"	   =>$mail,
@@ -189,10 +189,7 @@ use App\lib\Verify;
 				"token"    =>$token,
 				"time"     =>time()+30*60
 			];		
-			Cache::set([			
-			$token =>json_encode($array),
-			$mail =>123					
-			],1800);															
+			Cache::set($token ,json_encode($array),1800);															
 			$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
 （注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>
 <a href='http://127.0.0.1:8080/Enroll/Register?token=".$token."' target= 
@@ -200,7 +197,7 @@ use App\lib\Verify;
 如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
 			Mail::to($mail)->title("WangYuanStudio")->content($emailbody);				
 			Response::out(200);			
-		}							 
+		//}							 
 	}
 
 
@@ -267,20 +264,18 @@ use App\lib\Verify;
 			Response::out(412);
 			return false;
 		}
-		if(Cache::has($mail)){
+		if(Cache::has(md5($mail))){
 			Response::out(419);
 			return false;
 		}
-		$token=md5(rand(1000000,9999999).time());
+		$token=md5($mail);
 		$array=[
 			"token" => $token,
 			"time"  =>time()+30*60,
 			"mail"  =>$mail
 		];
-		Cache::set([
-			$token => json_encode($array),
-			$mail  => 123
-		],1800);		
+		Cache::set(
+			$token ,json_encode($array),1800);		
 		$emailbody = "亲爱的".$user_nickname."，您好"."：<br/>请您点击以下链接进行找回密码，即可生效！<br/> 
 	（注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>     
 	<a href='http://127.0.0.1:8080/Enroll/Supdatepsw?token=".$token."' target= 
@@ -459,5 +454,9 @@ use App\lib\Verify;
 			return false;
 		}
 	}
-
+	public function ds(){
+		Cache::flush();
+	}
 }
+
+
