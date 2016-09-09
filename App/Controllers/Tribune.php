@@ -16,6 +16,7 @@ use App\Models\Post;
 use App\Models\Bbs;
 use App\Models\User;
 use App\Lib\SphinxClient;
+use PHPExcel;
 
 class Tribune
 {
@@ -428,12 +429,26 @@ class Tribune
 
     public function test()
     {
-        Mail::to("wangyuaninfo@163.com")->title("帅哥来嘛")->content("吻我第 <b>1</b> 遍！");
-//        for($i=0;$i<40;$i++){
-//            Mail::to("wangyuaninfo@163.com")->title("帅哥来嘛")->content("吻我第 <b>$i</b> 遍！");
-//            echo $i."<br>";
+//        for($i=0;$i<5;$i++){
+//            Mail::to("sostuts@vip.qq.com")->title("帅哥来嘛")->content("第 <b>$i 777</b> 遍！");
+//            echo $i."  s<br>";
 //            sleep(2);
 //        }
+//        $a=new \PHPExcel();
+//        $w=new \PHPExcel_Writer_Excel2007($a);
+//        $w->save("a.xlsx");
+//        $w= new \PHPExcel_Writer_Excel5($a);
+//        header("Pragma: public");
+//        header("Expires: 0");
+//        header("Cache-Control:must-revalidate, post-check=0, pre-check=0");
+//        header("Content-Type:application/force-download");
+//        header("Content-Type:application/vnd.ms-execl");
+//        header("Content-Type:application/octet-stream");
+//        header("Content-Type:application/download");;
+//        header('Content-Disposition:attachment;filename="resume.xls"');
+//        header("Content-Transfer-Encoding:binary");
+//        $w->save('php://output');
+        $a=new \PHPExcel_Reader_Excel5();
     }
 
     public function update()

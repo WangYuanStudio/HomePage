@@ -25,18 +25,18 @@ return [
             "drive"   => "mysql",
             "host"    => "mysql",
             "dbname"  => "wangyuan",
-            "user"    => "root",
-            "pwd"     => "Wyzxgzs#08",
+            "user"    => "wy",
+            "pwd"     => "wyzxgzs_308",
             "charset" => "utf8"
         ],
 
         'slave' => [
             [
                 "drive"   => "mysql",
-                "host"    => "123.207.240.115",
+                "host"    => "123.207.237.219",
                 "dbname"  => "wangyuan",
-                "user"    => "root",
-                "pwd"     => "Wyzxgzs#08",
+                "user"    => "wy",
+                "pwd"     => "wyzxgzs_308",
                 "charset" => "utf8"
             ]
         ]
@@ -93,7 +93,7 @@ return [
      * redis服务器配置
      */
     'redis'     => [
-        'server' => ["redis", 6379, "Wyzxgzs#08_redis"]
+        'server' => ["123.207.237.219", 6379, "Wyzxgzs#08_redis"]
     ],
 
 
@@ -122,6 +122,5 @@ return [
         310 => 'permission is already assign',
         311 => 'Did not find relevant content.',
         312 => 'More than field limits'
-        ]
-
+    ]
 ];
