@@ -185,6 +185,9 @@ class Sign
 			if(1==$privilege){
 				Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
 			}else{
+				User::where('id','=',$uid)->update([
+						"role"	=>10
+					]);	
 				Common::setInform($uid, "报名", "报名失败", "您于".date("Y-m-d H:i:s")."报名审核不通过，快去看看！", "");
 			}
 			Response::out(200);
@@ -200,7 +203,7 @@ class Sign
 	*@param enum $department 0 部门名称{'backend','frontend','design','secret'}
 	*@param int $privilege 0 审核判断,默认为0未审核,1通过,2为不通过
 	*
-	@return status.状态码 data.指定页的审核数据
+	*@return status.状态码 data.指定页的审核数据
 	*/
 
 	public function CheckPower($page=1,$department=null,$privilege=0)
@@ -339,7 +342,7 @@ class Sign
 		Response::out(200, ['tid' => $time_id[0]]);
 	}
 
-	/**报名-获取报名时间
+	/**报名-获取所有报名时间
 	*@param int $page 0   页码
 	*	
 	*@return status.状态码 data.指定页的报名时间
@@ -362,6 +365,98 @@ class Sign
 	public function Deletesigntime($time_id)
 	{
 		Info_Time::where('time_id','=',$time_id)->delete();
+		Response::out(200);
+	}
+
+	/**报名-获取最新报名时间
+	*	
+	*@return status.状态码 data.报名时间
+	*/
+	public function Getnewsigntime()
+	{
+		$data=Info_Time::limit(0, 1)->orderBy('time_id desc')->select();		
+ 		if(0==count($data)){
+ 			Response::out(311);
+ 		}else{
+ 		Response::out(200,['data'=>$data]);    
+ 		}
+	}
+
+	/**报名-修改报名时间
+	*@param int $time_id    时间id
+	*@param timestamp $end_time 1 截止时间（13位时间戳）
+	*@param timestamp $start_time 0 起始时间（13位时间戳）
+	*	
+	*@return status.状态码 
+	*/
+	public function Updatesigntime($time_id, $start_time = null,$end_time)
+	{
+		
+		$end_time = $this->getJSTimestamp($end_time);	// 转换时间戳
+		$start_time = is_null($start_time) ? time() : $this->getJSTimestamp($start_time);
+		if ($end_time < time() || $end_time < $start_time) {
+			// 时间设置不符
+			Response::out(505);
+			return;
+		}
+		Info_Time::where('time_id','=',$time_id)->Update([			
+			'start_time' => date("Y-m-d H:i:s", $start_time),
+			'end_time' => date("Y-m-d H:i:s", $end_time)			
+		]);
+		Response::out(200);
+	}
+
+	/**报名-列表通过/否决
+	*@param array $data    列表数据(名字，名字，逗号是中文的！！)
+	*@param int $privilege 0 审核判断,默认为1通过,2为不通过  
+	*	
+	*@return status.状态码 
+	*/
+	public function Listpass($data,$privilege=1)
+	{
+		//切割成数组
+		$array_data=explode("，", $data);
+		//分割数据
+		foreach ($array_data as $key => $value) {
+			$info_data=Info::where('name','=',$value)->select();
+			//防止重名
+			for($i=0;$i<count($info_data);$i++)
+			{
+				$uid=$info_data[$i]['uid'];
+				$department=$info_data[$i]['department'];
+				//修改角色
+				if('design'==$department){		
+					User::where('id','=',$uid)->update([
+							"role"	=>8
+					]);				
+				}elseif('frontend'==$department){
+					User::where('id','=',$uid)->update([
+							"role"	=>7
+					]);				
+				}elseif('backend'==$department){
+					User::where('id','=',$uid)->update([
+							"role"	=>9
+					]);
+				}else{
+					User::where('id','=',$uid)->update([
+							"role"	=>6
+					]);				
+				}				
+				//审核
+				Info::where('uid','=',$uid)->update([
+					"privilege"=>$privilege
+					]);
+				// 消息通知
+				if(1==$privilege){
+					Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
+				}else{
+					User::where('id','=',$uid)->update([
+							"role"	=>10
+					]);	
+					Common::setInform($uid, "报名", "报名失败", "您于".date("Y-m-d H:i:s")."报名审核不通过，快去看看！", "");
+				}
+			}
+		}
 		Response::out(200);
 	}
 }
