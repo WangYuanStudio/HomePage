@@ -24,6 +24,22 @@ class Mail
      *
      * @var array
      */
+//    private $config = [
+//        'name'     => '网园资讯工作室',
+//        'host'     => 'smtp.ym.163.com',
+//        'port'     => 994,
+//        'username' => 'admin@WangYuan.Info',
+//        'password' => 'wangyuanINFO308',
+//        'secure'   => 'ssl'
+//    ];
+//    private $config = [
+//        'name'     => '网园资讯工作室',
+//        'host'     => 'smtp.163.com',
+//        'port'     => 465,
+//        'username' => 'wangyuaninfo@163.com',
+//        'password' => 'wyzxgzs308',
+//        'secure'   => 'ssl'
+//    ];
     private $config = [
         'name'     => '网园资讯工作室',
         'host'     => 'mail.wangyuan.info',
