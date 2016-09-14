@@ -19,6 +19,7 @@ use App\lib\Verify;
  {
  	const En_Photo_UPLOAD='avatar/';
  	const En_Photo_REGISTER='avatar/head.gif';
+ 	const En_Photo_FILE='file';
  // 	public $middle = [
 	// 	'UploadPhoto' => 'Check_login',
 	// 	'Limituser' => ['Check_login','Check_ManagerMember'],
@@ -51,13 +52,13 @@ use App\lib\Verify;
 	];
 
 	/**官网-实现注册
-	*       
-	*@param string $token  邮箱链接的token   
+	*         
 	*
 	*@return login_id.返回插入的id
 	*/
-	public function Register($token=NULL)
+	public function Register()
 	{
+		$token=$_GET['token'];
 		//判断是否已发送邮箱	
 		if(!Cache::has($token)){
 			Response::out(423);
@@ -102,20 +103,19 @@ use App\lib\Verify;
 	}
 	
 	/**官网-更换头像
-	*@param string $form_filename 头像上传组名
 	*
 	*@return status.状态码
 	*/
-	public function UploadPhoto($form_filename)
+	public function UploadPhoto()
 	{
 		//检查文件格式
-		$name=$_FILES[$form_filename]['name'];
+		$name=$_FILES[self::En_Photo_FILE]['name'];
 		$allowtype=array('png','gif','bmp','ipeg','jpg');
 		$aryStr=explode(".",$name);
 		$filetype=strtolower($aryStr[count($aryStr)-1]);
 		if(in_array(strtolower($filetype),$allowtype)){
 			$id = Session::get("user.id");
-			$src = Document::Upload($form_filename, self::En_Photo_UPLOAD);
+			$src = Document::Upload(self::En_Photo_FILE, self::En_Photo_UPLOAD,Session::get("user.id"));
 			$check=User::where('id','=',$id)->Update([
 				"photo"=>$src
 				]);
@@ -192,8 +192,8 @@ use App\lib\Verify;
 			Cache::set($token ,json_encode($array),1800);															
 			$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
 （注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>
-<a href='http://127.0.0.1:8080/Enroll/Register?token=".$token."' target= 
-'_blank'>/http://127.0.0.1:8080/Enroll/Register?token=".$token."</a><br/> 
+<a href='http://api.wangyuan.info:4433/Enroll/Register?token=".$token."' target= 
+'_blank'>http://api.wangyuan.info:4433/Enroll/Register?token=".$token."</a><br/> 
 如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
 			Mail::to($mail)->title("WangYuanStudio")->content($emailbody);				
 			Response::out(200);			
@@ -264,23 +264,21 @@ use App\lib\Verify;
 			Response::out(412);
 			return false;
 		}
-		if(Cache::has(md5($mail))){
+		if(Cache::has($mail)){
 			Response::out(419);
 			return false;
 		}
-		$token=md5($mail);
+		$token=rand(100000,999999);
 		$array=[
 			"token" => $token,
-			"time"  =>time()+30*60,
+			"time"  =>time()+80,
 			"mail"  =>$mail
 		];
-		Cache::set(
-			$token ,json_encode($array),1800);		
-		$emailbody = "亲爱的".$user_nickname."，您好"."：<br/>请您点击以下链接进行找回密码，即可生效！<br/> 
-	（注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>     
-	<a href='http://127.0.0.1:8080/Enroll/Supdatepsw?token=".$token."' target= 
-	'_blank'>/http://127.0.0.1:8080/Enroll/Supdatepsw?token=".$token."</a><br/> 			
-	如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
+		Cache::set([
+			$token =>json_encode($array),
+			$mail  =>$array['mail']
+			],120);		
+		$emailbody ="亲爱的".$user_nickname."，您好"."：<br/>验证码为".$token; 
 		Mail::to($mail)->title("WangYuanStudio")->content($emailbody);
 		Response::out(200);
 			
@@ -289,13 +287,14 @@ use App\lib\Verify;
 	/**官网-找回密码之修改密码
 	*
 	*@param string $password    	密码
-	*@param string $password2		确认密码
-	*@param string $token           邮箱链接的token      
+	*@param string $password2		确认密码  
+	*@param string $token           邮箱的验证码 
 	*
 	*@return status.状态码
 	*/
 	public function Supdatepsw($password,$password2,$token=NULL)
 	{
+		
 		//判断是否已发送邮箱	
 		if(!Cache::has($token)){
 			Response::out(424);
