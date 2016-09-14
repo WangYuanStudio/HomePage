@@ -6,7 +6,7 @@ return [
      * -----------------
      *  single || daily
      */
-    'log'       => 'single',
+    'log'        => 'single',
 
 
     /*
@@ -14,29 +14,35 @@ return [
      * ----------------
      *  true || false
      */
-    'debug'     => true,
+    'debug'      => true,
+
+
+    /**
+     * https端口
+     */
+    'https_port' => 443,
 
 
     /**
      * 数据库配置
      */
-    'database'  => [
+    'database'   => [
         'master' => [
             "drive"   => "mysql",
             "host"    => "mysql",
             "dbname"  => "wangyuan",
-            "user"    => "root",
-            "pwd"     => "Wyzxgzs#08",
+            "user"    => "wy",
+            "pwd"     => "wyzxgzs_308",
             "charset" => "utf8"
         ],
 
         'slave' => [
             [
                 "drive"   => "mysql",
-                "host"    => "123.207.240.115",
+                "host"    => "123.207.237.219",
                 "dbname"  => "wangyuan",
-                "user"    => "root",
-                "pwd"     => "Wyzxgzs#08",
+                "user"    => "wy",
+                "pwd"     => "wyzxgzs_308",
                 "charset" => "utf8"
             ]
         ]
@@ -46,7 +52,7 @@ return [
     /**
      * Smarty配置
      */
-    'smarty'    => [
+    'smarty'     => [
         "debugging"       => false,
         "caching"         => false,
         "cache_lifetime"  => 120,
@@ -58,7 +64,7 @@ return [
     /**
      * 类名别名
      */
-    'aliases'   => [
+    'aliases'    => [
         'Api'                     => Zereri\Lib\Replacement\Api::class,
         'Factory'                 => Zereri\Lib\Factory::class,
         'App\Models\Model'        => Zereri\Lib\Model::class,
@@ -73,7 +79,7 @@ return [
     /**
      * 缓存配置
      */
-    'cache'     => [
+    'cache'      => [
         "drive" => "redis",
         'time'  => 3600
     ],
@@ -82,7 +88,7 @@ return [
     /**
      * Memcached服务器配置
      */
-    'memcached' => [
+    'memcached'  => [
         'server' => [
             ['127.0.0.1', 11211]
         ]
@@ -92,8 +98,8 @@ return [
     /**
      * redis服务器配置
      */
-    'redis'     => [
-        'server' => ["redis", 6379, "Wyzxgzs#08_redis"]
+    'redis'      => [
+        'server' => ["123.207.237.219", 6379, "Wyzxgzs#08_redis"]
     ],
 
 
@@ -102,7 +108,7 @@ return [
      * --------------------
      *   file || memcached || redis
      */
-    'session'   => [
+    'session'    => [
         'drive' => 'file'
     ],
 
@@ -122,6 +128,5 @@ return [
         310 => 'permission is already assign',
         311 => 'Did not find relevant content.',
         312 => 'More than field limits'
-        ]
-
+    ]
 ];
