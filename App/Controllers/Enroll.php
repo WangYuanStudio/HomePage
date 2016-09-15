@@ -17,8 +17,8 @@ use App\lib\Verify;
 
  class Enroll
  {
- 	const En_Photo_UPLOAD='avatar/';
- 	const En_Photo_REGISTER='avatar/head.gif';
+ 	const En_Photo_UPLOAD='https://api.wangyuan.info:4433/avatar/';
+ 	const En_Photo_REGISTER='https://api.wangyuan.info:4433/avatar/head.gif';
  	const En_Photo_FILE='file';
  // 	public $middle = [
 	// 	'UploadPhoto' => 'Check_login',
@@ -104,7 +104,7 @@ use App\lib\Verify;
 	
 	/**官网-更换头像
 	*
-	*@return status.状态码
+	*@return status.状态码 src.照片路径
 	*/
 	public function UploadPhoto()
 	{
@@ -120,7 +120,7 @@ use App\lib\Verify;
 				"photo"=>$src
 				]);
 			if(1==$check){
-				Response::out(200);
+				Response::out(200,['src'=>$src]);
 			}else{
 				Response::out(410);
 			}	
@@ -189,11 +189,11 @@ use App\lib\Verify;
 				"token"    =>$token,
 				"time"     =>time()+30*60
 			];		
-			Cache::set($token ,json_encode($array),1800);															
+			Cache::set($token ,json_encode($array),80);															
 			$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
 （注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>
-<a href='http://api.wangyuan.info:4433/Enroll/Register?token=".$token."' target= 
-'_blank'>http://api.wangyuan.info:4433/Enroll/Register?token=".$token."</a><br/> 
+<a href='https://api.wangyuan.info:4433/Enroll/Register?token=".$token."' target= 
+'_blank'>https://api.wangyuan.info:4433/Enroll/Register?token=".$token."</a><br/> 
 如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
 			Mail::to($mail)->title("WangYuanStudio")->content($emailbody);				
 			Response::out(200);			
