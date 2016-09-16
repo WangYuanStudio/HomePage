@@ -128,6 +128,19 @@ class Sign
 			Response::out(312);
 			return false;
 		}
+		//检查长号的唯一性
+		$checkphone=0;
+		$data_phone=Info::where('phone','=',$phone)->select('phone');
+		foreach($data_phone as $value){
+			if(in_array($phone, $value)){
+				$checkphone=1;
+			}
+		}
+		if(1==$checkphone)
+		{
+			Response::out(428);
+			return false;
+		}
 		//phone user set 
 		if(is_null($uid)){
 			if(is_null($mail))
@@ -154,25 +167,13 @@ class Sign
 				Response::out(408);
 				return false;
 			}
-			//检查长号的唯一性
-			$checkphone=0;
-			$data_phone=Info::where('phone','=',$phone)->select('phone');
-			foreach($data_phone as $value){
-				if(in_array($phone, $value)){
-					$checkphone=1;
-				}
-			}
-			if(1==$checkphone)
-			{
-				Response::out(428);
-				return false;
-			}
+			
 			//判断短信
 			if(!$this->Judgemessage($phone,$token)){
 				return false;
 			}
 
-			$password=password_hash($phone,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
+			$password=password_hash($sid,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
 			$register_uid=User::Insert([
 			"nickname" =>'intern'.rand(10000,99999),
 			"mail" =>$mail,
