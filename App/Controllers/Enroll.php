@@ -17,8 +17,9 @@ use App\lib\Verify;
 
  class Enroll
  {
- 	const En_Photo_UPLOAD='https://api.wangyuan.info:4433/avatar/';
- 	const En_Photo_REGISTER='https://api.wangyuan.info:4433/avatar/head.gif';
+ 	protected static $root=__ROOT__;
+ 	const En_Photo_UPLOAD='avatar/';
+ 	const En_Photo_REGISTER='avatar/head.gif';
  	const En_Photo_FILE='file';
  // 	public $middle = [
 	// 	'UploadPhoto' => 'Check_login',
@@ -110,7 +111,7 @@ use App\lib\Verify;
 	{
 		//检查文件格式
 		$name=$_FILES[self::En_Photo_FILE]['name'];
-		$allowtype=array('png','gif','bmp','ipeg','jpg');
+		$allowtype=array('png','gif','bmp','jpeg','jpg');
 		$aryStr=explode(".",$name);
 		$filetype=strtolower($aryStr[count($aryStr)-1]);
 		if(in_array(strtolower($filetype),$allowtype)){
@@ -189,7 +190,7 @@ use App\lib\Verify;
 				"token"    =>$token,
 				"time"     =>time()+30*60
 			];		
-			Cache::set($token ,json_encode($array),80);															
+			Cache::set($token ,json_encode($array),1800);															
 			$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
 （注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>
 <a href='https://api.wangyuan.info:4433/Enroll/Register?token=".$token."' target= 
@@ -271,7 +272,7 @@ use App\lib\Verify;
 		$token=rand(100000,999999);
 		$array=[
 			"token" => $token,
-			"time"  =>time()+80,
+			"time"  =>time()+120,
 			"mail"  =>$mail
 		];
 		Cache::set([
@@ -453,9 +454,15 @@ use App\lib\Verify;
 			return false;
 		}
 	}
-	public function ds(){
-		Cache::flush();
+	
+	public function test($token,$mail){
+		response(__ROOT__);
+		response(Cache::get($token));
+		response(time());
+		Cache::delete($mail);
+
 	}
+	
 }
 
 

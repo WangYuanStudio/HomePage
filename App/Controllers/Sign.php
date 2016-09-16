@@ -7,15 +7,17 @@
 
 namespace App\Controllers;
 
+use App\Models\User;
 use App\Models\Info;
 use App\Models\Info_Time;
-use App\Models\User;
 use App\Lib\Response;
 use App\Lib\Html;
 use App\Controllers\Common;
+use App\Lib\Message;
 
 class Sign
 {
+	const En_Photo_REGISTER='avatar/head.gif';
 	const HW_DEPARTMEMT = ['backend', 'frontend', 'design', 'secret'];	// 部门标识符
 	// public $middle = [
 	// 	'Insertnews' => 'Check_login',
@@ -36,11 +38,19 @@ class Sign
 		402 => 'Student id error.',
 		403 => 'The student id already exists.'	,
 		404 => 'An error occurred when audit failure.',
+		408 => 'Your email has been in existence.',
+		409 => 'Email format error.',
+		411 => 'Token error.',
+		413 => 'Time out.',
 		420 => 'You have successfully registered.',
 		422 => 'Registration deadline.',
 		// 截止时间应大于现在和起始时间
 		505 => 'The deadline should be greater than nowtime and start time.',
 		500 => 'Illegal department.',	// 不存在该部门
+		425 => 'message has been sent, please wait a moment.',
+		426 => 'Please send back the message.',		
+		427 => 'Please fill in the email.',
+		428 => 'The phone number has been in existence'
 	];
 
 	/**报名系统-实现报名
@@ -53,11 +63,13 @@ class Sign
 	*@param string $sex    			性别
 	*@param string $college      学院(16内)
 	*@param string $major        专业(16内)
+	*@param string $mail 0 邮箱(电脑不用，移动端必须)
+	*@param string $token 0 短信验证码(电脑不用，移动端必须)
 	*
 	*@return status.状态码  
 	*/
 
-	public function Insertnews($name,$sid,$department,$grade,$phone,$short_phone,$sex,$college,$major)
+	public function Insertnews($name,$sid,$department,$grade,$phone,$short_phone,$sex,$college,$major,$mail=NULL,$token=NULL)
 	{
 		if (!in_array($department, self::HW_DEPARTMEMT)) {
 			Response::out(500);
@@ -116,23 +128,94 @@ class Sign
 			Response::out(312);
 			return false;
 		}
-		//if(Verify::auth()){
+		//phone user set 
+		if(is_null($uid)){
+			if(is_null($mail))
+			{
+				Response::out(427);
+				return false;
+			}
+			//检查邮件格式
+			if(!preg_match("/([\w\-]+\@[\w\-]+\.[\w\-]+)/",$mail))
+			{
+				Response::out(409);
+				return false;
+			}
+			//检查邮件的唯一性
+			$checkdata=0;
+			$data=User::where('mail','=',$mail)->select('mail');
+			foreach($data as $value){
+				if(in_array($mail, $value)){
+					$checkdata=1;
+				}
+			}
+			if(1==$checkdata)
+			{
+				Response::out(408);
+				return false;
+			}
+			//检查长号的唯一性
+			$checkphone=0;
+			$data_phone=Info::where('phone','=',$phone)->select('phone');
+			foreach($data_phone as $value){
+				if(in_array($phone, $value)){
+					$checkphone=1;
+				}
+			}
+			if(1==$checkphone)
+			{
+				Response::out(428);
+				return false;
+			}
+			//判断短信
+			if(!$this->Judgemessage($phone,$token)){
+				return false;
+			}
+
+			$password=password_hash($phone,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
+			$register_uid=User::Insert([
+			"nickname" =>'intern'.rand(10000,99999),
+			"mail" =>$mail,
+			"password"=>$password,
+			"photo" =>self::En_Photo_REGISTER,
+			"role" =>10,
+			"status"=>0
+			]);	
+			$uid=$register_uid[0];
 			$insert_news=Info::insert([
-			"uid" 		 	=> $uid,
-			"name" 			=> Html::removeSpecialChars($name),
-			"sid"			=> $sid,
-			"department" 	=> Html::removeSpecialChars($department),
-			"grade"			=> Html::removeSpecialChars($grade),
-			"phone"			=> $phone,
-			"short_phone"	=> $short_phone,
-			"privilege"     => 0,
-			"sex"			=> $sex,
-			"college"       => Html::removeSpecialChars($college),
-			"major"			=> Html::removeSpecialChars($major)
-			]);
-			Response::out(200);
-		//}	
-		
+				"uid" 		 	=> $uid,
+				"name" 			=> Html::removeSpecialChars($name),
+				"sid"			=> $sid,
+				"department" 	=> Html::removeSpecialChars($department),
+				"grade"			=> Html::removeSpecialChars($grade),
+				"phone"			=> $phone,
+				"short_phone"	=> $short_phone,
+				"privilege"     => 0,
+				"sex"			=> $sex,
+				"college"       => Html::removeSpecialChars($college),
+				"major"			=> Html::removeSpecialChars($major)
+				]);
+			Cache::delete($phone);
+				Response::out(200);
+		}
+		else{
+			// if(Verify::auth()){
+				$insert_news=Info::insert([
+				"uid" 		 	=> $uid,
+				"name" 			=> Html::removeSpecialChars($name),
+				"sid"			=> $sid,
+				"department" 	=> Html::removeSpecialChars($department),
+				"grade"			=> Html::removeSpecialChars($grade),
+				"phone"			=> $phone,
+				"short_phone"	=> $short_phone,
+				"privilege"     => 0,
+				"sex"			=> $sex,
+				"college"       => Html::removeSpecialChars($college),
+				"major"			=> Html::removeSpecialChars($major)
+				]);
+				Response::out(200);
+			// }	
+		}
 			
 	}
 
@@ -203,7 +286,7 @@ class Sign
 	*@param enum $department 0 部门名称{'backend','frontend','design','secret'}
 	*@param int $privilege 0 审核判断,默认为0未审核,1通过,2为不通过
 	*
-	*@return status.状态码 data.指定页的审核数据
+	*@return status.状态码 data.指定页的审核数据 num.总页数
 	*/
 
 	public function CheckPower($page=1,$department=null,$privilege=0)
@@ -212,14 +295,18 @@ class Sign
 		if($department!=null){
 		$data=Info::where('privilege','=',$privilege)
 			->andwhere('department','=',$department)
-			->limit(($page - 1) * 10, 10)
+			->limit(($page - 1) * 4, 4)
             ->select('*');
+        $num=ceil(count(Info::where('privilege','=',$privilege)
+			->andwhere('department','=',$department)
+            ->select('*'))/4);
         }else{
         	$data=Info::where('privilege','=',$privilege)
-			->limit(($page - 1) * 10, 10)
+			->limit(($page - 1) * 4, 4)
             ->select('*');
+            $num=ceil(count(Info::where('privilege','=',$privilege)->select('*'))/4);
         }              
-        Response::out(200,['data'=>$data]);       
+        Response::out(200,['data'=>$data,'num'=>$num]);       
 	}
 
 	/**报名-一键通过审核(本页)
@@ -229,7 +316,7 @@ class Sign
 	public function Allpass()
 	{				
 		$data_info=Info::where('privilege','=',0)
-				->limit((Session::get("page_data")-1)*10,10)
+				->limit((Session::get("page_data")-1)*4,4)
 				->select('uid,department');
 		foreach($data_info as $key => $value){
 			$data_value=$value;						
@@ -297,17 +384,18 @@ class Sign
 	*@param int $page 0   页码
 	*@param string $content    内容
 	*
-	*@return status.状态码 data.指定页的搜索数据
+	*@return status.状态码 data.指定页的搜索数据 num.总页数
 	*/
 	public function Content_search($page=1,$content)
 	{
 		$data=Info::where('name','like',"%".$content."%")
-			->limit(($page - 1) * 10, 10)
- 		          ->select();		
+			->limit(($page - 1) * 4, 4)
+ 		          ->select();
+ 		$num=ceil(count(Info::where('name','like',"%".$content."%")->select())/4);		
  		if(0==count($data)){
  			Response::out(311);
  		}else{
- 		Response::out(200,['data'=>$data]);    
+ 		Response::out(200,['data'=>$data,'num'=>$num]);    
  		}
 	}
 
@@ -345,15 +433,16 @@ class Sign
 	/**报名-获取所有报名时间
 	*@param int $page 0   页码
 	*	
-	*@return status.状态码 data.指定页的报名时间
+	*@return status.状态码 data.指定页的报名时间 num.总页数
 	*/
 	public function Getsigntime($page=1)
 	{
-		$data=Info_Time::limit(($page - 1) * 10, 10)->select();		
+		$data=Info_Time::limit(($page - 1) * 10, 10)->select();	
+		$num=ceil(count(Info_Time::limit(($page - 1) * 4, 4)->select())/4);
  		if(0==count($data)){
  			Response::out(311);
  		}else{
- 		Response::out(200,['data'=>$data]);    
+ 		Response::out(200,['data'=>$data,'num'=>$num]);    
  		}
 	}
 
@@ -459,4 +548,133 @@ class Sign
 		}
 		Response::out(200);
 	}
+
+	/**发送短信(60s)
+	*@param string $phone   长号
+	*
+	*@return status.状态码 
+	*/
+	public function sendPhone($phone){
+		$verify=rand(100000,999999);
+		$array=[
+			"verify" => $verify,
+			"time"  =>time()+120
+		];
+		//判断缓存
+		if(Cache::has($phone)){
+			Response::out(425);
+			return false;
+		}
+		//send message
+		if(Message::send($phone, $verify)){       	
+			Cache::set($phone,json_encode($array),80);	
+        	Response::out(200);
+      	}
+	}
+
+	/**判断短信
+	*
+	*@param string $phone   长号
+	*@param string $token   短信验证码
+	*
+	*@return status.状态码 
+	*/
+	public function Judgemessage($phone,$token=NULL){
+		//判断是否已发送短信	
+		if(!Cache::has($phone)){
+			Response::out(426);
+			return false;
+		}
+
+		//获取缓存数据
+		$array=json_decode(Cache::get($phone));		
+		foreach ($array as $key => $value) {
+			if('time'==$key)
+				$time=$value;
+			if('verify'==$key)
+				$verify=$value;
+		}
+		if(time()>$time){
+			Response::out(413);
+			return false;
+		}
+		if($verify!=$token){
+			Response::out(411);
+			return false;
+		}		
+		return true;		 
+	}
+
+	//判断移动端还是电脑端
+	public function Judge_phone(){
+		if(isset($_SERVER['HTTP_X_WAP_PROFILE'])) { 
+	        return true; 
+	    } 
+	    if(isset ($_SERVER['HTTP_VIA'])) { 
+	        //找不到为flase,否则为true 
+	        return stristr($_SERVER['HTTP_VIA'], "wap") ?  true :  false; 
+	    } 
+	    if(isset($_SERVER['HTTP_USER_AGENT'])) { 
+	        //此数组有待完善 
+	        $clientkeywords = array ( 
+	        'nokia', 
+	        'sony', 
+	        'ericsson', 
+	        'mot', 
+	        'samsung', 
+	        'htc', 
+	        'sgh', 
+	        'lg', 
+	        'sharp', 
+	        'sie-', 
+	        'philips', 
+	        'panasonic', 
+	        'alcatel', 
+	        'lenovo', 
+	        'iphone', 
+	        'ipod', 
+	        'blackberry', 
+	        'meizu', 
+	        'android', 
+	        'netfront', 
+	        'symbian', 
+	        'ucweb', 
+	        'windowsce', 
+	        'palm', 
+	        'operamini', 
+	        'operamobi', 
+	        'openwave', 
+	        'nexusone', 
+	        'cldc', 
+	        'midp', 
+	        'wap', 
+	        'mobile'
+	        ); 
+	        // 从HTTP_USER_AGENT中查找手机浏览器的关键字 
+	        if(preg_match("/(" . implode('|', $clientkeywords) . ")/i", strtolower($_SERVER['HTTP_USER_AGENT']))) { 
+	            return true; 
+	        } 
+	  
+	    } 
+	  
+	    //协议法，因为有可能不准确，放到最后判断 
+	    if (isset ($_SERVER['HTTP_ACCEPT'])) { 
+	        // 如果只支持wml并且不支持html那一定是移动设备 
+	        // 如果支持wml和html但是wml在html之前则是移动设备 
+	        if ((strpos($_SERVER['HTTP_ACCEPT'], 'vnd.wap.wml') !== false) && (strpos($_SERVER['HTTP_ACCEPT'], 'text/html') === false || (strpos($_SERVER['HTTP_ACCEPT'], 'vnd.wap.wml') < strpos($_SERVER['HTTP_ACCEPT'], 'text/html')))) { 
+	            return true; 
+	        } 
+	    } 
+		return false; 
+	}
+	
+	public function test(){
+		if($this->Judge_phone()){
+			response("phone");
+		}else{
+			response("PC");
+		}
+		Cache::delete('13640134362');
+	}
+	
 }
