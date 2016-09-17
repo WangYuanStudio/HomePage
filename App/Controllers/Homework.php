@@ -19,7 +19,7 @@ date_default_timezone_set('PRC');
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-09-08 21:08
+ * Last modified time: 2016-09-17 12:49
  */
 class Homework
 {
@@ -32,17 +32,18 @@ class Homework
 	const HW_ALLOWDVIEW_FILEEXT = [	// 允许预览的文件扩展名
 		'php', 'txt', 'md', 'html', 'htm', 'css', 'js', 'aspx', 'asp', 'sql'
 	];
-	const HW_DEPARTMEMT = ['backend', 'frontend', 'design', 'secret'];	// 部门标识符
+	const HW_DEPARTMEMT = ['backend', 'secret', 'frontend', 'design'];	// 部门标识符
 	const HW_DEPARTMEMT_ZH = [
 		'backend' => '编程部',
+		'secret' => '文秘部',
 		'frontend' => '页面部前端',
-		'design' => '页面部设计',
-		'secret' => '文秘部'
+		'design' => '页面部设计'
 	];	// 部门对应中文名
+	const HW_UPLOAD_FIELD = 'file';	// 作业文件上传字段
 
 	public $middle = [
-		// 'uploadWork' => ['Hws_WorkSubmit', 'Check_Operation_Count'],
-		// 'all' => ['Check_login', 'Hws_SeeWork'] // 对所有方法判断登录
+		'uploadWork' => ['Hws_WorkSubmit', 'Check_Operation_Count'],
+		'all' => ['Check_login', 'Hws_SeeWork'] // 对所有方法判断登录
 	];
 
 	/*错误代码 && 错误信息
@@ -70,8 +71,10 @@ class Homework
 		514 => 'This file extension is not allow to upload.',	// 该类扩展名文件不允许上传
 		515 => 'File should be uploaded.',	// 没有上传文件
 		516 => 'Cannot open the file.',	// 文件无法打开
-		517 => 'Invalid filename.',	// 非法的文件名
-		518 => 'Invalid type.'
+		517 => 'Invalid filename.',	// 无效的文件名
+		518 => 'Invalid type.',	// 无效的类型
+		519 => 'Invalid score.',	// 不存在该分数等级
+		520 => 'Without search result.'	// 无搜索结果
 	];
 
 	/*登录用户Session数据
@@ -81,8 +84,8 @@ class Homework
 	private $loginedUser;
 
 	public function __construct() {
-		$test = User::where('id', '=', 1)->select();	// test: 1管理员 2编程部成员 3前端成员 4编程部实习生 5游客
-		//$this->loginedUser = Session::get('user');
+		// $test = User::where('id', '=', 1)->select();
+		$this->loginedUser = Session::get('user');
 	}
 
 	/**作业系统 - 获取某用户/某任务优秀作业
@@ -109,11 +112,11 @@ class Homework
 		// 查询用户信息
 		for ($i = 0; $i < count($pageData); $i++) {
 			$pageData[$i]['user'] = [];
-			if ($user = User::where('id', '=', $pageData[$i]['uid'])->select('nickname, mail, photo')) {
-				$pageData[$i]['user'] = $user[0];
-			}
-			if ($info = Info::where('uid', '=', $pageData[$i]['uid'])->select()) {
-				$pageData[$i]['user']['info'] = $info[0];
+			$userInfo = User::leftJoin('info', 'user.id', '=', 'info.uid')
+				->where('id', '=', $pageData[$i]['uid'])
+				->select('user.nickname, user.mail, user.photo, info.*');
+			if ($userInfo) {
+				$pageData[$i]['user'] = $userInfo[0];
 			}
 		}
 		Response::out(200, [
@@ -127,28 +130,28 @@ class Homework
 	
 	/**作业系统 - 上传作业
 	 * 
-	 * @param string $file_field 1 文件上传组件名
+	 * @param file $file 1 作业文件
 	 * @param int $tid 1 任务ID
 	 * @param string $note 0 作业备注
 	 * @return status.状态码 errmsg.错误信息 rid.作业ID
 	 */
-	public function uploadWork($file_field, $tid, $note = null) {
+	public function uploadWork($tid, $note = null) {
 		if ($task = Hws_Task::where('id', '=', $tid)->select()) {
 			// 验证提交开放时间
 			if (time() >= strtotime($task[0]['start_time']) &&
 			time() <= strtotime($task[0]['end_time'])) {
 				// 文件上传
-				if (!isset($_FILES[$file_field])) {	// 没有上传作业
+				if (!isset($_FILES[self::HW_UPLOAD_FIELD])) {	// 没有上传作业
 					Response::out(515);
 					return;
 				}
 				// 检查扩展名
-				if (!in_array(substr(strrchr($_FILES[$file_field]['name'], '.'), 1), self::HW_ALLOWDUPLOAD_FILEEXT)) {
+				if (!in_array(substr(strrchr($_FILES[self::HW_UPLOAD_FIELD]['name'], '.'), 1), self::HW_ALLOWDUPLOAD_FILEEXT)) {
 					// 该文件扩展不允许上传
 					Response::out(514);
 					return;
 				}
-				$src = Document::Upload($file_field, self::HW_UPLOAD_FOLDER);
+				$src = Document::Upload(self::HW_UPLOAD_FIELD, self::HW_UPLOAD_FOLDER);
 				//$src = substr($src, strlen(self::HW_UPLOAD_FOLDER));
 				if (empty($src)) {
 					// 文件上传失败
@@ -309,7 +312,7 @@ class Homework
 	 * 
 	 * @param int $tid 1 作业ID
 	 * @param int $page 0 当前页数（默认为1）
-	 * @return status.状态码 totalItem.结果总条数 totalPage.总页数 currentPage.当前页数 perPage.每页条数 pageData/id.作业ID pageData/tid.任务ID pageData/uid.提交用户ID pageData/file_path.作业文件路径 pageData/time.提交时间 pageData/note.备注 pageData/score.评分 pageData/comment.评语 pageData/comment_uid.批改用户ID pageData/comment_time.批改时间 pageData/recommend.是否推荐 pageData/unpack_path.解压后路径 pageData/user.提交用户信息
+	 * @return status.状态码 errmsg.错误信息 totalItem.结果总条数 totalPage.总页数 currentPage.当前页数 perPage.每页条数 pageData/id.作业ID pageData/tid.任务ID pageData/uid.提交用户ID pageData/file_path.作业文件路径 pageData/time.提交时间 pageData/note.备注 pageData/score.评分 pageData/comment.评语 pageData/comment_uid.批改用户ID pageData/comment_time.批改时间 pageData/recommend.是否推荐 pageData/unpack_path.解压后路径 pageData/user.提交用户信息
 	 */
 	public function getWorksFromTid($tid, $page = 1) {
 		$permission = Authorization::getExistingPermission($this->loginedUser['role']);
@@ -347,11 +350,11 @@ class Homework
 		// 查询用户信息
 		for ($i = 0; $i < count($pageData); $i++) {
 			$pageData[$i]['user'] = [];
-			if ($user = User::where('id', '=', $pageData[$i]['uid'])->select('nickname, mail, photo')) {
-				$pageData[$i]['user'] = $user[0];
-			}
-			if ($info = Info::where('uid', '=', $pageData[$i]['uid'])->select()) {
-				$pageData[$i]['user']['info'] = $info[0];
+			$userInfo = User::leftJoin('info', 'user.id', '=', 'info.uid')
+				->where('id', '=', $pageData[$i]['uid'])
+				->select('user.nickname, user.mail, user.photo, info.*');
+			if ($userInfo) {
+				$pageData[$i]['user'] = $userInfo[0];
 			}
 		}
 		Response::out(200, [
@@ -367,7 +370,7 @@ class Homework
 	 *
 	 * @param int $type 0 类型（0:全部(默认)，1:已批改，2:未批改）
 	 * @param int $page 0 当前页数（默认为1）
-	 * @return status.状态码 totalItem.结果总条数 totalPage.总页数 currentPage.当前页数 perPage.每页条数 pageData/id.作业ID pageData/tid.任务ID pageData/uid.提交用户ID pageData/file_path.作业文件路径 pageData/time.提交时间 pageData/note.备注 pageData/score.评分 pageData/comment.评语 pageData/comment_uid.批改用户ID pageData/comment_time.批改时间 pageData/recommend.是否推荐 pageData/unpack_path.解压后路径 pageData/user.提交用户信息
+	 * @return status.状态码 errmsg.错误信息 totalItem.结果总条数 totalPage.总页数 currentPage.当前页数 perPage.每页条数 pageData/id.作业ID pageData/tid.任务ID pageData/uid.提交用户ID pageData/file_path.作业文件路径 pageData/time.提交时间 pageData/note.备注 pageData/score.评分 pageData/comment.评语 pageData/comment_uid.批改用户ID pageData/comment_time.批改时间 pageData/recommend.是否推荐 pageData/unpack_path.解压后路径 pageData/user.提交用户信息
 	 */
 	public function getAllWorks($type = 0, $page = 1) {
 		// 获取登录用户对应所有权限
@@ -424,11 +427,11 @@ class Homework
 		// 查询用户信息
 		for ($i = 0; $i < count($pageData); $i++) {
 			$pageData[$i]['user'] = [];
-			if ($user = User::where('id', '=', $pageData[$i]['uid'])->select('nickname, mail, photo')) {
-				$pageData[$i]['user'] = $user[0];
-			}
-			if ($info = Info::where('uid', '=', $pageData[$i]['uid'])->select()) {
-				$pageData[$i]['user']['info'] = $info[0];
+			$userInfo = User::leftJoin('info', 'user.id', '=', 'info.uid')
+				->where('id', '=', $pageData[$i]['uid'])
+				->select('user.nickname, user.mail, user.photo, info.*');
+			if ($userInfo) {
+				$pageData[$i]['user'] = $userInfo[0];
 			}
 		}
 		Response::out(200, [
@@ -453,6 +456,10 @@ class Homework
 			// 权限判断
 			if (!Authorization::isAuthorized($this->loginedUser['role'], 'manage_'.$t[0]['department'].'_homeworks')) {
 				Response::out(301);
+				return;
+			}
+			if (!in_array($score, ['A', 'B', 'C', 'D'])) {
+				Response::out(519);
 				return;
 			}
 			// 已批改
@@ -893,19 +900,29 @@ class Homework
 		return $result;
 	}
 
-	/**导出新生信息/实习生作业成绩
+	/**作业系统 - 管理 - 导出新生信息/实习生作业成绩
 	 * 
-	 * @param int $type 导出类型{1: 新生信息, 2: 实习生作业成绩}
-	 * @return status.状态码 data.Excel二进制数据（如果成功没有status，直接返回二进制数据，引导页面下载| 实习生作业成绩暂时有bug）
+	 * @param int $type 1 导出类型{1:新生信息,2:实习生作业成绩}
+	 * @return status.状态码 errmsg.错误信息 data.Excel二进制数据（如果成功没有status，直接返回二进制数据，引导页面下载）
 	 */
-	public function exportData($type = 2) {
+	public function exportData($type) {
+		if ($this->loginedUser['role'] != 1) {	// TODO: 管理员角色ID
+            // 无管理权限
+            Response::out(301);
+            return;
+        }
+
 		if ($type != 1 && $type != 2) {
 			// 无效的type
 			Response::out(518);
 		}
 
 		if ($type == 1) {
+
+
 			// 导出新生信息
+			
+
 			// 获取新生用户数据
 			$newlyInfo = Info::leftJoin('user', 'info.uid', '=', 'user.id')
 				->where('privilege', '=', 1)
@@ -921,9 +938,7 @@ class Homework
 				$n = $i + 3;	// TODO: 第一行输出行行数
 				$templateInfo->getActiveSheet()->setCellValue('A'.$n, $newlyInfo[$i]['sid']);
 				$templateInfo->getActiveSheet()->setCellValue('B'.$n, $newlyInfo[$i]['name']);
-				$templateInfo->getActiveSheet()->setCellValue('C'.$n, 
-					($newlyInfo[$i]['sex'] == 1 ? '男' : ($newlyInfo[$i]['sex'] == 2 ? '女' : NULL))
-				);
+				$templateInfo->getActiveSheet()->setCellValue('C'.$n, $newlyInfo[$i]['sex']);
 				$templateInfo->getActiveSheet()->setCellValue('D'.$n, $newlyInfo[$i]['mail']);
 				$templateInfo->getActiveSheet()->setCellValue('E'.$n, self::HW_DEPARTMEMT_ZH[$newlyInfo[$i]['department']]);
 				$templateInfo->getActiveSheet()->setCellValue('F'.$n, $newlyInfo[$i]['grade']);
@@ -932,35 +947,50 @@ class Homework
 				$templateInfo->getActiveSheet()->setCellValue('I'.$n, $newlyInfo[$i]['phone']);
 				$templateInfo->getActiveSheet()->setCellValue('J'.$n, $newlyInfo[$i]['short_phone']);
 			}
-			$tableName = '新生信息导出表';
+			$templateInfo->getActiveSheet()->setTitle('新生信息导出表');
 			$fileName = 'newlyinfo_'.date("YmdHis", time()).'.xlsx';
-
 
 		} else if ($type == 2) {
 
 
 			// 导出实习生作业成绩
+
+
+			// 获取所有任务信息（注意排序）
+			$taskInfo = Hws_Task::orderBy('department, id')->select('id, title, department');
+
+			// 初始化分部门任务空数组
+			$taskInfoFromDepartment = [];
+			foreach (self::HW_DEPARTMEMT as $val) {
+				$taskInfoFromDepartment[$val] = [];
+			}
+
+			// 对任务进行分部门
+			foreach ($taskInfo as $val) {
+				$taskInfoFromDepartment[$val['department']][$val['id']] = $val['title'];
+			}
+
 			// 获取实习生用户数据
 			$traineeInfo = Info::leftJoin('user', 'info.uid', '=', 'user.id')
 				->where('privilege', '=', 1)
 				->orderBy('department', 'sid', 'grade')
 				->select('uid, sid, name, sex, department');
-
-			// 获取任务信息
-			$taskInfo = Hws_Task::orderBy('department, id')->select('id, title');
+			
 			
 			foreach ($traineeInfo as $key => $trainee) {
 				// 初始化实习生空作业成绩数组
-				foreach ($taskInfo as $val) {
-					$traineeInfo[$key]['homeworks'][$val['id']] = null;
+				foreach ($taskInfoFromDepartment[$traineeInfo[$key]['department']] as $id => $title) {
+					$traineeInfo[$key]['homeworks'][$id] = null;
 				}
 
 				// 查询用户对应作业
 				$recordInfo = Hws_Record::leftJoin('hws_task', 'hws_record.tid', '=', 'hws_task.id')
 					->whereNotNull('hws_record.score')
-					->andWhere('hws_record.uid', '=', $trainee['uid'])
+					->_and()
+					->whereAndWhere(['hws_record.uid', '=', $trainee['uid']], ['hws_task.department', '=', $traineeInfo[$key]['department']])
 					->orderBy('hws_task.department, hws_task.id, hws_record.id desc')
-					->select();
+					->select('hws_record.id, hws_record.tid, hws_record.uid, hws_record.score');
+
 				// 覆盖数组中实习生的空作业成绩
 				foreach ($recordInfo as $val) {
 					if (is_null($traineeInfo[$key]['homeworks'][$val['tid']]))
@@ -971,47 +1001,135 @@ class Homework
 			// Excel处理导出
 			$objReader = new \PHPExcel_Reader_Excel2007();	// 读取模板
 			$templateInfo = $objReader->load("../vendor/template_score.xlsx");
-			// 各任务标题导出
-			for ($i = 0; $i < count($taskInfo); $i++) {
-				$first = ord('E') + $i;
-				$showFirst = chr($first);
-				if ($first > 90) {
-					$showFirst = chr(ord('A')+(($first-65)%26)-1).$showFirst;
-				}
-				$templateInfo->getActiveSheet()->setCellValue($showFirst.'2', $taskInfo[$i]['title']);
-				$templateInfo->getActiveSheet()->getColumnDimension($showFirst)->setWidth(20);
-			}
 
-			// 设值
-			for ($i = 0; $i < count($traineeInfo); $i++) {
-				$n = $i + 3;	// TODO: 第一行输出行行数
-				$templateInfo->getActiveSheet()->setCellValue('A'.$n, $traineeInfo[$i]['sid']);
-				$templateInfo->getActiveSheet()->setCellValue('B'.$n, $traineeInfo[$i]['name']);
-				$templateInfo->getActiveSheet()->setCellValue('C'.$n, 
-					($traineeInfo[$i]['sex'] == 1 ? '男' : ($traineeInfo[$i]['sex'] == 2 ? '女' : NULL))
-				);
-				$templateInfo->getActiveSheet()->setCellValue('D'.$n, self::HW_DEPARTMEMT_ZH[$traineeInfo[$i]['department']]);
+			$sheetTitleArr = [
+				'编程部实习生作业成绩导出',
+				'文秘部实习生作业成绩导出',
+				'页面部前端实习生作业成绩导出',
+				'页面部设计实习生作业成绩导出'
+			];
+			$scoreExchangeInt = [
+				'A' => 100,
+				'B' => 80,
+				'C' => 60,
+				'D' => 50
+			];
 
-				for ($j = 0; $j < count($taskInfo); $j++) {
-					$first = ord('E') + $j;
+			foreach ($sheetTitleArr as $index => $sheetTitle) {
+				// 切换表
+				$templateInfo->setActiveSheetIndex($index);
+				// 设置单元格中标题
+				$templateInfo->getActiveSheet()->setCellValue('A1', $sheetTitle);
+
+				// 任务标题导出
+				$n = 0;
+				foreach ($taskInfoFromDepartment[self::HW_DEPARTMEMT[$index]] as $id => $title) {
+					$first = ord('F') + $n;
 					$showFirst = chr($first);
 					if ($first > 90) {
 						$showFirst = chr(ord('A')+(($first-65)%26)-1).$showFirst;
 					}
-					$templateInfo->getActiveSheet()->setCellValue($showFirst.$n, $traineeInfo[$i]['homeworks'][$taskInfo[$j]['id']]);
+					$templateInfo->getActiveSheet()->setCellValue($showFirst.'2', $title);
+					$templateInfo->getActiveSheet()->getColumnDimension($showFirst)->setWidth(20);
+					$n++;
+				}
+
+				// 设值
+				$n = 3;
+				for ($i = 0; $i < count($traineeInfo); $i++) {
+					if ($traineeInfo[$i]['department'] != self::HW_DEPARTMEMT[$index])
+						continue;
+
+					// 基本信息写入
+					$templateInfo->getActiveSheet()->setCellValue('A'.$n, $traineeInfo[$i]['sid']);
+					$templateInfo->getActiveSheet()->setCellValue('B'.$n, $traineeInfo[$i]['name']);
+					$templateInfo->getActiveSheet()->setCellValue('C'.$n, $traineeInfo[$i]['sex']);
+					$templateInfo->getActiveSheet()->setCellValue('D'.$n, self::HW_DEPARTMEMT_ZH[$traineeInfo[$i]['department']]);
+
+					// 成绩写入
+					$j = 0;
+					$totalScorePer = 0;
+					foreach ($taskInfoFromDepartment[self::HW_DEPARTMEMT[$index]] as $id => $title) {
+						$first = ord('F') + $j;
+						$showFirst = chr($first);
+						if ($first > 90) {
+							$showFirst = chr(ord('A')+(($first-65)%26)-1).$showFirst;
+						}
+						$templateInfo->getActiveSheet()->setCellValue($showFirst.$n, $traineeInfo[$i]['homeworks'][$id]);
+						$totalScorePer += 
+							isset($scoreExchangeInt[$traineeInfo[$i]['homeworks'][$id]])
+							 ? $scoreExchangeInt[$traineeInfo[$i]['homeworks'][$id]]
+							 : 0;
+						$j++;
+					}
+					$templateInfo->getActiveSheet()->setCellValue('E'.$n, $totalScorePer);
+					$n++;
 				}
 			}
-			$tableName = '成绩导出表';
 			$fileName = 'score_'.date("YmdHis", time()).'.xlsx';
 		}
-		$templateInfo->getActiveSheet()->setTitle($tableName);
 		$templateInfo->setActiveSheetIndex(0);
 		// $objWriter->save('test.xlsx');
-		header('Content-Type: application/vnd.ms-excel');
-		header('Content-Disposition: attachment;filename="'.$fileName.'"');
+		header('Pragma: public');
+		header('Expires: 0');
 		header('Cache-Control: max-age=0');
+		header('Content-Type: application/force-download');
+		header('Content-Type: application/vnd.ms-execl');
+		header('Content-Type: application/octet-stream');
+		header('Content-Type: application/download');
+		header('Content-Disposition: attachment;filename="'.$fileName.'"');
+		header('Content-Transfer-Encoding: binary');
 		$objWriter = \PHPExcel_IOFactory::createWriter($templateInfo, 'Excel2007');
-		$objWriter->save('php://output');	// Warning: 可能出现缓冲区不足
+		$objWriter->save('php://output');	// Warning: 可能出现缓冲区不足		
+	}
+
+	/**作业系统 - 管理 - 任务搜索
+	 * 
+	 * @param string $title 1 任务标题关键词
+	 * @param int $page 0 当前页数（默认为1）
+	 * @return status.状态码 errmsg.错误信息 totalItem.结果总条数 totalPage.总页数 currentPage.当前页数 perPage.每页条数 pageData/id.作业ID pageData/tid.任务ID pageData/uid.提交用户ID pageData/file_path.作业文件路径 pageData/time.提交时间 pageData/note.备注 pageData/score.评分 pageData/comment.评语 pageData/comment_uid.批改用户ID pageData/comment_time.批改时间 pageData/recommend.是否推荐 pageData/unpack_path.解压后路径 pageData/user.提交用户信息
+	 */
+	public function searchTask($title, $page = 1) {
+		$data = Hws_Record::leftJoin('hws_task', 'hws_record.tid', '=', 'hws_task.id')
+			->where('hws_task.title', 'like', "%".$title."%")
+			->select('hws_task.id, hws_task.title, hws_task.content, hws_task.department, hws_record.*');
+
+		if ($data) {
+            if (!Authorization::isAuthorized($this->loginedUser['role'], 'submit_'.$data[0]['department'].'_homeworks')) {
+            	// 无管理权限
+            	Response::out(301);
+                return;
+            }
+        } else {
+        	// 无搜索结果
+        	Response::out(520);
+        	return;
+        }
+
+        $perPage = 4;
+		$totalItem = count($data);
+		$totalPage = (int)(count($data) / $perPage) + ((count($data) % $perPage != 0) ? 1 : 0);
+		$pageData = [];
+		for ($i = ($page - 1) * $perPage; $i < $page * $perPage && $i < $totalItem; $i++) {
+			array_push($pageData, $data[$i]);
+		}
+		// 查询用户信息
+		for ($i = 0; $i < count($pageData); $i++) {
+			$pageData[$i]['user'] = [];
+			$userInfo = User::leftJoin('info', 'user.id', '=', 'info.uid')
+				->where('id', '=', $pageData[$i]['uid'])
+				->select('user.nickname, user.mail, user.photo, info.*');
+			if ($userInfo) {
+				$pageData[$i]['user'] = $userInfo[0];
+			}
+		}
+		Response::out(200, [
+			'totalItem' => $totalItem,
+			'totalPage' => $totalPage,
+			'currentPage' => $page,
+			'perPage' => $perPage,
+			'pageData' => $pageData
+		]);
 	}
 }
 ?>
