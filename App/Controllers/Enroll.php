@@ -14,6 +14,7 @@ use App\Lib\Vcode;
 use App\Lib\Response;
 use App\Lib\Html;
 use App\lib\Verify;
+use App\Controllers\Login;
 
  class Enroll
  {
@@ -393,7 +394,8 @@ use App\lib\Verify;
 		]);
 		if(1==$update_psw){
 			Cache::delete($re_verify."send_verify");
-			Response::out(200);
+			$out=new Login();
+			$out->logout();
 		}else{
 			Response::out(415);
 		}
