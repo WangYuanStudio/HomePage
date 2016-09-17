@@ -13,7 +13,7 @@ use App\Lib\Mail;
 use App\Lib\Vcode;
 use App\Lib\Response;
 use App\Lib\Html;
-use App\lib\Verify;
+use App\Lib\Verify;
 use App\Controllers\Login;
 
  class Enroll

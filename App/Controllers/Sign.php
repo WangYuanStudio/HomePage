@@ -14,13 +14,14 @@ use App\Lib\Response;
 use App\Lib\Html;
 use App\Controllers\Common;
 use App\Lib\Message;
+use App\Lib\Verify;
 
 class Sign
 {
 	const En_Photo_REGISTER='avatar/head.gif';
 	const HW_DEPARTMEMT = ['backend', 'frontend', 'design', 'secret'];	// 部门标识符
 	public $middle = [
-		'Insertnews' => 'Check_login',
+		//'Insertnews' => 'Check_login',
 		'Signupreview' => ['Check_login','Check_ManagerMember'],
 		'CheckPower' =>['Check_login','Check_ManagerMember'],
 		'Allpass' =>['Check_login','Check_ManagerMember'],
@@ -30,7 +31,8 @@ class Sign
 		'Addsigntime'=>['Check_login','Check_ManagerMember'],
 		'Getsigntime'=>['Check_login','Check_ManagerMember'],
 		'Deletesigntime'=>['Check_login','Check_ManagerMember'],
-		'sendPhone'  =>'Check_Operation_Count'
+		'sendPhone'  =>'Check_Operation_Count',
+		'PCsign'     =>'Check_login'
 		// 对所有方法判断登录
 	];
 	public static $status=[
@@ -190,19 +192,7 @@ class Sign
 		}
 		else{
 			 if(Verify::auth()){
-				$insert_news=Info::insert([
-				"uid" 		 	=> $uid,
-				"name" 			=> Html::removeSpecialChars($name),
-				"sid"			=> $sid,
-				"department" 	=> Html::removeSpecialChars($department),
-				"grade"			=> Html::removeSpecialChars($grade),
-				"phone"			=> $phone,
-				"short_phone"	=> $short_phone,
-				"privilege"     => 0,
-				"sex"			=> $sex,
-				"college"       => Html::removeSpecialChars($college),
-				"major"			=> Html::removeSpecialChars($major)
-				]);
+				$this->PCsign($uid,$name,$sid,$department,$grade,$phone,$short_phone,$sex,$college,$major);
 				Response::out(200);
 			 }	
 		}
@@ -658,6 +648,23 @@ class Sign
 		return false; 
 	}
 	
+	//电脑端报名
+	public function PCsign($uid,$name,$sid,$department,$grade,$phone,$short_phone,$sex,$college,$major){
+		$insert_news=Info::insert([
+				"uid" 		 	=> $uid,
+				"name" 			=> Html::removeSpecialChars($name),
+				"sid"			=> $sid,
+				"department" 	=> Html::removeSpecialChars($department),
+				"grade"			=> Html::removeSpecialChars($grade),
+				"phone"			=> $phone,
+				"short_phone"	=> $short_phone,
+				"privilege"     => 0,
+				"sex"			=> $sex,
+				"college"       => Html::removeSpecialChars($college),
+				"major"			=> Html::removeSpecialChars($major)
+				]);
+	}
+
 	public function test($phone){
 		if($this->Judge_phone()){
 			response("phone");

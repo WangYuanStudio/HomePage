@@ -64,17 +64,19 @@ class Document{
 		}		
 		
 		//判断格式
-		if(self::checkFileType())
-		{//设置文件名
-			self::setFileName($fileoldname); 
-			//判断文件是否保存成功，成功则返回文件信息
-			if(move_uploaded_file($_FILES[$files]['tmp_name'],self::$paths.self::$fileName)){			
-				return self::$paths.self::$fileName;
-			}
-			else{
-					return false;
-				}			
-			}	
+		if(!self::checkFileType())
+		{	
+			return false;		
+		}	
+		//设置文件名
+		self::setFileName($fileoldname); 
+		//判断文件是否保存成功，成功则返回文件信息
+		if(move_uploaded_file($_FILES[$files]['tmp_name'],self::$paths.self::$fileName)){			
+			return self::$paths.self::$fileName;
+		}
+		else{
+			return false;
+		}	
 		return false;
 	}
 
