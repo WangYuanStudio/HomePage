@@ -62,10 +62,7 @@ class Document{
 		}else{
 			return false;
 		}		
-		//判断路径是否存在，不存在则创建		
-		if(!file_exists(self::$paths)){
-			mkdir(self::$paths,0755);
-		}
+		
 		//判断格式
 		if(self::checkFileType())
 		{//设置文件名
