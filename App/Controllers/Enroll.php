@@ -419,7 +419,9 @@ use App\Controllers\Login;
 		$update_user=User::where('id','=',$uid)->Update([					
 			"nickname" => Html::removeSpecialChars($nickname)
 			]);	
-		if(1==$update_user){			
+		if(1==$update_user){	
+			Session::set("user.nickname",$nickname);	
+			//response(Session::get("user.nickname"));
 			Response::out(200);
 		}else{
 			Response::out(417);
