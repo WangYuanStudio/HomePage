@@ -26,7 +26,7 @@ class Message
      */
     public static function send($phone, $code)
     {
-        $res = file_get_contents("http://sms.tehir.cn/code/sms/api/v1/send?srcSeqId=123&account=13580104633&password=xiasiwo&mobile=$phone&code=$code&time=1");
+        $res = file_get_contents("http://sms.tehir.cn/code/sms/api/v1/send?srcSeqId=123&account=13580104633&password=xiasiwo&mobile=$phone&code=$code&time=2");
         if ("成功" === json_decode($res, true)["responseInfo"]) {
             return true;
         } else {
