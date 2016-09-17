@@ -535,19 +535,28 @@ class Sign
 			return false;
 		}
 
-		$verify=rand(100000,999999);
-		$array=[
-			"verify" => $verify,
-			"time"  =>time()+120
-		];
 		//判断缓存
-		if(Cache::has($phone)){
+		//获取缓存数据
+		$array=json_decode(Cache::get($phone));		
+		foreach ($array as $key => $value) {
+			if('re_time'==$key)
+				$re_time=$value;
+		}
+		if(time()<=$re_time){
 			Response::out(425);
 			return false;
 		}
+
+		$verify=rand(100000,999999);
+		$array=[
+			"verify" => $verify,
+			"time"   =>time()+600,
+			"re_time"=>time()+120
+		];
+		
 		//send message
 		if(Message::send($phone, $verify)){       	
-			Cache::set($phone,json_encode($array),120);	
+			Cache::set($phone,json_encode($array),600);	
         	Response::out(200);
       	}
 	}
