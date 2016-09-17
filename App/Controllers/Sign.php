@@ -556,6 +556,20 @@ class Sign
 	*@return status.状态码 
 	*/
 	public function sendPhone($phone){
+		//检查长号的唯一性
+		$checkphone=0;
+		$data_phone=Info::where('phone','=',$phone)->select('phone');
+		foreach($data_phone as $value){
+			if(in_array($phone, $value)){
+				$checkphone=1;
+			}
+		}
+		if(1==$checkphone)
+		{
+			Response::out(428);
+			return false;
+		}
+
 		$verify=rand(100000,999999);
 		$array=[
 			"verify" => $verify,
