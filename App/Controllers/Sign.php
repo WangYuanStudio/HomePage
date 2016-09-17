@@ -19,20 +19,20 @@ class Sign
 {
 	const En_Photo_REGISTER='avatar/head.gif';
 	const HW_DEPARTMEMT = ['backend', 'frontend', 'design', 'secret'];	// 部门标识符
-	// public $middle = [
-	// 	'Insertnews' => 'Check_login',
-	// 	'Signupreview' => ['Check_login','Check_ManagerMember'],
-	// 	'CheckPower' =>['Check_login','Check_ManagerMember'],
-	// 	'Allpass' =>['Check_login','Check_ManagerMember'],
-	// 	'Alldelete' =>['Check_login','Check_ManagerMember'],
-	// 	'Elimination' =>['Check_login','Check_ManagerMember'],
-	// 	'Content_search'=>['Check_login','Check_ManagerMember'],
-	// 	'Addsigntime'=>['Check_login','Check_ManagerMember'],
-	// 	'Getsigntime'=>['Check_login','Check_ManagerMember'],
-	// 	'Deletesigntime'=>['Check_login','Check_ManagerMember'],
-	// 	// 对所有方法判断登录
-	// ];
-
+	public $middle = [
+		'Insertnews' => 'Check_login',
+		'Signupreview' => ['Check_login','Check_ManagerMember'],
+		'CheckPower' =>['Check_login','Check_ManagerMember'],
+		'Allpass' =>['Check_login','Check_ManagerMember'],
+		'Alldelete' =>['Check_login','Check_ManagerMember'],
+		'Elimination' =>['Check_login','Check_ManagerMember'],
+		'Content_search'=>['Check_login','Check_ManagerMember'],
+		'Addsigntime'=>['Check_login','Check_ManagerMember'],
+		'Getsigntime'=>['Check_login','Check_ManagerMember'],
+		'Deletesigntime'=>['Check_login','Check_ManagerMember'],
+		'sendPhone'  =>'Check_Operation_Count'
+		// 对所有方法判断登录
+	];
 	public static $status=[
 		401 => 'Mobile phone trombone error.',
 		402 => 'Student id error.',
@@ -50,7 +50,9 @@ class Sign
 		425 => 'message has been sent, please wait a moment.',
 		426 => 'Please send back the message.',		
 		427 => 'Please fill in the email.',
-		428 => 'The phone number has been in existence'
+		428 => 'The phone number has been in existence',
+		429 => 'Invalid format of cornet.',
+		430 => 'Invalid sex.'
 	];
 
 	/**报名系统-实现报名
@@ -60,7 +62,7 @@ class Sign
 	*@param enum $grade 		年级{'2015级','2016级'}
 	*@param string $phone 		长号	
 	*@param string $short_phone 	短号
-	*@param string $sex    			性别
+	*@param string $sex    			性别('男','女')
 	*@param string $college      学院(16内)
 	*@param string $major        专业(16内)
 	*@param string $mail 0 邮箱(电脑不用，移动端必须)
@@ -76,8 +78,6 @@ class Sign
 			return false;
 		}
 		$uid=Session::get("user.id");
-		$truedata=0;
-		$check_uid=0;
 		if($sign_time=Info_Time::orderBy("time_id desc")->limit(0, 1)->select()){
 			if (time() < strtotime($sign_time[0]['start_time']) ||
 			time() > strtotime($sign_time[0]['end_time'])){
@@ -98,47 +98,41 @@ class Sign
 			return false;
 		}
 		//查询学号是否存在
-		$data=Info::where('sid','=',$sid)->select('sid');					
-		foreach($data as $value){
-			if (in_array($sid , $value)){
-				$truedata=1;				
-			}
-		}
-		//查询是否已报名
-		$search_data=Info::where('uid','=',$uid)->select('uid');
-		foreach($search_data as $value){
-			if(in_array($uid, $value)){
-				$check_uid=1;
-			}
-		}
-		//学号
-		if(1==$truedata)
+		if(Info::where('sid','=',$sid)->select('sid'))					
 		{
 			Response::out(403);
 			return false;
 		}
-		//已报名
-		if(1==$check_uid){
+		//查询是否已报名
+		if(Info::where('uid','=',$uid)->select('uid'))
+		{
 			Response::out(420);
 			return false;
-		}	
+		}
+		
+		//检查长号的唯一性
+		if(Info::where('phone','=',$phone)->select('phone'))
+		{
+			Response::out(428);
+			return false;
+		}
+		
+		//检查短号
+		if(!is_numeric($short_phone)){
+			Response::out(429);
+			return false;
+		}
+
+		//检查性别
+		if (!in_array($sex,['男','女'])) {
+			Response::out(430);
+			return false;
+		}
+
 		//长度判断
 		if(strlen(Html::removeSpecialChars($name))>30||strlen($sid)>11||strlen($department)>15||strlen(Html::removeSpecialChars($grade))>20||strlen($sex)>3||strlen(Html::removeSpecialChars($college))>50||strlen(Html::removeSpecialChars($major))>50||strlen($phone)>11||strlen($short_phone)>6)	
 		{
 			Response::out(312);
-			return false;
-		}
-		//检查长号的唯一性
-		$checkphone=0;
-		$data_phone=Info::where('phone','=',$phone)->select('phone');
-		foreach($data_phone as $value){
-			if(in_array($phone, $value)){
-				$checkphone=1;
-			}
-		}
-		if(1==$checkphone)
-		{
-			Response::out(428);
 			return false;
 		}
 		//phone user set 
@@ -154,25 +148,19 @@ class Sign
 				Response::out(409);
 				return false;
 			}
-			//检查邮件的唯一性
-			$checkdata=0;
-			$data=User::where('mail','=',$mail)->select('mail');
-			foreach($data as $value){
-				if(in_array($mail, $value)){
-					$checkdata=1;
-				}
-			}
-			if(1==$checkdata)
+
+			//检查邮件的唯一性			
+			if(User::where('mail','=',$mail)->select('mail'))
 			{
 				Response::out(408);
 				return false;
 			}
-			
+
 			//判断短信
 			if(!$this->Judgemessage($phone,$token)){
 				return false;
 			}
-
+			//register
 			$password=password_hash($sid,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
 			$register_uid=User::Insert([
 			"nickname" =>'intern'.rand(10000,99999),
@@ -183,6 +171,7 @@ class Sign
 			"status"=>0
 			]);	
 			$uid=$register_uid[0];
+			//sign
 			$insert_news=Info::insert([
 				"uid" 		 	=> $uid,
 				"name" 			=> Html::removeSpecialChars($name),
@@ -197,10 +186,10 @@ class Sign
 				"major"			=> Html::removeSpecialChars($major)
 				]);
 			Cache::delete($phone);
-				Response::out(200);
+			Response::out(200);
 		}
 		else{
-			// if(Verify::auth()){
+			 if(Verify::auth()){
 				$insert_news=Info::insert([
 				"uid" 		 	=> $uid,
 				"name" 			=> Html::removeSpecialChars($name),
@@ -215,7 +204,7 @@ class Sign
 				"major"			=> Html::removeSpecialChars($major)
 				]);
 				Response::out(200);
-			// }	
+			 }	
 		}
 			
 	}
@@ -229,21 +218,14 @@ class Sign
 	*/
 	public function Signupreview($uid,$privilege=1)
 	{
-		$checkdata=0;
-		$department='department';
-		$data=Info::where('uid','=',$uid)->select();
-		foreach($data as $key => $value){
-			if(in_array($uid,$value)){
-				$checkdata=1;
-				$checkvalue=$value;
-				if(1==$checkdata){
-					foreach($checkvalue as $key =>$value){
-						if($key=='department')
-							$department=$value;
-						}
-				}
-			}
-		}		
+		
+		if($data=Info::where('uid','=',$uid)->select()){
+			$department=$data[0]['department'];
+			echo $department;
+		}else{
+			return false;
+		}
+		
 		if('design'==$department){		
 			$check=	User::where('id','=',$uid)->update([
 					"role"	=>8
@@ -557,14 +539,7 @@ class Sign
 	*/
 	public function sendPhone($phone){
 		//检查长号的唯一性
-		$checkphone=0;
-		$data_phone=Info::where('phone','=',$phone)->select('phone');
-		foreach($data_phone as $value){
-			if(in_array($phone, $value)){
-				$checkphone=1;
-			}
-		}
-		if(1==$checkphone)
+		if(Info::where('phone','=',$phone)->select('phone'))
 		{
 			Response::out(428);
 			return false;
@@ -683,13 +658,13 @@ class Sign
 		return false; 
 	}
 	
-	public function test(){
+	public function test($phone){
 		if($this->Judge_phone()){
 			response("phone");
 		}else{
 			response("PC");
 		}
-		Cache::delete('13640134362');
+		//Cache::delete('13640134362');
+		
 	}
-	
 }

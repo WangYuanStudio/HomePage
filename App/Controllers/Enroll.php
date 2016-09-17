@@ -1,8 +1,8 @@
 <?php
 /*
 *User: huizhe
-*Date: 2016/9/7
-*Time: 20:02
+*Date: 2016/9/17
+*Time: 15:02
 */
 
 namespace App\Controllers;
@@ -18,19 +18,21 @@ use App\Controllers\Login;
 
  class Enroll
  {
- 	protected static $root=__ROOT__;
  	const En_Photo_UPLOAD='avatar/';
  	const En_Photo_REGISTER='avatar/head.gif';
  	const En_Photo_FILE='file';
- // 	public $middle = [
-	// 	'UploadPhoto' => 'Check_login',
-	// 	'Limituser' => ['Check_login','Check_ManagerMember'],
-	// 	'Relieve' => ['Check_login','Check_ManagerMember'],
-	// 	'Updatepsw' => 'Check_login',
-	// 	'Updateuser' => 'Check_login',
-	//  	'Sendverify' => 'Check_login'
-	// 	// 对所有方法判断登录
-	// ];
+ 	
+ 	public $middle = [
+	'UploadPhoto' => 'Check_login',
+	'Limituser' => ['Check_login','Check_ManagerMember'],
+	'Relieve' => ['Check_login','Check_ManagerMember'],
+	'Updatepsw' => 'Check_login',
+	'Updateuser' => 'Check_login',
+	'Sendverify' => ['Check_login','Check_Operation_Count'],
+	'sendEmail'  =>'Check_Operation_Count',	
+	'Searchpsw'  =>'Check_Operation_Count'
+		// 对所有方法判断登录
+	];
 
  	public static $status=[
 		405 => 'Verification code is empty.',
@@ -60,6 +62,7 @@ use App\Controllers\Login;
 	*/
 	public function Register()
 	{
+	
 		$token=$_GET['token'];
 		//判断是否已发送邮箱	
 		if(!Cache::has($token)){
@@ -104,13 +107,14 @@ use App\Controllers\Login;
 		Response::out(200,['login_id'=>$login_id]);	
 	}
 	
-	/**官网-更换头像
+	/**官网-用户更换头像
 	*@param string $file 1 上传控件
 	*
-	*@return status.状态码 src.照片路径
+	*@return status.状态码 data.照片路径
 	*/
 	public function UploadPhoto()
 	{
+		
 		//检查文件格式
 		$name=$_FILES[self::En_Photo_FILE]['name'];
 		$allowtype=array('png','gif','bmp','jpeg','jpg');
@@ -123,7 +127,8 @@ use App\Controllers\Login;
 				"photo"=>$src
 				]);
 			if(1==$check){
-				Response::out(200,['src'=>$src]);
+				Session::set("user.photo",$src);
+				Response::out(200,$src);
 			}else{
 				Response::out(410);
 			}	
@@ -144,7 +149,6 @@ use App\Controllers\Login;
 	*/
 	public function sendEmail($mail,$nickname,$password,$password2)
 	{
-		$checkdata=0;
 		//检查邮件格式
 		if(!preg_match("/([\w\-]+\@[\w\-]+\.[\w\-]+)/",$mail))
 		{
@@ -152,17 +156,12 @@ use App\Controllers\Login;
 			return false;
 		}
 		//检查邮件的唯一性
-		$data=User::where('mail','=',$mail)->select('mail');
-		foreach($data as $value){
-			if(in_array($mail, $value)){
-				$checkdata=1;
-			}
-		}
-		if(1==$checkdata)
+		if(User::where('mail','=',$mail)->select('mail'))
 		{
 			Response::out(408);
 			return false;
 		}
+		
 		//检查密码是否输入一致					
 		if($password!=$password2){
 			Response::out(414);
@@ -183,7 +182,7 @@ use App\Controllers\Login;
 			Response::out(419);
 			return false;
 		}
- 		//if(Verify::auth()){														
+ 		if(Verify::auth()){														
 			$token=md5($mail);
 			$array=[
 				"nickname" =>Html::removeSpecialChars($nickname),
@@ -200,7 +199,7 @@ use App\Controllers\Login;
 如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
 			Mail::to($mail)->title("WangYuanStudio")->content($emailbody);				
 			Response::out(200);			
-		//}							 
+		}							 
 	}
 
 
@@ -252,18 +251,11 @@ use App\Controllers\Login;
 		}
 		$checkdata=0;
 		//获取用户的信息		
-		$data=User::where('mail','=',$mail)->select();
-		foreach($data as $key => $value){
-			if(in_array($mail,$value)){
-				$checkdata=1;
-				$checkvalue=$value;
-				if(1==$checkdata){
-					$user_nickname=$value["nickname"];
-				}
-			}
-		}		
-		if(1!=$checkdata)
+		if($data=User::where('mail','=',$mail)->select())
 		{
+			$user_nickname=$data[0]['nickname'];
+
+		}else{
 			Response::out(412);
 			return false;
 		}
@@ -420,9 +412,8 @@ use App\Controllers\Login;
 		$update_user=User::where('id','=',$uid)->Update([					
 			"nickname" => Html::removeSpecialChars($nickname)
 			]);	
-		if(1==$update_user){	
-			Session::set("user.nickname",$nickname);	
-			//response(Session::get("user.nickname"));
+		if(1==$update_user){
+			Session::set("user.nickname",$nickname);				
 			Response::out(200);
 		}else{
 			Response::out(417);
@@ -459,15 +450,23 @@ use App\Controllers\Login;
 			return false;
 		}
 	}
-	
+
+
+
+
+
+	public function ds(){
+		Cache::flush();
+	}
+
 	public function test($token,$mail){
 		response(__ROOT__);
 		response(Cache::get($token));
 		response(time());
+		//Cache::delete($token);
 		Cache::delete($mail);
-
+		
 	}
-	
 }
 
 
