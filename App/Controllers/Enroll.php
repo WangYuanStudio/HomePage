@@ -115,6 +115,7 @@ use App\Controllers\Login;
 	public function UploadPhoto()
 	{
 		
+		$set_name=sha1(time().Session::get("user.id").rand(10000,99999));
 		//检查文件格式
 		$name=$_FILES[self::En_Photo_FILE]['name'];
 		$allowtype=array('png','gif','bmp','jpeg','jpg');
@@ -122,11 +123,12 @@ use App\Controllers\Login;
 		$filetype=strtolower($aryStr[count($aryStr)-1]);
 		if(in_array(strtolower($filetype),$allowtype)){
 			$id = Session::get("user.id");
-			$src = Document::Upload(self::En_Photo_FILE, self::En_Photo_UPLOAD,Session::get("user.id"));
+			$src = Document::Upload(self::En_Photo_FILE,self::En_Photo_UPLOAD,$set_name);
 			$check=User::where('id','=',$id)->Update([
 				"photo"=>$src
 				]);
 			if(1==$check){
+				unlink(Session::get("user.photo"));
 				Session::set("user.photo",$src);
 				Response::out(200,$src);
 			}else{
