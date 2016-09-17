@@ -105,6 +105,7 @@ use App\Controllers\Login;
 	}
 	
 	/**官网-更换头像
+	*@param string $file 1 上传控件
 	*
 	*@return status.状态码 src.照片路径
 	*/
