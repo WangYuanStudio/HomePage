@@ -550,7 +550,7 @@ class Sign
 		Response::out(200);
 	}
 
-	/**发送短信(60s)
+	/**发送短信(120s)
 	*@param string $phone   长号
 	*
 	*@return status.状态码 
@@ -582,7 +582,7 @@ class Sign
 		}
 		//send message
 		if(Message::send($phone, $verify)){       	
-			Cache::set($phone,json_encode($array),80);	
+			Cache::set($phone,json_encode($array),120);	
         	Response::out(200);
       	}
 	}
