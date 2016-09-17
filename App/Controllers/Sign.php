@@ -536,16 +536,19 @@ class Sign
 		}
 
 		//判断缓存
-		//获取缓存数据
-		$array=json_decode(Cache::get($phone));		
-		foreach ($array as $key => $value) {
-			if('re_time'==$key)
-				$re_time=$value;
+		if(Cache::has($phone)){
+			//获取缓存数据
+			$array11=json_decode(Cache::get($phone));		
+			foreach ($array11 as $key => $value) {
+				if('re_time'==$key)
+					$re_time=$value;
+			}
+			if(time()<=$re_time){
+				Response::out(425);
+				return false;
+			}
 		}
-		if(time()<=$re_time){
-			Response::out(425);
-			return false;
-		}
+		
 
 		$verify=rand(100000,999999);
 		$array=[
