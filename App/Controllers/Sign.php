@@ -163,8 +163,10 @@ class Sign
 				Response::out(408);
 				return false;
 			}
+
 			//判断短信
-			if(1!=Session::get("phone")){
+
+			if(null==Session::get("phone")){
 				Response::out(411);
 				return false;
 			}
@@ -696,11 +698,18 @@ class Sign
 				]);
 	}
 
-	public function test($phone){
+	public function test(){
 		if($this->Judge_phone()){
 			response("phone");
 		}else{
 			response("PC");
+		}
+
+		if(null==Session::get("phone")){
+			response("1");
+		}
+		else{
+			response("2");
 		}
 		//Cache::delete('13640134362');
 		
