@@ -18,7 +18,6 @@ use App\Lib\Verify;
 
 class Sign
 {
-	private $judge_right;
 	const En_Photo_REGISTER='avatar/head.gif';
 	const HW_DEPARTMEMT = ['backend', 'frontend', 'design', 'secret'];	// 部门标识符
 	public $middle = [
@@ -70,12 +69,11 @@ class Sign
 	*@param string $college      学院(16内)
 	*@param string $major        专业(16内)
 	*@param string $mail 0 邮箱(电脑不用，移动端必须)
-	*@param string $token 0 短信验证码(电脑不用，移动端必须)
 	*
 	*@return status.状态码  
 	*/
 
-	public function Insertnews($name,$sid,$department,$grade,$phone,$short_phone,$sex,$college,$major,$mail=NULL,$token=NULL)
+	public function Insertnews($name,$sid,$department,$grade,$phone,$short_phone,$sex,$college,$major,$mail=NULL)
 	{
 		if (!in_array($department, self::HW_DEPARTMEMT)) {
 			Response::out(500);
@@ -146,10 +144,6 @@ class Sign
 				Response::out(300);
 				return false;
 			}
-			if(is_null($token)){
-				Response::out(431);
-				return false;
-			}
 
 			if(is_null($mail))
 			{
@@ -169,9 +163,8 @@ class Sign
 				Response::out(408);
 				return false;
 			}
-
 			//判断短信
-			if(1!=$this->judge_right){
+			if(1!=Session::get("phone")){
 				Response::out(411);
 				return false;
 			}
@@ -585,9 +578,8 @@ class Sign
 	*@return status.状态码 
 	*/
 	public function Judge_me($phone,$token=NULL){
-		$this->judge_right=0;
 		if($this->Judgemessage($phone,$token)){
-			$this->judge_right=1;
+			Session::set("phone",1);
 		}
 	}
 
@@ -598,6 +590,11 @@ class Sign
 			Response::out(426);
 			return false;
 		}
+		
+		if(is_null($token)){
+				Response::out(431);
+				return false;
+			}
 
 		//获取缓存数据
 		$array=json_decode(Cache::get($phone));		
