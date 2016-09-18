@@ -18,6 +18,7 @@ use App\Lib\Verify;
 
 class Sign
 {
+	private $judge_right;
 	const En_Photo_REGISTER='avatar/head.gif';
 	const HW_DEPARTMEMT = ['backend', 'frontend', 'design', 'secret'];	// 部门标识符
 	public $middle = [
@@ -54,7 +55,8 @@ class Sign
 		427 => 'Please fill in the email.',
 		428 => 'The phone number has been in existence',
 		429 => 'Invalid format of cornet.',
-		430 => 'Invalid sex.'
+		430 => 'Invalid sex.',
+		431 => 'token is null.'
 	];
 
 	/**报名系统-实现报名
@@ -139,6 +141,16 @@ class Sign
 		}
 		//phone user set 
 		if(is_null($uid)){
+			//judge PC
+			if(!$this->Judge_phone()){
+				Response::out(300);
+				return false;
+			}
+			if(is_null($token)){
+				Response::out(431);
+				return false;
+			}
+
 			if(is_null($mail))
 			{
 				Response::out(427);
@@ -159,7 +171,8 @@ class Sign
 			}
 
 			//判断短信
-			if(!$this->Judgemessage($phone,$token)){
+			if(1!=$this->judge_right){
+				Response::out(411);
 				return false;
 			}
 			//register
@@ -571,7 +584,15 @@ class Sign
 	*
 	*@return status.状态码 
 	*/
-	public function Judgemessage($phone,$token=NULL){
+	public function Judge_me($phone,$token=NULL){
+		$this->judge_right=0;
+		if($this->Judgemessage($phone,$token)){
+			$this->judge_right=1;
+		}
+	}
+
+
+	private function Judgemessage($phone,$token=NULL){
 		//判断是否已发送短信	
 		if(!Cache::has($phone)){
 			Response::out(426);
@@ -593,7 +614,8 @@ class Sign
 		if($verify!=$token){
 			Response::out(411);
 			return false;
-		}		
+		}
+		Response::out(200);		
 		return true;		 
 	}
 
