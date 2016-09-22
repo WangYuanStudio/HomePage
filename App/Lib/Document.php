@@ -25,7 +25,7 @@ class Document{
 	*传过来的文件类型，如rar，zip，7z
 	*@type   string
 	*/
-	private static $allowtype=array('zip','rar','7z','png','gif','bmp','ipeg','jpg');
+	private static $allowtype=array('zip','rar','7z','png','gif','bmp','jpeg','jpg');
 
 	/**
 	*设置文件名+时间
@@ -62,22 +62,21 @@ class Document{
 		}else{
 			return false;
 		}		
-		//判断路径是否存在，不存在则创建		
-		if(!file_exists(self::$paths)){
-			mkdir(self::$paths,0755);
-		}
+		
 		//判断格式
-		if(self::checkFileType())
-		{//设置文件名
-			self::setFileName($fileoldname); 
-			//判断文件是否保存成功，成功则返回文件信息
-			if(move_uploaded_file($_FILES[$files]['tmp_name'],self::$paths.self::$fileName)){			
-				return self::$paths.self::$fileName;
-			}
-			else{
-					return false;
-				}			
-			}	
+		if(!self::checkFileType())
+		{	
+			return false;		
+		}	
+		//设置文件名
+		self::setFileName($fileoldname); 
+		//判断文件是否保存成功，成功则返回文件信息
+		if(move_uploaded_file($_FILES[$files]['tmp_name'],self::$paths.self::$fileName)){			
+			return self::$paths.self::$fileName;
+		}
+		else{
+			return false;
+		}	
 		return false;
 	}
 
@@ -92,7 +91,7 @@ class Document{
 		}
 	}
 	/**
-	*获取文件类型，并判断是否为zip,rar,7z,jpg,ipeg,gif,png
+	*获取文件类型，并判断是否为zip,rar,7z,jpg,jpeg,gif,png
 	*/
 	private static function checkFileType(){
 		$aryStr=explode(".",self::$name);

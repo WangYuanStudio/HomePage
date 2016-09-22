@@ -1,8 +1,8 @@
 <?php
 /*
 *User: huizhe
-*Date: 2016/9/7
-*Time: 20:02
+*Date: 2016/9/17
+*Time: 15:02
 */
 
 namespace App\Controllers;
@@ -13,19 +13,24 @@ use App\Lib\Mail;
 use App\Lib\Vcode;
 use App\Lib\Response;
 use App\Lib\Html;
-use App\lib\Verify;
+use App\Lib\Verify;
+use App\Controllers\Login;
 
  class Enroll
  {
  	const En_Photo_UPLOAD='avatar/';
  	const En_Photo_REGISTER='avatar/head.gif';
+ 	const En_Photo_FILE='file';
+ 	
  	public $middle = [
-		'UploadPhoto' => 'Check_login',
-		'Limituser' => ['Check_login','Check_ManagerMember'],
-		'Relieve' => ['Check_login','Check_ManagerMember'],
-		'Updatepsw' => 'Check_login',
-		'Updateuser' => 'Check_login',
-	 	'Sendverify' => 'Check_login'
+	'UploadPhoto' => 'Check_login',
+	'Limituser' => ['Check_login','Check_ManagerMember'],
+	'Relieve' => ['Check_login','Check_ManagerMember'],
+	'Updatepsw' => 'Check_login',
+	'Updateuser' => 'Check_login',
+	'Sendverify' => ['Check_login','Check_Operation_Count'],
+	'sendEmail'  =>'Check_Operation_Count',	
+	'Searchpsw'  =>'Check_Operation_Count'
 		// 对所有方法判断登录
 	];
 
@@ -51,13 +56,14 @@ use App\lib\Verify;
 	];
 
 	/**官网-实现注册
-	*       
-	*@param string $token  邮箱链接的token   
+	*         
 	*
 	*@return login_id.返回插入的id
 	*/
-	public function Register($token=NULL)
+	public function Register()
 	{
+	
+		$token=$_GET['token'];
 		//判断是否已发送邮箱	
 		if(!Cache::has($token)){
 			Response::out(423);
@@ -101,26 +107,30 @@ use App\lib\Verify;
 		Response::out(200,['login_id'=>$login_id]);	
 	}
 	
-	/**官网-更换头像
-	*@param string $form_filename 头像上传组名
+	/**官网-用户更换头像
+	*@param string $file 1 上传控件
 	*
-	*@return status.状态码
+	*@return status.状态码 data.照片路径
 	*/
-	public function UploadPhoto($form_filename)
+	public function UploadPhoto()
 	{
+		
+		$set_name=sha1(time().Session::get("user.id").rand(10000,99999));
 		//检查文件格式
-		$name=$_FILES[$form_filename]['name'];
-		$allowtype=array('png','gif','bmp','ipeg','jpg');
+		$name=$_FILES[self::En_Photo_FILE]['name'];
+		$allowtype=array('png','gif','bmp','jpeg','jpg');
 		$aryStr=explode(".",$name);
 		$filetype=strtolower($aryStr[count($aryStr)-1]);
 		if(in_array(strtolower($filetype),$allowtype)){
 			$id = Session::get("user.id");
-			$src = Document::Upload($form_filename, self::En_Photo_UPLOAD);
+			$src = Document::Upload(self::En_Photo_FILE,self::En_Photo_UPLOAD,$set_name);
 			$check=User::where('id','=',$id)->Update([
 				"photo"=>$src
 				]);
 			if(1==$check){
-				Response::out(200);
+				unlink(Session::get("user.photo"));
+				Session::set("user.photo",$src);
+				Response::out(200,$src);
 			}else{
 				Response::out(410);
 			}	
@@ -141,7 +151,6 @@ use App\lib\Verify;
 	*/
 	public function sendEmail($mail,$nickname,$password,$password2)
 	{
-		$checkdata=0;
 		//检查邮件格式
 		if(!preg_match("/([\w\-]+\@[\w\-]+\.[\w\-]+)/",$mail))
 		{
@@ -149,17 +158,12 @@ use App\lib\Verify;
 			return false;
 		}
 		//检查邮件的唯一性
-		$data=User::where('mail','=',$mail)->select('mail');
-		foreach($data as $value){
-			if(in_array($mail, $value)){
-				$checkdata=1;
-			}
-		}
-		if(1==$checkdata)
+		if(User::where('mail','=',$mail)->select('mail'))
 		{
 			Response::out(408);
 			return false;
 		}
+		
 		//检查密码是否输入一致					
 		if($password!=$password2){
 			Response::out(414);
@@ -176,12 +180,12 @@ use App\lib\Verify;
 			return false;
 		}
 		//检查是否已发送邮件			
-		if(Cache::has($mail)){
+		if(Cache::has(md5($mail))){
 			Response::out(419);
 			return false;
 		}
  		if(Verify::auth()){														
-			$token=md5(rand(10000,99999).time());
+			$token=md5($mail);
 			$array=[
 				"nickname" =>Html::removeSpecialChars($nickname),
 				"mail"	   =>$mail,
@@ -189,14 +193,11 @@ use App\lib\Verify;
 				"token"    =>$token,
 				"time"     =>time()+30*60
 			];		
-			Cache::set([			
-			$token =>json_encode($array),
-			$mail =>123					
-			],1800);															
+			Cache::set($token ,json_encode($array),1800);															
 			$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
 （注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>
-<a href='http://127.0.0.1:8080/Enroll/Register?token=".$token."' target= 
-'_blank'>/http://127.0.0.1:8080/Enroll/Register?token=".$token."</a><br/> 
+<a href='https://api.wangyuan.info:4433/Enroll/Register?token=".$token."' target= 
+'_blank'>https://api.wangyuan.info:4433/Enroll/Register?token=".$token."</a><br/> 
 如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
 			Mail::to($mail)->title("WangYuanStudio")->content($emailbody);				
 			Response::out(200);			
@@ -252,18 +253,11 @@ use App\lib\Verify;
 		}
 		$checkdata=0;
 		//获取用户的信息		
-		$data=User::where('mail','=',$mail)->select();
-		foreach($data as $key => $value){
-			if(in_array($mail,$value)){
-				$checkdata=1;
-				$checkvalue=$value;
-				if(1==$checkdata){
-					$user_nickname=$value["nickname"];
-				}
-			}
-		}		
-		if(1!=$checkdata)
+		if($data=User::where('mail','=',$mail)->select())
 		{
+			$user_nickname=$data[0]['nickname'];
+
+		}else{
 			Response::out(412);
 			return false;
 		}
@@ -271,21 +265,17 @@ use App\lib\Verify;
 			Response::out(419);
 			return false;
 		}
-		$token=md5(rand(1000000,9999999).time());
+		$token=rand(100000,999999);
 		$array=[
 			"token" => $token,
-			"time"  =>time()+30*60,
+			"time"  =>time()+120,
 			"mail"  =>$mail
 		];
 		Cache::set([
-			$token => json_encode($array),
-			$mail  => 123
-		],1800);		
-		$emailbody = "亲爱的".$user_nickname."，您好"."：<br/>请您点击以下链接进行找回密码，即可生效！<br/> 
-	（注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>     
-	<a href='http://127.0.0.1:8080/Enroll/Supdatepsw?token=".$token."' target= 
-	'_blank'>/http://127.0.0.1:8080/Enroll/Supdatepsw?token=".$token."</a><br/> 			
-	如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
+			$token =>json_encode($array),
+			$mail  =>$array['mail']
+			],120);		
+		$emailbody ="亲爱的".$user_nickname."，您好"."：<br/>验证码为".$token; 
 		Mail::to($mail)->title("WangYuanStudio")->content($emailbody);
 		Response::out(200);
 			
@@ -294,13 +284,14 @@ use App\lib\Verify;
 	/**官网-找回密码之修改密码
 	*
 	*@param string $password    	密码
-	*@param string $password2		确认密码
-	*@param string $token           邮箱链接的token      
+	*@param string $password2		确认密码  
+	*@param string $token           邮箱的验证码 
 	*
 	*@return status.状态码
 	*/
 	public function Supdatepsw($password,$password2,$token=NULL)
 	{
+		
 		//判断是否已发送邮箱	
 		if(!Cache::has($token)){
 			Response::out(424);
@@ -398,7 +389,8 @@ use App\lib\Verify;
 		]);
 		if(1==$update_psw){
 			Cache::delete($re_verify."send_verify");
-			Response::out(200);
+			$out=new Login();
+			$out->logout();
 		}else{
 			Response::out(415);
 		}
@@ -422,7 +414,8 @@ use App\lib\Verify;
 		$update_user=User::where('id','=',$uid)->Update([					
 			"nickname" => Html::removeSpecialChars($nickname)
 			]);	
-		if(1==$update_user){			
+		if(1==$update_user){
+			Session::set("user.nickname",$nickname);				
 			Response::out(200);
 		}else{
 			Response::out(417);
@@ -460,4 +453,22 @@ use App\lib\Verify;
 		}
 	}
 
+
+
+
+
+	public function ds(){
+		Cache::flush();
+	}
+
+	public function test($token,$mail){
+		response(__ROOT__);
+		response(Cache::get($token));
+		response(time());
+		//Cache::delete($token);
+		Cache::delete($mail);
+		
+	}
 }
+
+
