@@ -11,7 +11,7 @@ class Check_login implements MiddleWare
 {
     public function before($request)
     {
-        $_SESSION = Cache::get($_SERVER["HTTP_AUTHENTICATION"]);
+        $_SESSION = json_decode(Cache::get($_SERVER["HTTP_AUTHENTICATION"]),true);
 
         $token = Session::get("user");
         if ($token != NULL) {
@@ -65,11 +65,10 @@ class Check_login implements MiddleWare
                 return false;
             }
         }
-
     }
 
     public function after($request)
     {
-        Cache::set($_SERVER["HTTP_AUTHENTICATION"], $_SESSION);
+        Cache::set($_SERVER["HTTP_AUTHENTICATION"], json_encode($_SESSION));
     }
 }
