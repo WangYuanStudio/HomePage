@@ -71,7 +71,7 @@ return [
         'App\Queues\InQueue'      => Zereri\Lib\InQueue::class,
         'App\Middles\MiddleWare'  => Zereri\Lib\MiddleWare::class,
         'App\Controllers\Smarty'  => Zereri\Lib\Replacement\Smarty::class,
-        'App\Controllers\Session' => Zereri\Lib\Replacement\Session::class,
+        'App\Controllers\Session' => App\Lib\Session::class,
         'App\Controllers\Cache'   => Zereri\Lib\Replacement\Cache::class
     ],
 
