@@ -20,18 +20,18 @@ class Call
     private $method;
 
 
-    /**控制器的反射对象
-     *
-     * @var ReflectionMethod
-     */
-    private $reflect;
-
-
     /**post数据内容
      *
      * @var string
      */
     private $post;
+
+
+    /**url中的参数
+     *
+     * @var array
+     */
+    private $url_params;
 
 
     /**控制器方法的参数
@@ -41,6 +41,13 @@ class Call
     private $params = [];
 
 
+    /**回调函数
+     *
+     * @var callable
+     */
+    private $callback;
+
+
     /**控制器实例
      *
      * @var Object
@@ -48,26 +55,12 @@ class Call
     private $controller;
 
 
-    public function __construct($class, $method)
+    public function __construct($class, $method, $url_params = [], $callback)
     {
         $this->class = $class;
         $this->method = $method;
-        $this->reflect = $this->getReflect();
-    }
-
-
-    /**获取控制器反射对象
-     *
-     * @return ReflectionMethod
-     * @throws \Zereri\Lib\UserException
-     */
-    private function getReflect()
-    {
-        if (!$this->isMethodExists()) {
-            throw new UserException('The Api does not exist!');
-        }
-
-        return new ReflectionMethod($this->class, $this->method);
+        $this->url_params = $url_params;
+        $this->callback = $callback;
     }
 
 
@@ -89,8 +82,10 @@ class Call
      */
     public function setPost($post)
     {
-        $this->post = $post;
-        $this->setControllerParams();
+        if (!$this->callback) {
+            $this->post = $post;
+            $this->setControllerParams();
+        }
 
         return $this;
     }
@@ -101,9 +96,31 @@ class Call
      */
     private function setControllerParams()
     {
-        foreach ($this->reflect->getParameters() as $param) {
+        $reflect = $this->getReflect();
+        foreach ($reflect->getParameters() as $index => $param) {
+            if ($index < count($this->url_params)) {
+                $this->params[] = $this->url_params[ $index ];
+
+                continue;
+            }
+
             $this->params[] = $this->getPostColmn($param->getName()) ?: $this->getDefaultValue($param);
         }
+    }
+
+
+    /**获取控制器反射对象
+     *
+     * @return ReflectionMethod
+     * @throws \Zereri\Lib\UserException
+     */
+    private function getReflect()
+    {
+        if (!$this->isMethodExists()) {
+            throw new UserException('The Api does not exist!');
+        }
+
+        return new ReflectionMethod($this->class, $this->method);
     }
 
 
@@ -143,15 +160,21 @@ class Call
      */
     private function valueError($param_name)
     {
-        throw new UserException('Post data must have the colmn <b>"' . $param_name . '"</b>.');
+        throw new UserException('It requires a parameter <b>"' . $param_name . '"</b>.');
     }
 
 
     /**
-     * 调用中间件以及控制器
+     * 调用回调函数 或者 中间件以及控制器
      */
     public function call()
     {
+        if ($this->callback) {
+            call_user_func_array($this->callback, $this->url_params);
+
+            return false;
+        }
+
         $this->controller = new $this->class;
 
         if (isset($this->controller->middle)) {

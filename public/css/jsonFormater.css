@@ -1,0 +1,35 @@
+@charset "utf-8";
+/* CSS Document */
+.jf-ObjectBrace {
+    color: #bacad7;
+    font-weight: bold;
+}
+.jf-ArrayBrace {
+    color: #bacad7;
+    font-weight: bold;
+}
+.jf-PropertyName {
+    color: #67beae;
+    font-weight: bold;
+}
+.jf-String {
+    color: #ffedc7;
+}
+.jf-Number {
+    color: #f4c569;
+}
+.jf-Boolean {
+    color: #f4c569;
+}
+.jf-Null {
+    color: #f4c569;
+}
+.jf-Comma {
+    color: #bacad7;
+    font-weight: bold;
+}
+pre.jf-CodeContainer {
+    margin-top: 0;
+    margin-bottom: 0;
+    text-align: left;
+}

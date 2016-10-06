@@ -3,8 +3,8 @@ namespace Zereri\Lib;
 
 class HandleUri
 {
-    //获取的uri
-    private $uri;
+    //请求的url(不包含版本)
+    private $url;
 
     //解析出来的控制器类名
     private $class;
@@ -12,45 +12,138 @@ class HandleUri
     //解析出来的控制器方法名
     private $method;
 
+    //请求的版本
+    private $version;
+
+    //url参数
+    private $params;
+
+    //回调函数
+    private $callback;
+
     //控制器的命名空间
     private $controller_namespace;
 
 
     public function __construct()
     {
-        $this->uri = $this->getUri();
         $this->controller_namespace = '\App\Controllers\\';
-        $this->explodeUri();
+        list($this->version, $this->url) = $this->getVersionAndUrl();
+        $this->url = "/" . $this->url;
+        list($this->class, $this->method, $this->callback) = $this->explodeUrl();
     }
 
 
-    /**获取Uri
+    /**获取请求版本以及url地址
      *
-     * @return string
+     * @return array
      */
-    private function getUri()
+    private function getVersionAndUrl()
     {
-        return urldecode($_SERVER['REQUEST_URI']);
+        $url = urldecode($_SERVER['QUERY_STRING']);
+        if (!config("version_control")) {
+            return ["", $url];
+        }
+
+        if (count($pieces = explode("/", $url, 2)) > 1) {
+            return $pieces;
+        }
+
+        return ["", ""];
     }
 
 
-    /**分解URI取最后两个数据得类名、方法名和get参数
+    /**分解url
      *
-     * @throws UserException
+     * @return array
      */
-    private function explodeUri()
+    private function explodeUrl()
     {
-        $class_and_method = explode('/', $this->uri);
-        if (($count = count($class_and_method)) < 2) {
-            throw new UserException('Wrong Url!');
+        if ($this->isRouteExist($this->url)) {
+            return $this->callbackOrGetClassMethod($this->url);
+        } elseif (($route = $this->matchParam($this->url)) && $this->isRouteExist($route)) {
+            return $this->callbackOrGetClassMethod($route);
+        } else {
+            response(404, "", "text", "", 1);
+        }
+    }
+
+
+    /**判断路由是否存在
+     *
+     * @param $route
+     *
+     * @return bool
+     */
+    private function isRouteExist($route)
+    {
+        $route =& $this->getRouteSelf($route);
+        if (!isset($route)) {
+            return false;
         }
 
-        $method_get = explode("?", $class_and_method[ $count - 1 ], 2);
-        if (isset($method_get[1])) {
-            parse_str($method_get[1], $_GET);
+        return true;
+    }
+
+
+    /**从路由中提取控制器、方法名以及回调函数
+     *
+     * @param $route
+     *
+     * @return array
+     */
+    private function callbackOrGetClassMethod($route)
+    {
+        $route =& $this->getRouteSelf($route);
+
+        //回调
+        if (is_callable($route)) {
+            return ["", "", $route];
         }
-        $this->method = $method_get[0];
-        $this->class = $class_and_method[ $count - 2 ];
+
+        $class_method = explode("@", preg_replace('/\\//', '\\', $route));
+        array_push($class_method, NULL);
+
+        return $class_method;
+    }
+
+
+    /**获取route引用
+     *
+     * @param $route
+     *
+     * @return mixed
+     */
+    private function &getRouteSelf($route)
+    {
+        if ($this->version) {
+            return $GLOBALS["route"][ $this->version ][ $route ][ $_SERVER['REQUEST_METHOD'] ];
+        }
+
+        return $GLOBALS["route"][ $route ][ $_SERVER['REQUEST_METHOD'] ];
+    }
+
+
+    /**获取url中的参数
+     *
+     * @param $url
+     *
+     * @return bool
+     */
+    private function matchParam($url)
+    {
+        $routes = array_keys($this->version ? $GLOBALS["route"][ $this->version ] : $GLOBALS["route"]);
+        foreach ($routes as $each_route) {
+            if ($rule = preg_replace('/\\{.*\\}/Usm', '([^\\/]*)', $each_route)) {
+                if (preg_match('#^' . $rule . '$#', $url, $param)) {
+                    $this->params = array_slice($param, 1);
+
+                    return $each_route;
+                }
+            }
+        }
+
+        return false;
     }
 
 
@@ -71,5 +164,25 @@ class HandleUri
     public function getMethod()
     {
         return $this->method;
+    }
+
+
+    /**获取控制器url参数
+     *
+     * @return mixed
+     */
+    public function getParams()
+    {
+        return $this->params;
+    }
+
+
+    /**获取路由的回调函数
+     *
+     * @return mixed
+     */
+    public function getCallback()
+    {
+        return $this->callback;
     }
 }
