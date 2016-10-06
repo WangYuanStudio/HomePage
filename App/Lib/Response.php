@@ -8,11 +8,11 @@ use Zereri\Lib\Register;
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-08-18 15:07
+ * Last modified time: 2016-10-06 23:52
  *
  * Usage method:
  * use App\Lib\Response;
- * 1. Response::out($code, $return = null, $rewrite = false)
+ * Response::out($code, $return = null, $rewrite = false)
  */
 class Response
 {
@@ -32,7 +32,7 @@ class Response
 		else
 			$response = ['status' => $code, 'errmsg' => ($rewrite ? $return : $classname::$status[$code])];
 
-		response($response);
+		response(200, $response);
 	}
 }
 ?>

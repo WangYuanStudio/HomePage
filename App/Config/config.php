@@ -169,15 +169,15 @@ return [
         300 => 'Invalid login status.',
         301 => 'Permission denied.',
         302 => 'Verify code was wrong.',
-        303 => 'Operations are too frequent',
-        304 => 'permission is existed',
-        305 => 'role is existed',
-        306 => 'no permission list',
-        307 => 'no role list',
-        308 => 'fail to delete',
-        309 => 'fail to update',
-        310 => 'permission is already assign',
+        303 => 'Operations are too frequent.',
+        304 => 'Permission is existed.',
+        305 => 'Role is existed.',
+        306 => 'No permission list.',
+        307 => 'No role list.',
+        308 => 'Fail to delete.',
+        309 => 'Fail to update.',
+        310 => 'Permission is already assign.',
         311 => 'Did not find relevant content.',
-        312 => 'More than field limits'
+        312 => 'More than field limits.'
     ]
 ];
