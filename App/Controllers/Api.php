@@ -1,10 +1,12 @@
 <?php
 namespace App\Controllers;
 
+use Zereri\Lib\Document;
+
 class Api
 {
     public function index()
     {
-        \Api::show();
+        (new Document())->init();
     }
 }
