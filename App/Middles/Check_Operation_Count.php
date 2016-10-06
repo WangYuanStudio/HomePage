@@ -16,7 +16,7 @@ class Check_Operation_Count implements MiddleWare
 {
     public function before($request)
     {
-        $user = Session::get("user.id") ?: $_SERVER["REMOTE_ADDR"];
+        $user = $_SERVER["REMOTE_ADDR"];
 
         if (Cache::get($user) > 3) {
             Cache::EXPIRE($user, 300);

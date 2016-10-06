@@ -21,12 +21,14 @@ class Verify
 {
     public static function auth()
     {
-        if (1 !== Session::get("verify_auth")) {
+        if (1 !== Cache::get($_SERVER["REMOTE_ADDR"] . "_verify_auth")) {
             Response::out(302);
 
             return false;
         }
 
-        Session::remove("verify_auth");
+        Cache::delete($_SERVER["REMOTE_ADDR"] . "_verify_auth");
+
+        return true;
     }
 }

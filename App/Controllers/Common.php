@@ -32,7 +32,7 @@ class Common
     public function verifyImg()
     {
         $v = new \App\Lib\Vcode('img', 2, 18, 150, 250, false, true, 0, 0, __ROOT__ . "/public/" . mt_rand(1, 19) . ".jpg", __ROOT__ . '/msyhbd.ttc', [255, 250, 250]);
-        Session::set("vcode", $v->getData());
+        Cache::set($_SERVER["REMOTE_ADDR"] . "_vcode", $v->getData());
         $v->show();
     }
 
@@ -42,7 +42,7 @@ class Common
      */
     public function verifyType()
     {
-        response(Session::get("vcode.type"));
+        response(200, Cache::get($_SERVER["REMOTE_ADDR"] . "_vcode")["type"]);
     }
 
 
@@ -54,8 +54,8 @@ class Common
      */
     public function verify($text)
     {
-        if ($v = Session::get("vcode.text")) {
-            Session::remove("vcode");
+        if ($v = Cache::get($_SERVER["REMOTE_ADDR"] . "_vcode")["text"]) {
+            Cache::delete($_SERVER["REMOTE_ADDR"] . "_vcode");
             foreach ($text as $key => $value) {
                 if ($value["x"] > $v[ $key ]["max_x"]
                     || $value["x"] < $v[ $key ]["min_x"]
@@ -68,9 +68,9 @@ class Common
             }
 
             //删除记录次数
-            Cache::delete(Session::get("user.id") ?: $_SERVER["REMOTE_ADDR"]);
+            Cache::delete($_SERVER["REMOTE_ADDR"] . "_count");
             //标记验证过关
-            Session::set("verify_auth", 1);
+            Cache::set($_SERVER["REMOTE_ADDR"] . "_verify_auth", 1);
 
             Response::out(200);
         } else {
