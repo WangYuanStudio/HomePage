@@ -5,15 +5,11 @@ return [
         "/api/list"                         => [
             "GET" => "Api@index"
         ],
-        "/tribune/{department}/list/{page}" => [
+        "/tribune/posts/{department}/{page}" => [
             "GET"  => "Tribune@index"
         ],
         "/tribune/publish"                  => [
             "POST" => "Tribune@publish"
         ]
-    ],
-
-    "v2" => [
-
     ]
 ];

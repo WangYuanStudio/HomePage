@@ -38,11 +38,11 @@ class Tribune
     ];
 
 
-    /**论坛-首页加载-获取帖子数据
+    /**首页加载-获取帖子列表数据
      *
-     * @group tribune
+     * @group 论坛
      *
-     * @param enum $department 部门(编程、前端、设计、文秘)
+     * @param enum  $department 部门(编程、前端、设计、文秘)
      * @param int    $page       页码
      *
      * @return status:状态码 data.page_count:总页数 data.post:帖子数据 data.post.nickname:昵称 data.post.photo:头像 data.post.id:帖子的id data.post.title:帖子标题 data.post.short_content:帖子简介 data.post.time:发布时间 data.post.last_time:最后回复时间 data.post.view:浏览数 data.post.response:回复数 data.post.img:帖子的第一张图片
@@ -71,9 +71,9 @@ class Tribune
     }
 
 
-    /**论坛-发帖
+    /**发帖
      *
-     * @group tribune
+     * @group 论坛
      *
      * @header string authentication 口令认证
      *
