@@ -10,12 +10,14 @@ namespace App\Controllers;
 
 use App\Lib\Authorization;
 use App\Lib\Mail;
+use App\Lib\Message;
 use App\Lib\Response;
 use App\Lib\Html;
 use App\Models\Post;
 use App\Models\Bbs;
 use App\Models\User;
 use App\Lib\SphinxClient;
+use PHPExcel;
 
 class Tribune
 {
@@ -32,19 +34,21 @@ class Tribune
     public static $status = [
         700 => "Unavailable Key",
         701 => "Unavailable ID",
-        702 => "Unavailable Department",
-        703 => "Out Of Index"
+        702 => "Unavailable Department"
     ];
 
 
     /**论坛-首页加载-获取帖子数据
      *
-     * @param string $department 部门(编程、前端、设计、文秘)
+     * @group tribune
+     *
+     * @param enum $department 部门(编程、前端、设计、文秘)
      * @param int    $page       页码
      *
-     * @return post.指定页的帖子数据 page_count.页码总数 publish_key.发布帖子的key
+     * @return status:状态码 data.page_count:总页数 data.post:帖子数据 data.post.nickname:昵称 data.post.photo:头像 data.post.id:帖子的id data.post.title:帖子标题 data.post.short_content:帖子简介 data.post.time:发布时间 data.post.last_time:最后回复时间 data.post.view:浏览数 data.post.response:回复数 data.post.img:帖子的第一张图片
+     * @example 200 {"status":200,"data":{"page_count":5,"post":[{"nickname":null,"photo":null,"id":"36","title":"eeeeeee","short_content":"\u56db\u7ea7\u97f6\u5173\u9648\u5fd7\u5cf0&lt;img src=&#039;1.jpg&#039;\/&gt;fuck1","time":"2016-08-29 22:56:43","last_time":"2016-08-29 22:56:43","view":"0","response":"0","img":"2.jpg"},{"nickname":null,"photo":null,"id":"35","title":"eeeeeee","short_content":"\u56db\u7ea7\u97f6\u5173\u9648\u5fd7\u5cf0&lt;img src=&#039;1.jpg&#039;\/&gt;fuck1","time":"2016-08-29 22:56:31","last_time":"2016-08-29 22:56:31","view":"0","response":"0","img":""},{"nickname":null,"photo":null,"id":"34","title":"eeeeeee","short_content":null,"time":"2016-08-29 17:21:01","last_time":"2016-08-29 17:21:01","view":"0","response":"0","img":"<img src='1.jpg'\/>"},{"nickname":"zeffee","photo":"","id":"33","title":"z","short_content":null,"time":"2016-08-22 13:58:42","last_time":null,"view":"88","response":"0","img":null},{"nickname":"zeffee","photo":"","id":"32","title":"zeffee","short_content":null,"time":"2016-08-09 13:34:25","last_time":null,"view":null,"response":"0","img":null},{"nickname":"zeffee","photo":"","id":"31","title":"zeffee","short_content":null,"time":"2016-08-09 13:31:46","last_time":null,"view":null,"response":"0","img":null},{"nickname":"zeffee","photo":"","id":"29","title":"zeffee","short_content":null,"time":"2016-08-08 16:49:46","last_time":null,"view":null,"response":"0","img":null}]}}
      */
-    public function index($department, $page = 1)
+    public function index($department, $page)
     {
         $data = [];
 
@@ -61,7 +65,7 @@ class Tribune
             ->limit(($page - 1) * $page_size, $page_size)
             ->select('user.nickname,user.photo,post.id,post.title,post.short_content,post.time,post.last_time,post.view,post.response,post.img');
 
-        $data["publish_key"] = $this->setCsrfKey("publish_key");
+//        $data["publish_key"] = $this->setCsrfKey("publish_key");
 
         Response::out(200, $data);
     }
@@ -69,16 +73,21 @@ class Tribune
 
     /**论坛-发帖
      *
+     * @group tribune
+     *
+     * @header string authentication 口令认证
+     *
      * @param string $title       标题
      * @param string $content     内容
-     * @param string $department  部门(编程、前端、设计、文秘)
-     * @param string $publish_key 发布帖子的key
+     * @param enum   $department  部门(编程、前端、设计、文秘)
      *
-     * @return post_id.返回插入的id
+     * @return status:状态码 errmsg:失败时,错误信息 data.post_id:成功之后返回帖子的id
+     * @example 200702 {"status":702,"errmsg":"Unavailable Department"}
+     * @example 200200 {"status":200,"data":{"post_id":"38"}}
      */
-    public function publish($title, $content, $department, $publish_key)
+    public function publish($title, $content, $department)
     {
-        $this->checkKey($publish_key, "publish_key");
+//        $this->checkKey($publish_key, "publish_key");
 
         if (!in_array($department, ["编程", "前端", "设计", "文秘"])) {
             Response::out(702);
@@ -101,7 +110,7 @@ class Tribune
             "last_time"     => $time,
             "short_content" => substr(Html::removeSpecialChars($content), 0, 60),
             "img"           => Html::getFirstImg($content)
-        ]);
+        ])[0];
 
         Response::out(200, ["post_id" => $post_id]);
     }
@@ -173,15 +182,15 @@ class Tribune
      * @param $key
      * @param $column
      */
-    private function checkKey($key, $column)
-    {
-        if (!Session::get($column) || $key != Session::get($column)) {
-            Session::remove($column);
-            Response::out(700);
-
-            die();
-        }
-    }
+//    private function checkKey($key, $column)
+//    {
+//        if (!Session::get($column) || $key != Session::get($column)) {
+//            Session::remove($column);
+//            Response::out(700);
+//
+//            die();
+//        }
+//    }
 
 
     /**论坛-打开某个帖子-获取信息
@@ -224,13 +233,13 @@ class Tribune
      *
      * @return string
      */
-    private function setCsrfKey($name)
-    {
-        $key = md5(time());
-        Session::set($name, $key);
-
-        return $key;
-    }
+//    private function setCsrfKey($name)
+//    {
+//        $key = md5(time());
+//        Session::set($name, $key);
+//
+//        return $key;
+//    }
 
 
     /**论坛-个人中心-历史帖子
@@ -428,16 +437,17 @@ class Tribune
 
     public function test()
     {
-        Mail::to("wangyuaninfo@163.com")->title("帅哥来嘛")->content("吻我第 <b>1</b> 遍！");
-//        for($i=0;$i<40;$i++){
-//            Mail::to("wangyuaninfo@163.com")->title("帅哥来嘛")->content("吻我第 <b>$i</b> 遍！");
-//            echo $i."<br>";
-//            sleep(2);
-//        }
+        (new \Zereri\Lib\Document())->init();
+    }
+
+    public function tran()
+    {
+        response(TB("tran")->select());
     }
 
     public function update()
     {
-        Common::setInform(1, "论坛", "你收到一条回复", "www.wangyuan.info", "www.wangyuan.info");
+//        Common::setInform(1, "论坛", "你收到一条回复", "www.wangyuan.info", "www.wangyuan.info");
+        print_r(Post::where("id", "=", 1)->update(["id" => 1]));
     }
 }
