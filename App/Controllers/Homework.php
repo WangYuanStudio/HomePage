@@ -19,7 +19,7 @@ date_default_timezone_set('PRC');
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-09-17 12:49
+ * Last modified time: 2016-10-07 20:20
  */
 class Homework
 {
@@ -28,6 +28,9 @@ class Homework
 	const HW_UNZIP_FOLDER = __ROOT__.'/homework/';	// 优秀作业解压存储路径
 	const HW_ALLOWDUPLOAD_FILEEXT = [	// 作业允许上传的文件扩展名
 		'zip', 'rar'
+	];
+	const AT_ALLOWDUPLOAD_FILEEXT = [	// 作业允许上传的文件扩展名
+		'zip', 'rar', 'psd', 'ppt', 'pptx'
 	];
 	const HW_ALLOWDVIEW_FILEEXT = [	// 允许预览的文件扩展名
 		'php', 'txt', 'md', 'html', 'htm', 'css', 'js', 'aspx', 'asp', 'sql'
@@ -40,10 +43,11 @@ class Homework
 		'design' => '页面部设计'
 	];	// 部门对应中文名
 	const HW_UPLOAD_FIELD = 'file';	// 作业文件上传字段
+	const AT_UPLOAD_FIELD = 'file';	// 作业文件上传字段
 
 	public $middle = [
-		'uploadWork' => ['Hws_WorkSubmit', 'Check_Operation_Count'],
-		'all' => ['Check_login', 'Hws_SeeWork'] // 对所有方法判断登录
+		// 'uploadWork' => ['Hws_WorkSubmit', 'Check_Operation_Count'],
+		// 'all' => ['Check_login', 'Hws_SeeWork'] // 对所有方法判断登录
 	];
 
 	/*错误代码 && 错误信息
@@ -84,58 +88,87 @@ class Homework
 	private $loginedUser;
 
 	public function __construct() {
-		// $test = User::where('id', '=', 1)->select();
-		$this->loginedUser = Session::get('user');
+		$test = User::where('id', '=', 1)->select();
+		$this->loginedUser = $test[0];//Session::get('user');
 	}
 
-	/**作业系统 - 获取某用户/某任务优秀作业
+	/**获取某用户优秀作业
 	 * 
-	 * @param int $uid 0 用户ID（默认当前登录用户，为0时则查任务的优秀作业）
-	 * @param int $tid 0 任务ID（为空时则查用户的所有优秀作业）
-	 * @param int $page 0 当前页数（默认为1）
-	 * @return status.状态码 totalItem.结果总条数 totalPage.总页数 currentPage.当前页数 perPage.每页条数 pageData/id.作业ID pageData/tid.任务ID pageData/uid.提交用户ID pageData/file_path.作业文件路径 pageData/time.提交时间 pageData/note.备注 pageData/score.评分 pageData/comment.评语 pageData/comment_uid.批改用户ID pageData/comment_time.批改时间 pageData/recommend.是否推荐 pageData/unpack_path.解压后路径 pageData/user.提交用户信息
+	 * @group 作业系统
+	 * @param int $uid 用户ID（0为当前登录用户）
+	 * @param int $page 当前页数
+	 * @return status:状态码 data.totalItem:结果总条数 data.totalPage:总页数 data.currentPage:当前页数 data.perPage:每页条数 data.pageData.id:作业ID data.pageData.tid:任务ID data.pageData.uid:提交用户ID data.pageData.file_path:作业文件路径 data.pageData.time:提交时间 data.pageData.note:备注 data.pageData.score:评分 data.pageData.comment:评语 data.pageData.comment_uid:批改用户ID data.pageData.comment_time:批改时间 data.pageData.recommend:是否推荐 data.pageData.unpack_path:解压后路径 data.pageData.user.nickname:提交用户昵称 data.pageData.user.mail:提交用户邮箱 data.pageData.user.photo:提交用户头像路径 data.pageData.user.uid:提交用户UID data.pageData.user.name:提交用户姓名 data.pageData.user.sid:提交用户学号 data.pageData.user.department:提交用户部门 data.pageData.user.grade:提交用户年级 data.pageData.user.phone:提交用户长号 data.pageData.user.short_phone:提交用户短号 data.pageData.user.privilege:报名是否通过审核 data.pageData.user.sex:提交用户性别 data.pageData.user.college:提交用户学院 data.pageData.user.major:提交用户专业
+	 * @example 成功获取 {"status":200,"data":{"totalItem":1,"totalPage":1,"currentPage":"1","perPage":4,"pageData":[{"id":"5","tid":"4","uid":"1","file_path":"upload/20160824102959_752.zip","time":"2016-08-2410:29:59","note":null,"score":"D","comment":null,"comment_uid":null,"comment_time":null,"recommend":"1","unpack_path":"homework/20160824102959_752/","user":{"nickname":"laijingwu","mail":"admin@admin.com","photo":null,"uid":"1","name":"赖靖武","sid":"15115011018","department":"backend","grade":"2015级","phone":"13642593995","short_phone":"653995","privilege":"1","sex":"男","college":"信息科学与工程学院","major":"计算机科学与技术"}}]}}
 	 */
-	public function getExcellentWorks($uid = 0, $tid = 0, $page = 1) {
-		$raw = Hws_Record::where('recommend', '=', 1);
-		if ($uid > 0)
-			$raw = $raw->andWhere('uid', '=', $uid);
-		if ($tid > 0)
-			$raw = $raw->andWhere('tid', '=', $tid);
-		$data = $raw->orderBy('time desc')->select();
-		$perPage = 4;
+	public function getExcellentWorksFromUid($uid, $page) {
+		$uid = $uid > 0 ? $uid : $this->loginedUser['id'];
+		$data = Hws_Record::whereAndWhere(['recommend', '=', 1], ['uid', '=', $uid])
+				->orderBy('time desc')
+				->select();
+		Response::out(200, $this->formatPage($data, $page));
+	}
+
+	/**获取某任务优秀作业
+	 * 
+	 * @group 作业系统
+	 * @param int $tid 任务ID
+	 * @param int $page 当前页数
+	 * @return status:状态码 data.totalItem:结果总条数 data.totalPage:总页数 data.currentPage:当前页数 data.perPage:每页条数 data.pageData.id:作业ID data.pageData.tid:任务ID data.pageData.uid:提交用户ID data.pageData.file_path:作业文件路径 data.pageData.time:提交时间 data.pageData.note:备注 data.pageData.score:评分 data.pageData.comment:评语 data.pageData.comment_uid:批改用户ID data.pageData.comment_time:批改时间 data.pageData.recommend:是否推荐 data.pageData.unpack_path:解压后路径 data.pageData.user.nickname:提交用户昵称 data.pageData.user.mail:提交用户邮箱 data.pageData.user.photo:提交用户头像路径 data.pageData.user.uid:提交用户UID data.pageData.user.name:提交用户姓名 data.pageData.user.sid:提交用户学号 data.pageData.user.department:提交用户部门 data.pageData.user.grade:提交用户年级 data.pageData.user.phone:提交用户长号 data.pageData.user.short_phone:提交用户短号 data.pageData.user.privilege:报名是否通过审核 data.pageData.user.sex:提交用户性别 data.pageData.user.college:提交用户学院 data.pageData.user.major:提交用户专业
+	 * @example 成功获取 {"status":200,"data":{"totalItem":1,"totalPage":1,"currentPage":1,"perPage":4,"pageData":[{"id":"5","tid":"4","uid":"1","file_path":"upload/20160824102959_752.zip","time":"2016-08-2410:29:59","note":null,"score":"D","comment":null,"comment_uid":null,"comment_time":null,"recommend":"1","unpack_path":"homework/20160824102959_752/","user":{"nickname":"laijingwu","mail":"admin@admin.com","photo":null,"uid":"1","name":"赖靖武","sid":"15115011018","department":"backend","grade":"2015级","phone":"13642593995","short_phone":"653995","privilege":"1","sex":"男","college":"信息科学与工程学院","major":"计算机科学与技术"}}]}}
+	 */
+	public function getExcellentWorksFromTid($tid, $page) {
+		$data = Hws_Record::whereAndWhere(['recommend', '=', 1], ['tid', '=', $tid])
+				->orderBy('time desc')
+				->select();
+		Response::out(200, $this->formatPage($data, $page));
+	}
+
+	/*数据分页
+	 * 
+	 * @group 作业系统
+	 * @param mixed $data 数据
+	 * @param int $page 当前页数
+	 * @param int $perPage 每页项数
+	 * @param bool $bCheckUser 是否返回用户资料数据
+	 * @return json
+	 */
+	private function formatPage($data, $page = 1, $perPage = 4, $bCheckUser = true) {
 		$totalItem = count($data);
 		$totalPage = (int)(count($data) / $perPage) + ((count($data) % $perPage != 0) ? 1 : 0);
 		$pageData = [];
 		for ($i = ($page - 1) * $perPage; $i < $page * $perPage && $i < $totalItem; $i++) {
 			array_push($pageData, $data[$i]);
 		}
-		// 查询用户信息
-		for ($i = 0; $i < count($pageData); $i++) {
-			$pageData[$i]['user'] = [];
-			$userInfo = User::leftJoin('info', 'user.id', '=', 'info.uid')
-				->where('id', '=', $pageData[$i]['uid'])
-				->select('user.nickname, user.mail, user.photo, info.*');
-			if ($userInfo) {
-				$pageData[$i]['user'] = $userInfo[0];
+		if ($bCheckUser) {
+			// 查询用户信息
+			for ($i = 0; $i < count($pageData); $i++) {
+				$pageData[$i]['user'] = [];
+				$userInfo = User::leftJoin('info', 'user.id', '=', 'info.uid')
+					->where('id', '=', $pageData[$i]['uid'])
+					->select('user.nickname, user.mail, user.photo, info.*');
+				if ($userInfo) {
+					$pageData[$i]['user'] = $userInfo[0];
+				}
 			}
 		}
-		Response::out(200, [
+		return [
 			'totalItem' => $totalItem,
 			'totalPage' => $totalPage,
 			'currentPage' => $page,
 			'perPage' => $perPage,
 			'pageData' => $pageData
-		]);
+		];
 	}
 	
-	/**作业系统 - 上传作业
+	/**上传作业
 	 * 
-	 * @param file $file 1 作业文件
-	 * @param int $tid 1 任务ID
-	 * @param string $note 0 作业备注
-	 * @return status.状态码 errmsg.错误信息 rid.作业ID
+	 * @group 作业系统
+	 * @param int $tid 任务ID
+	 * @param string $note 作业备注
+	 * @param file $file 文件
+	 * @return status:状态码 errmsg:错误信息 data.rid:作业ID
 	 */
-	public function uploadWork($tid, $note = null) {
+	public function uploadWork($tid, $note = null, $file = null) {
 		if ($task = Hws_Task::where('id', '=', $tid)->select()) {
 			// 验证提交开放时间
 			if (time() >= strtotime($task[0]['start_time']) &&
@@ -181,14 +214,18 @@ class Homework
 		}
 	}
 
-	/**作业系统 - 获取所有任务（游客可用）
+	/**获取所有任务（游客可用）
 	 * 
-	 * @param enum $department 0 部门名称{'backend','frontend','design','secret'}
-	 * @param int $page 0 当前页数（默认为1）
-	 * @return status.状态码 totalItem.结果总条数 totalPage.总页数 currentPage.当前页数 perPage.每页条数 pageData/id.任务ID pageData/title.标题 pageData/content.内容 pageData/department.部门 pageData/start_time.提交起始时间 pageData/end_time.提交截止时间
+	 * @group 作业系统
+	 * @param enum $department 部门名称{'all', 'backend','frontend','design','secret'}
+	 * @param int $page 当前页数
+	 * @return status:状态码 errmsg:错误信息 data.totalItem:结果总条数 data.totalPage:总页数 data.currentPage:当前页数 data.perPage:每页条数 data.pageData.id:作业ID data.pageData.tid:任务ID data.pageData.uid:提交用户ID data.pageData.file_path:作业文件路径 data.pageData.time:提交时间 data.pageData.note:备注 data.pageData.score:评分 data.pageData.comment:评语 data.pageData.comment_uid:批改用户ID data.pageData.comment_time:批改时间 data.pageData.recommend:是否推荐 data.pageData.unpack_path:解压后路径 data.pageData.user.nickname:提交用户昵称 data.pageData.user.mail:提交用户邮箱 data.pageData.user.photo:提交用户头像路径 data.pageData.user.uid:提交用户UID data.pageData.user.name:提交用户姓名 data.pageData.user.sid:提交用户学号 data.pageData.user.department:提交用户部门 data.pageData.user.grade:提交用户年级 data.pageData.user.phone:提交用户长号 data.pageData.user.short_phone:提交用户短号 data.pageData.user.privilege:报名是否通过审核 data.pageData.user.sex:提交用户性别 data.pageData.user.college:提交用户学院 data.pageData.user.major:提交用户专业
+	 * @example 成功获取 {"status":200,"data":{"totalItem":4,"totalPage":1,"currentPage":"1","perPage":4,"pageData":[{"id":"1","title":"TESTTASK1","content":"测试作业","department":"backend","start_time":"2016-08-0100:00:00","end_time":"2016-08-1200:00:00","attachments":null},{"id":"2","title":"TEST2","content":"内容","department":"frontend","start_time":"2016-08-1111:48:58","end_time":"2016-08-1215:35:19","attachments":null},{"id":"3","title":"TEST3","content":"内容3","department":"secret","start_time":"2016-08-1112:20:57","end_time":"2016-08-1215:35:19","attachments":null},{"id":"4","title":"sss","content":"szx","department":"backend","start_time":"2016-08-1804:06:07","end_time":"2016-12-1812:00:00","attachments":null}]}}
+	 * @example 超出总页数 {"status":200,"data":{"totalItem":4,"totalPage":1,"currentPage":"100","perPage":4,"pageData":[]}}
 	 */
-	public function getAllTasks($department = null, $page = 1) {
-		if ($department) {
+	public function getAllTasks($department, $page) {
+		$data = null;
+		if ($department && $department != "all") {
 			if (!in_array($department, self::HW_DEPARTMEMT)) {
 				Response::out(500);
 				return;
@@ -197,26 +234,14 @@ class Homework
 		} else {
 			$data = Hws_Task::orderBy("id")->select();
 		}
-		$perPage = 4;
-		$totalItem = count($data);
-		$totalPage = (int)(count($data) / $perPage) + ((count($data) % $perPage != 0) ? 1 : 0);
-		$pageData = [];
-		for ($i = ($page - 1) * $perPage; $i < $page * $perPage && $i < $totalItem; $i++) {
-			array_push($pageData, $data[$i]);
-		}
-		Response::out(200, [
-			'totalItem' => $totalItem,
-			'totalPage' => $totalPage,
-			'currentPage' => $page,
-			'perPage' => $perPage,
-			'pageData' => $pageData
-		]);
+		Response::out(200, $this->formatPage($data, $page, 4, false));
 	}
 
-	/**作业系统 - 获取解压后优秀作业目录
+	/**获取解压后优秀作业目录
 	 * 
-	 * @param int $rid 1 作业ID
-	 * @return status.状态码 dir.目录 file.文件
+	 * @group 作业系统
+	 * @param int $rid 作业ID
+	 * @return status:状态码 errmsg:错误信息 data.dir:目录 data.file:文件
 	 */
 	public function getUnzipWorkDir($rid) {
 		$w = Hws_Record::whereAndWhere(['id', '=', $rid], ['recommend', '=', 1])-> select();
@@ -231,10 +256,11 @@ class Homework
 		}
 	}
 
-	/**作业系统 - 获取优秀作业文件内容
+	/**获取优秀作业文件内容
 	 * 
-	 * @param string $path 1 文件路径
-	 * @return status.状态码 bytes.文件大小（单位字节） lines.文件总行数 modify_time.上次修改时间 text.文件内容
+	 * @group 作业系统
+	 * @param string $path 文件路径（urlencode后的路径）
+	 * @return status:状态码 errmsg:错误信息 data.bytes:文件大小（单位字节） data.lines:文件总行数 data.modify_time:上次修改时间 data.text:文件内容
 	 */
 	public function getUnzipWorkFile($path) {
 		// 非法字符检测
@@ -308,13 +334,14 @@ class Homework
 
 	/* 下方为管理员/正式成员功能 */
 
-	/**作业系统 - 获取当前任务中自己所提交的所有作业/管理-获取某任务的所有作业
+	/**获取当前任务自己作业/管理-获取任务所有作业
 	 * 
-	 * @param int $tid 1 作业ID
-	 * @param int $page 0 当前页数（默认为1）
-	 * @return status.状态码 errmsg.错误信息 totalItem.结果总条数 totalPage.总页数 currentPage.当前页数 perPage.每页条数 pageData/id.作业ID pageData/tid.任务ID pageData/uid.提交用户ID pageData/file_path.作业文件路径 pageData/time.提交时间 pageData/note.备注 pageData/score.评分 pageData/comment.评语 pageData/comment_uid.批改用户ID pageData/comment_time.批改时间 pageData/recommend.是否推荐 pageData/unpack_path.解压后路径 pageData/user.提交用户信息
+	 * @group 作业系统
+	 * @param int $tid 作业ID
+	 * @param int $page 当前页数
+	 * @return status:状态码 errmsg:错误信息 data.totalItem:结果总条数 data.totalPage:总页数 data.currentPage:当前页数 data.perPage:每页条数 data.pageData.id:作业ID data.pageData.tid:任务ID data.pageData.uid:提交用户ID data.pageData.file_path:作业文件路径 data.pageData.time:提交时间 data.pageData.note:备注 data.pageData.score:评分 data.pageData.comment:评语 data.pageData.comment_uid:批改用户ID data.pageData.comment_time:批改时间 data.pageData.recommend:是否推荐 data.pageData.unpack_path:解压后路径 data.pageData.user.nickname:提交用户昵称 data.pageData.user.mail:提交用户邮箱 data.pageData.user.photo:提交用户头像路径 data.pageData.user.uid:提交用户UID data.pageData.user.name:提交用户姓名 data.pageData.user.sid:提交用户学号 data.pageData.user.department:提交用户部门 data.pageData.user.grade:提交用户年级 data.pageData.user.phone:提交用户长号 data.pageData.user.short_phone:提交用户短号 data.pageData.user.privilege:报名是否通过审核 data.pageData.user.sex:提交用户性别 data.pageData.user.college:提交用户学院 data.pageData.user.major:提交用户专业
 	 */
-	public function getWorksFromTid($tid, $page = 1) {
+	public function getWorksFromTid($tid, $page) {
 		$permission = Authorization::getExistingPermission($this->loginedUser['role']);
 		$department_permission = [];
 		$data = [];
@@ -340,39 +367,17 @@ class Homework
 				return;
 			}
 		}
-		$perPage = 4;
-		$totalItem = count($data);
-		$totalPage = (int)(count($data) / $perPage) + ((count($data) % $perPage != 0) ? 1 : 0);
-		$pageData = [];
-		for ($i = ($page - 1) * $perPage; $i < $page * $perPage && $i < $totalItem; $i++) {
-			array_push($pageData, $data[$i]);
-		}
-		// 查询用户信息
-		for ($i = 0; $i < count($pageData); $i++) {
-			$pageData[$i]['user'] = [];
-			$userInfo = User::leftJoin('info', 'user.id', '=', 'info.uid')
-				->where('id', '=', $pageData[$i]['uid'])
-				->select('user.nickname, user.mail, user.photo, info.*');
-			if ($userInfo) {
-				$pageData[$i]['user'] = $userInfo[0];
-			}
-		}
-		Response::out(200, [
-			'totalItem' => $totalItem,
-			'totalPage' => $totalPage,
-			'currentPage' => $page,
-			'perPage' => $perPage,
-			'pageData' => $pageData
-		]);
+		Response::out(200, $this->formatPage($data, $page));
 	}
 
-	/**作业系统 - 管理 - 获取所属部门的作业（全部/已批改/未批改）
+	/**管理 - 获取所属部门的作业（全部/已/未批改）
 	 *
-	 * @param int $type 0 类型（0:全部(默认)，1:已批改，2:未批改）
-	 * @param int $page 0 当前页数（默认为1）
-	 * @return status.状态码 errmsg.错误信息 totalItem.结果总条数 totalPage.总页数 currentPage.当前页数 perPage.每页条数 pageData/id.作业ID pageData/tid.任务ID pageData/uid.提交用户ID pageData/file_path.作业文件路径 pageData/time.提交时间 pageData/note.备注 pageData/score.评分 pageData/comment.评语 pageData/comment_uid.批改用户ID pageData/comment_time.批改时间 pageData/recommend.是否推荐 pageData/unpack_path.解压后路径 pageData/user.提交用户信息
+	 * @group 作业系统
+	 * @param enum $type 类型{0:全部,1:已批改,2:未批改}
+	 * @param int $page 当前页数
+	 * @return status:状态码 errmsg:错误信息 data.totalItem:结果总条数 data.totalPage:总页数 data.currentPage:当前页数 data.perPage:每页条数 data.pageData.id:作业ID data.pageData.tid:任务ID data.pageData.uid:提交用户ID data.pageData.file_path:作业文件路径 data.pageData.time:提交时间 data.pageData.note:备注 data.pageData.score:评分 data.pageData.comment:评语 data.pageData.comment_uid:批改用户ID data.pageData.comment_time:批改时间 data.pageData.recommend:是否推荐 data.pageData.unpack_path:解压后路径 data.pageData.user.nickname:提交用户昵称 data.pageData.user.mail:提交用户邮箱 data.pageData.user.photo:提交用户头像路径 data.pageData.user.uid:提交用户UID data.pageData.user.name:提交用户姓名 data.pageData.user.sid:提交用户学号 data.pageData.user.department:提交用户部门 data.pageData.user.grade:提交用户年级 data.pageData.user.phone:提交用户长号 data.pageData.user.short_phone:提交用户短号 data.pageData.user.privilege:报名是否通过审核 data.pageData.user.sex:提交用户性别 data.pageData.user.college:提交用户学院 data.pageData.user.major:提交用户专业
 	 */
-	public function getAllWorks($type = 0, $page = 1) {
+	public function getAllWorks($type, $page) {
 		// 获取登录用户对应所有权限
 		$permission = Authorization::getExistingPermission($this->loginedUser['role']);
 		$department_array = [];
@@ -416,39 +421,16 @@ class Homework
 		} else {
 			$data = $w;
 		}
-
-		$perPage = 4;
-		$totalItem = count($data);
-		$totalPage = (int)(count($data) / $perPage) + ((count($data) % $perPage != 0) ? 1 : 0);
-		$pageData = [];
-		for ($i = ($page - 1) * $perPage; $i < $page * $perPage && $i < $totalItem; $i++) {
-			array_push($pageData, $data[$i]);
-		}
-		// 查询用户信息
-		for ($i = 0; $i < count($pageData); $i++) {
-			$pageData[$i]['user'] = [];
-			$userInfo = User::leftJoin('info', 'user.id', '=', 'info.uid')
-				->where('id', '=', $pageData[$i]['uid'])
-				->select('user.nickname, user.mail, user.photo, info.*');
-			if ($userInfo) {
-				$pageData[$i]['user'] = $userInfo[0];
-			}
-		}
-		Response::out(200, [
-			'totalItem' => $totalItem,
-			'totalPage' => $totalPage,
-			'currentPage' => $page,
-			'perPage' => $perPage,
-			'pageData' => $pageData
-		]);
+		Response::out(200, $this->formatPage($data, $page));
 	}
 
-	/**作业系统 - 管理 - 批改作业/修改批语
+	/**管理 - 批改作业/修改批语
 	 * 
-	 * @param int $rid 1 作业ID
-	 * @param char $score 1 等级/分数
-	 * @param string $comment 1 评语
-	 * @return status.状态码 errmsg.错误信息
+	 * @group 作业系统
+	 * @param int $rid 作业ID
+	 * @param enum $score 等级/分数{'A','B','C','D'}
+	 * @param string $comment 评语
+	 * @return status:状态码 errmsg:错误信息
 	 */
 	public function correctWork($rid, $score, $comment) {
 		// 验证rid
@@ -482,10 +464,11 @@ class Homework
 		}
 	}
 
-	/**作业系统 - 管理 - 设置优秀作业
+	/**管理 - 设置优秀作业
 	 * 
-	 * @param int $rid 1 作业ID
-	 * @return status.状态码 errmsg.错误信息
+	 * @group 作业系统
+	 * @param int $rid 作业ID
+	 * @return status:状态码 errmsg:错误信息
 	 */
 	public function setExcellentWorks($rid) {
 		$raw = Hws_Record::where('id', '=', $rid)->select();
@@ -544,10 +527,11 @@ class Homework
 		}
 	}
 
-	/**作业系统 - 管理 - 取消设置优秀作业
+	/**管理 - 取消设置优秀作业
 	 * 
+	 * @group 作业系统
 	 * @param int $rid 作业ID
-	 * @return status.状态码 errmsg.错误信息
+	 * @return status:状态码 errmsg:错误信息
 	 */
 	public function cancelExcellentWorks($rid) {
 		$raw = Hws_Record::where('id', '=', $rid)->select();
@@ -575,10 +559,11 @@ class Homework
 		Response::out(200);
 	}
 
-	/**作业系统 - 管理 - 删除作业
+	/**管理 - 删除作业
 	 * 
-	 * @param int $rid 1 作业ID
-	 * @return status.状态码 errmsg.错误信息
+	 * @group 作业系统
+	 * @param int $rid 作业ID
+	 * @return status:状态码 errmsg:错误信息
 	 */
 	public function deleteWork($rid) {
 		$raw = Hws_Record::where('id', '=', $rid)->select('file_path, unpack_path');
@@ -607,18 +592,18 @@ class Homework
 		Response::out(200);
 	}
 
-	/**作业系统 - 管理 - 添加任务
+	/**管理 - 添加任务
 	 * 
-	 * @param string $title 1 任务标题
-	 * @param string $content 1 任务内容
-	 * @param enum $department 1 归属部门{'backend','frontend','design','secret'}
-	 * @param timestamp $end_time 1 截止时间（13位时间戳）
-	 * @param timestamp $start_time 0 起始时间（13位时间戳）
-	 * @param string $attachments_field 0 附件上传字段名（需要上传时才传）
-	 * @param file $(附件字段名) 0 文件
-	 * @return status.状态码 errmsg.错误信息 tid.新增任务ID
+	 * @group 作业系统
+	 * @param string $title 任务标题
+	 * @param string $content 任务内容
+	 * @param enum $department 归属部门{'backend','frontend','design','secret'}
+	 * @param timestamp $end_time 截止时间（13位时间戳）
+	 * @param timestamp $start_time 起始时间（13位时间戳）
+	 * @param file $file 附件上传字段（需要上传时才传）
+	 * @return status:状态码 errmsg:错误信息 data.tid:新增任务ID
 	 */
-	public function addTask($title, $content, $department, $end_time, $start_time = null, $attachments_field = null) {
+	public function addTask($title, $content, $department, $end_time, $start_time = null, $file = null) {
 		if (!in_array($department, self::HW_DEPARTMEMT)) {
 			Response::out(500);
 			return;
@@ -639,11 +624,18 @@ class Homework
 
 		// 上传附件
 		$src = null;
-		if ($attachments_field) {
-			$path = self::AT_UPLOAD_FOLDER;
-			$src = Document::Upload($attachments_field, $path);
+		// 附件上传
+		if (isset($_FILES[self::AT_UPLOAD_FIELD])) {	// 有上传附件
+			// 检查扩展名
+			if (!in_array(substr(strrchr($_FILES[self::AT_UPLOAD_FIELD]['name'], '.'), 1), self::AT_ALLOWDUPLOAD_FILEEXT)) {
+				// 该文件扩展不允许上传
+				Response::out(514);
+				return;
+			}
+			$src = Document::Upload(self::AT_UPLOAD_FIELD, self::AT_UPLOAD_FOLDER);
+			//$src = substr($src, strlen(self::AT_UPLOAD_FOLDER));
 			if (empty($src)) {
-				// 附件上传失败
+				// 文件上传失败
 				Response::out(513);
 				return;
 			}
@@ -660,19 +652,19 @@ class Homework
 		Response::out(200, ['tid' => $tid[0]]);
 	}
 
-	/**作业系统 - 管理 - 修改任务
+	/**管理 - 修改任务
 	 * 
-	 * @param int $tid 1 任务ID
-	 * @param string $title 0 任务标题
-	 * @param string $content 0 任务内容
-	 * @param enum $department 0 归属部门{'backend','frontend','design','secret'}
-	 * @param timestamp $end_time 0 截止时间（13位时间戳）
-	 * @param timestamp $start_time 0 起始时间（13位时间戳）
-	 * @param string $attachments_field 0 附件上传字段名
-	 * @param file $(附件字段名) 0 文件
-	 * @return status.状态码 errmsg.错误信息 row.受影响条数
+	 * @group 作业系统
+	 * @param int $tid 任务ID
+	 * @param string $title 任务标题
+	 * @param string $content 任务内容
+	 * @param enum $department 归属部门{'backend','frontend','design','secret'}
+	 * @param timestamp $end_time 截止时间（13位时间戳）
+	 * @param timestamp $start_time 起始时间（13位时间戳）
+	 * @param file $file 附件上传字段（需要上传时才传）
+	 * @return status:状态码 errmsg:错误信息 data.row:受影响条数
 	 */
-	public function updateTask($tid, $title = null, $content = null, $department = null, $end_time = null, $start_time = null, $attachments_field = null) {
+	public function updateTask($tid, $title = null, $content = null, $department = null, $end_time = null, $start_time = null, $file = null) {
 		if ($t = Hws_Task::where('id', '=', $tid)->select()) {
             if (!Authorization::isAuthorized($this->loginedUser['role'], 'submit_'.$t[0]['department'].'_homeworks')) {
             	// 无管理权限
@@ -703,11 +695,17 @@ class Homework
 
 		// 上传附件
 		$src = null;
-		if ($attachments_field) {
-			$path = self::AT_UPLOAD_FOLDER;
-			$src = Document::Upload($attachments_field, $path);
+		if (isset($_FILES[self::AT_UPLOAD_FIELD])) {	// 有上传附件
+			// 检查扩展名
+			if (!in_array(substr(strrchr($_FILES[self::AT_UPLOAD_FIELD]['name'], '.'), 1), self::AT_ALLOWDUPLOAD_FILEEXT)) {
+				// 该文件扩展不允许上传
+				Response::out(514);
+				return;
+			}
+			$src = Document::Upload(self::AT_UPLOAD_FIELD, self::AT_UPLOAD_FOLDER);
+			//$src = substr($src, strlen(self::AT_UPLOAD_FOLDER));
 			if (empty($src)) {
-				// 附件上传失败
+				// 文件上传失败
 				Response::out(513);
 				return;
 			}
@@ -719,10 +717,11 @@ class Homework
 		Response::out(200, ['row' => Hws_Task::where('id', '=', $tid)->update($task_update)]);
 	}
 
-	/**作业系统 - 管理 - 删除任务（会删除对应任务的所有作业）
+	/**管理 - 删除任务（会删除对应任务的所有作业）
 	 * 
-	 * @param int $tid 1 任务ID
-	 * @return status.状态码 errmsg.错误信息
+	 * @group 作业系统
+	 * @param int $tid 任务ID
+	 * @return status:状态码 errmsg:错误信息
 	 */
 	public function deleteTask($tid) {
 		$task_arr = Hws_Task::where('id', '=', $tid)->select();
@@ -784,10 +783,11 @@ class Homework
 		}
 	}
 
-	/**作业系统 - 管理 - 手动截止任务
+	/**管理 - 手动截止任务
 	 * 
-	 * @param int $tid 1 任务ID
-	 * @return status.状态码 errmsg.错误信息
+	 * @group 作业系统
+	 * @param int $tid 任务ID
+	 * @return status:状态码 errmsg:错误信息
 	 */
 	public function setTaskOff($tid) {
 		if ($t = Hws_Task::where('id', '=', $tid)->select()) {
@@ -900,10 +900,11 @@ class Homework
 		return $result;
 	}
 
-	/**作业系统 - 管理 - 导出新生信息/实习生作业成绩
+	/**管理 - 导出新生信息/实习生作业成绩
 	 * 
-	 * @param int $type 1 导出类型{1:新生信息,2:实习生作业成绩}
-	 * @return status.状态码 errmsg.错误信息 data.Excel二进制数据（如果成功没有status，直接返回二进制数据，引导页面下载）
+	 * @group 作业系统
+	 * @param enum $type 导出类型{1:新生信息,2:实习生作业成绩}
+	 * @return status:状态码 errmsg:错误信息 data:Excel二进制数据（如果成功没有status，直接返回二进制数据，引导页面下载）
 	 */
 	public function exportData($type) {
 		if ($this->loginedUser['role'] != 1) {	// TODO: 管理员角色ID
@@ -1083,13 +1084,14 @@ class Homework
 		$objWriter->save('php://output');	// Warning: 可能出现缓冲区不足		
 	}
 
-	/**作业系统 - 管理 - 任务搜索
+	/**管理 - 任务搜索
 	 * 
-	 * @param string $title 1 任务标题关键词
-	 * @param int $page 0 当前页数（默认为1）
-	 * @return status.状态码 errmsg.错误信息 totalItem.结果总条数 totalPage.总页数 currentPage.当前页数 perPage.每页条数 pageData/id.作业ID pageData/tid.任务ID pageData/uid.提交用户ID pageData/file_path.作业文件路径 pageData/time.提交时间 pageData/note.备注 pageData/score.评分 pageData/comment.评语 pageData/comment_uid.批改用户ID pageData/comment_time.批改时间 pageData/recommend.是否推荐 pageData/unpack_path.解压后路径 pageData/user.提交用户信息
+	 * @group 作业系统
+	 * @param string $title 任务标题关键词
+	 * @param int $page 当前页数
+	 * @return status:状态码 errmsg:错误信息 data.totalItem:结果总条数 data.totalPage:总页数 data.currentPage:当前页数 data.perPage:每页条数 data.pageData.id:作业ID data.pageData.tid:任务ID data.pageData.uid:提交用户ID data.pageData.file_path:作业文件路径 data.pageData.time:提交时间 data.pageData.note:备注 data.pageData.score:评分 data.pageData.comment:评语 data.pageData.comment_uid:批改用户ID data.pageData.comment_time:批改时间 data.pageData.recommend:是否推荐 data.pageData.unpack_path:解压后路径 data.pageData.user.nickname:提交用户昵称 data.pageData.user.mail:提交用户邮箱 data.pageData.user.photo:提交用户头像路径 data.pageData.user.uid:提交用户UID data.pageData.user.name:提交用户姓名 data.pageData.user.sid:提交用户学号 data.pageData.user.department:提交用户部门 data.pageData.user.grade:提交用户年级 data.pageData.user.phone:提交用户长号 data.pageData.user.short_phone:提交用户短号 data.pageData.user.privilege:报名是否通过审核 data.pageData.user.sex:提交用户性别 data.pageData.user.college:提交用户学院 data.pageData.user.major:提交用户专业
 	 */
-	public function searchTask($title, $page = 1) {
+	public function searchTask($title, $page) {
 		$data = Hws_Record::leftJoin('hws_task', 'hws_record.tid', '=', 'hws_task.id')
 			->where('hws_task.title', 'like', "%".$title."%")
 			->select('hws_task.id, hws_task.title, hws_task.content, hws_task.department, hws_record.*');
@@ -1106,30 +1108,7 @@ class Homework
         	return;
         }
 
-        $perPage = 4;
-		$totalItem = count($data);
-		$totalPage = (int)(count($data) / $perPage) + ((count($data) % $perPage != 0) ? 1 : 0);
-		$pageData = [];
-		for ($i = ($page - 1) * $perPage; $i < $page * $perPage && $i < $totalItem; $i++) {
-			array_push($pageData, $data[$i]);
-		}
-		// 查询用户信息
-		for ($i = 0; $i < count($pageData); $i++) {
-			$pageData[$i]['user'] = [];
-			$userInfo = User::leftJoin('info', 'user.id', '=', 'info.uid')
-				->where('id', '=', $pageData[$i]['uid'])
-				->select('user.nickname, user.mail, user.photo, info.*');
-			if ($userInfo) {
-				$pageData[$i]['user'] = $userInfo[0];
-			}
-		}
-		Response::out(200, [
-			'totalItem' => $totalItem,
-			'totalPage' => $totalPage,
-			'currentPage' => $page,
-			'perPage' => $perPage,
-			'pageData' => $pageData
-		]);
+        Response::out(200, $this->formatPage($data, $page));
 	}
 }
 ?>
