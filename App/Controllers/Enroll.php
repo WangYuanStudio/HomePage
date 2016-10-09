@@ -137,7 +137,12 @@ use App\Controllers\Login;
 				"photo"=>$src
 				]);
 			if(1==$check){
-				unlink(Session::get("user.photo"));
+				$photo_src=Session::get("user.photo");
+				$head_photo=explode("/",$photo_src);
+				$head_get=$head_photo[count($head_photo)-1];		
+				if("head.gif"!=$head_get){
+					unlink(Session::get("user.photo"));
+				}				
 				Session::set("user.photo",$src);
 				Response::out(200,$src);
 			}else{
@@ -422,15 +427,16 @@ use App\Controllers\Login;
 			Response::out(312);
 			return false;
 		}
+		Response::out(200);
 		$password1=Html::removeSpecialChars($password1);											
 		$password1=password_hash($password1,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
- 		$update_psw=User::where('id','=',$uid)->Update([
-		"password" =>$password1
-		]);
+ 	// 	$update_psw=User::where('id','=',$uid)->Update([
+		// "password" =>$password1
+		// ]);
 		if(1==$update_psw){
 			Cache::delete($re_verify."send_verify",Session::get("user.mail"));
-			$out=new Login();
-			$out->logout();
+			// $out=new Login();
+			// $out->logout();
 			Response::out(200);
 		}else{
 			Response::out(415);
@@ -485,7 +491,7 @@ use App\Controllers\Login;
 		if(Cache::has($mail)){
 			Response::out(419);
 		}else{
-			Cache::set($verify."send_verify",$verify,120);  
+			Cache::set($verify,$verify,120);  
 			Cache::set($mail,$mail,120);					   
 			Mail::to($mail)->title("WangYuanStudio")->content($emailbody);	
 			Response::out(200);
@@ -495,7 +501,9 @@ use App\Controllers\Login;
 	//修改密码之验证码验证
 	public function Updateverify($verify=NULL)
 	{
-		if($verify==Cache::get($verify."send_verify"))
+		// echo $verify;
+		// echo Cache::get($verify);
+		if($verify==Cache::get($verify))
 		{
 			return true;
 		}else{
