@@ -48,22 +48,25 @@ use App\Controllers\Login;
 		415 => 'Change the password failure.',
 	//	416 => 'Password mistake.',
 		417 => 'Modify personal information failure.',
-		418 => 'Password length less than 6',
-		419 => 'Email has been sent, please wait a moment',
+		418 => 'Password length less than 6.',
+		419 => 'Email has been sent, please wait a moment.',
 		421 => 'Only allowed to upload pictures.',
 		423 => 'Please send registered mail.',
 		424 => 'Please send back the password email.'
 	];
 
-	/**官网-实现注册
-	*         
-	*
-	*@return login_id.返回插入的id
+	/**实现注册
+	*@group 官网
+	*@param string $token  验证码
+	*@return status:状态码 errmsg:失败时,错误信息 data.login_id:返回插入的id
+	*@example 密钥验证过或错误 {"status":411,"errmsg":"Token error."}
+	*@example 超时 {"status":413,"errmsg":"Time out."}
+	*@example 先发送注册邮件 {"status":423,"errmsg":"Please send registered mail."}
 	*/
-	public function Register()
+	public function Register($token)
 	{
 	
-		$token=$_GET['token'];
+		//$token=$_GET['token'];
 		//判断是否已发送邮箱	
 		if(!Cache::has($token)){
 			Response::out(423);
@@ -103,16 +106,22 @@ use App\Controllers\Login;
 		"role" =>10,
 		"status"=>0
 		]);		
-		Cache::delete([$token,$mail]);
+		Cache::delete($token);
 		Response::out(200,['login_id'=>$login_id]);	
 	}
 	
-	/**官网-用户更换头像
-	*@param string $file 1 上传控件
+	/**用户更换头像
+	*@group 官网
+	*@header string authentication 口令认证
 	*
-	*@return status.状态码 data.照片路径
+	*@param file $file 1 上传控件
+	*
+	*@return status:状态码 errmsg:失败时,错误信息 data:照片路径
+	*@example 成功 {"status":200,"data":"Token error."}
+	*@example 更换头像错误 {"status":410,"errmsg":"Replace the face failure."}
+	*@example 只允许上传图片格式的文件 {"status":421,"errmsg":"Only allowed to upload pictures."}
 	*/
-	public function UploadPhoto()
+	public function UploadPhoto($file)
 	{
 		
 		$set_name=sha1(time().Session::get("user.id").rand(10000,99999));
@@ -140,14 +149,21 @@ use App\Controllers\Login;
 
 	}
 	
-	/**官网-发送邮件
-	*
+	/**发送注册邮件
+	*@group 官网
 	*@param string $mail 	邮箱
 	*@param string $nickname		昵称(16内)
 	*@param string $password     密码 
 	*@param string $password2    确认密码
 	*
-	*@return status.状态码 
+	*@return status:状态码 errmsg:失败时,错误信息
+	*@example 成功 {"status":200,"data":null}
+	*@example 超过限制长度 {"status":312,"errmsg":"More than field limits."}
+	*@example 邮箱已存在 {"status":408,"errmsg":"Your email has been in existence."}
+	*@example 邮箱格式错误 {"status":409,"errmsg":"Email format error."}
+	*@example 输入的密码不一致 {"status":414,"errmsg":"Do not match the password input."}
+	*@example 密码长度小于6 {"status":418,"errmsg":"Password length less than 6."}
+	*@example 邮件已发送 {"status":419,"errmsg":"Email has been sent, please wait a moment."}
 	*/
 	public function sendEmail($mail,$nickname,$password,$password2)
 	{
@@ -184,7 +200,7 @@ use App\Controllers\Login;
 			Response::out(419);
 			return false;
 		}
- 		if(Verify::auth()){														
+ 		//if(Verify::auth()){														
 			$token=md5($mail);
 			$array=[
 				"nickname" =>Html::removeSpecialChars($nickname),
@@ -196,20 +212,22 @@ use App\Controllers\Login;
 			Cache::set($token ,json_encode($array),1800);															
 			$emailbody = "亲爱的".$nickname."：<br/>感谢您在我站注册了新帐号。<br/>请点击链接激活您的帐号。<br/>
 （注：链接有效时间为30分钟，超时链接失效请重新进行申请操作）<br/>
-<a href='https://api.wangyuan.info:4433/Enroll/Register?token=".$token."' target= 
-'_blank'>https://api.wangyuan.info:4433/Enroll/Register?token=".$token."</a><br/> 
+<a href='http://127.0.0.1/HomePage/public/v1/enroll/register/".$token."' target= 
+'_blank'>http://127.0.0.1/HomePage/public/v1/enroll/register/".$token."</a><br/> 
 如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
 			Mail::to($mail)->title("WangYuanStudio")->content($emailbody);				
 			Response::out(200);			
-		}							 
+		//}							 
 	}
 
 
-	/**官网-限制账号
-	*
+	/**限制账号
+	*@group 官网
 	*@param int $uid    	用户id
 	*
-	*@return status.状态码
+	*@return status:状态码 errmsg:失败时,错误信息
+	*@example 成功 {"status":200,"data":null}
+	*@example 受限帐户操作失败 {"status":406,"errmsg":"Restricted account operation failed."}
 	*/
 	public function Limituser($uid){
 		$user_limit=User::where('id','=',$uid)->Update([
@@ -222,11 +240,13 @@ use App\Controllers\Login;
 		}
 	}
 	
-	/**官网-解除限制账号
-	*
+	/**解除限制账号
+	*@group 官网
 	*@param int $uid      用户id
 	*
-	*@return status.状态码
+	*@return status:状态码 errmsg:失败时,错误信息
+	*@example 成功 {"status":200,"data":null}
+	*@example 解锁帐户操作失败 {"status":407,"errmsg":"Unlock account operation fails."}
 	*/
 	public function Relieve($uid){
 		$user_relieve=User::where('id','=',$uid)->Update([
@@ -239,11 +259,15 @@ use App\Controllers\Login;
 		}
 	}
 
-	/**官网-找回密码之发送邮箱
-	*
+	/**找回密码之发送邮箱
+	*@group 官网
 	*@param string $mail 	邮箱
 	*
-	*@return status.状态码
+	*@return status:状态码 errmsg:失败时,错误信息
+	*@example 成功 {"status":200,"data":null}
+	*@example 邮箱格式错误 {"status":409,"errmsg":"Email format error."}
+	*@example 邮箱不存在 {"status":412,"errmsg":"Email does not exist."}
+	*@example 邮件已发送 {"status":419,"errmsg":"Email has been sent, please wait a moment."}
 	*/
 	public function Searchpsw($mail){
 		if(!preg_match("/([\w\-]+\@[\w\-]+\.[\w\-]+)/",$mail))
@@ -281,13 +305,21 @@ use App\Controllers\Login;
 			
 	}
 
-	/**官网-找回密码之修改密码
-	*
+	/**找回密码之修改密码
+	*@group 官网
 	*@param string $password    	密码
 	*@param string $password2		确认密码  
 	*@param string $token           邮箱的验证码 
 	*
-	*@return status.状态码
+	*@return status:状态码 errmsg:失败时,错误信息
+	*@example 成功 {"status":200,"data":null}
+	*@example 超过限制长度 {"status":312,"errmsg":"More than field limits."}
+	*@example 密钥验证过或错误 {"status":411,"errmsg":"Token error."}
+	*@example 密钥验证超时 {"status":413,"errmsg":"Time out."}
+	*@example 输入的密码不一致 {"status":414,"errmsg":"Do not match the password input."}
+	*@example 更改密码失败 {"status":415,"errmsg":"Change the password failure."}
+	*@example 密码长度小于6 {"status":418,"errmsg":"Password length less than 6."}
+	*@example 请先发送找回密码的邮件 {"status":424,"errmsg":"Please send back the password email."}
 	*/
 	public function Supdatepsw($password,$password2,$token=NULL)
 	{
@@ -350,13 +382,21 @@ use App\Controllers\Login;
 				
 	}
 
-	/**官网-修改密码
+	/**修改密码(调用后自动退出)
+	*@group 官网
+	*@header string authentication 口令认证
 	*
 	*@param string $password1		新密码
 	*@param string $password2		确认密码
 	*@param string $re_verify       验证码
 	*
-	*@return status.状态码
+	*@return status:状态码 errmsg:失败时,错误信息
+	*@example 成功 {"status":200,"data":null}
+	*@example 验证码错误 {"status":302,"errmsg":"Verify code was wrong."}
+	*@example 超过限制长度 {"status":312,"errmsg":"More than field limits."}
+	*@example 输入的密码不一致 {"status":414,"errmsg":"Do not match the password input."}
+	*@example 更改密码失败 {"status":415,"errmsg":"Change the password failure."}
+	*@example 密码长度小于6 {"status":418,"errmsg":"Password length less than 6."}	
 	*/
 	public function Updatepsw($password1,$password2,$re_verify)
 	{
@@ -388,20 +428,25 @@ use App\Controllers\Login;
 		"password" =>$password1
 		]);
 		if(1==$update_psw){
-			Cache::delete($re_verify."send_verify");
+			Cache::delete($re_verify."send_verify",Session::get("user.mail"));
 			$out=new Login();
 			$out->logout();
+			Response::out(200);
 		}else{
 			Response::out(415);
 		}
 					
 	}
 
-	/**官网-修改个人信息
+	/**修改个人信息
+	*@group 官网
+	* @header  string authentication 口令认证
 	*
 	*@param string $nickname		昵称(16内)
-	*
-	*@return status.状态码
+	*@return status:状态码 errmsg:失败时,错误信息
+	*@example 成功 {"status":200,"data":null}
+	*@example 超过限制长度 {"status":312,"errmsg":"More than field limits."}
+	*@example 修改个人信息失败 {"status":417,"errmsg":"Modify personal information failure."}
 	*/
 
 	public function Updateuser($nickname)
@@ -410,7 +455,8 @@ use App\Controllers\Login;
 			Response::out(312);
 			return false;
 		}
-		$uid = 	Session::get("user.id");					
+		$uid = Session::get('user.id');	
+		//Response::out(200,Session::get('user'));	
 		$update_user=User::where('id','=',$uid)->Update([					
 			"nickname" => Html::removeSpecialChars($nickname)
 			]);	
@@ -422,9 +468,13 @@ use App\Controllers\Login;
 		}									 				
 	}
 
-	/**官网-修改密码之发送邮箱
+	/**修改密码之发送邮箱
+	*@group 官网
+	*@header string authentication 口令认证
 	*
-	*@return status.状态码
+	*@return status:状态码 errmsg:失败时,错误信息
+	*@example 成功 {"status":200,"data":null}
+	*@example 邮件已发送 {"status":419,"errmsg":"Email has been sent, please wait a moment."}
 	*/
 	public function Sendverify()
 	{	

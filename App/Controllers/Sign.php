@@ -15,13 +15,14 @@ use App\Lib\Html;
 use App\Controllers\Common;
 use App\Lib\Message;
 use App\Lib\Verify;
+use App\Lib\Mail;
 
 class Sign
 {
 	const En_Photo_REGISTER='avatar/head.gif';
 	const HW_DEPARTMEMT = ['backend', 'frontend', 'design', 'secret'];	// 部门标识符
 	public $middle = [
-		//'Insertnews' => 'Check_login',
+		'Insertnews' => 'Check_login',
 		'Signupreview' => ['Check_login','Check_ManagerMember'],
 		'CheckPower' =>['Check_login','Check_ManagerMember'],
 		'Allpass' =>['Check_login','Check_ManagerMember'],
@@ -32,7 +33,7 @@ class Sign
 		'Getsigntime'=>['Check_login','Check_ManagerMember'],
 		'Deletesigntime'=>['Check_login','Check_ManagerMember'],
 		'sendPhone'  =>'Check_Operation_Count',
-		'PCsign'     =>'Check_login'
+		'Getuid'     =>'Check_login'
 		// 对所有方法判断登录
 	];
 	public static $status=[
@@ -58,7 +59,10 @@ class Sign
 		431 => 'token is null.'
 	];
 
-	/**报名系统-实现报名
+	/**电脑实现报名
+	* @group 报名
+	* @header string authentication 口令认证
+	*
 	*@param string $name    	名字(10内)
 	*@param string $sid          学号
 	*@param enum $department 	部门名称{'backend','frontend','design','secret'}
@@ -70,8 +74,24 @@ class Sign
 	*@param string $major        专业(16内)
 	*@param string $mail 0 邮箱(电脑不用，移动端必须)
 	*
-	*@return status.状态码  
-	*/
+	* @return status:状态码 errmsg:失败时,错误信息 
+	* @example 成功 {"status":200,"data":null}
+	* @example 没有登陆 {"status":300,"errmsg":"Invalid login status."}
+	* @example 超过限制长度 {"status":312,"errmsg":"More than field limits."}
+	* @example 手机长号格式不正确 {"status":401,"errmsg":"Mobile phone trombone error."}
+	* @example 学号格式不正确 {"status":402,"errmsg":"Student id error."}
+	* @example 学号已存在，请勿重复报名 {"status":403,"errmsg":"The student id already exists."}
+	* @example 邮箱已存在 {"status":408,"errmsg":"Your email has been in existence."}
+	* @example 邮箱格式错误 {"status":409,"errmsg":"Email format error."}
+	* @example 密钥验证过或错误 {"status":411,"errmsg":"Token error."}
+	* @example 您已成功报名 {"status":420,"errmsg":"You have successfully registered."}
+	* @example 报名已截止 {"status":422,"errmsg":"Registration deadline."}
+	* @example 邮箱为空 {"status":427,"errmsg":"Please fill in the email."}
+	* @example 该手机已被注册过 {"status":428,"errmsg":"The phone number has been in existence."}
+	* @example 无效的短号格式 {"status":429,"errmsg":"Invalid format of cornet."}
+	* @example 无效的性别 {"status":430,"errmsg":"Invalid sex."}
+    * @example 不存在该部门 {"status":500,"errmsg":"Illegal department."}
+    */
 
 	public function Insertnews($name,$sid,$department,$grade,$phone,$short_phone,$sex,$college,$major,$mail=NULL)
 	{
@@ -79,7 +99,7 @@ class Sign
 			Response::out(500);
 			return false;
 		}
-		$uid=Session::get("user.id");
+		
 		if($sign_time=Info_Time::orderBy("time_id desc")->limit(0, 1)->select()){
 			if (time() < strtotime($sign_time[0]['start_time']) ||
 			time() > strtotime($sign_time[0]['end_time'])){
@@ -104,14 +124,7 @@ class Sign
 		{
 			Response::out(403);
 			return false;
-		}
-		//查询是否已报名
-		if(Info::where('uid','=',$uid)->select('uid'))
-		{
-			Response::out(420);
-			return false;
-		}
-		
+		}		
 		//检查长号的唯一性
 		if(Info::where('phone','=',$phone)->select('phone'))
 		{
@@ -138,7 +151,7 @@ class Sign
 			return false;
 		}
 		//phone user set 
-		if(is_null($uid)){
+		if(!$this->Getuid()){
 			//judge PC
 			if(!$this->Judge_phone()){
 				Response::out(300);
@@ -199,27 +212,38 @@ class Sign
 			Response::out(200);
 		}
 		else{
-			 if(Verify::auth()){
+				$uid=$this->Getuid();
+				//查询是否已报名
+				if(Info::where('uid','=',$uid)->select('uid'))
+				{
+					Response::out(420);
+					return false;
+				}
+			 //if(Verify::auth()){
 				$this->PCsign($uid,$name,$sid,$department,$grade,$phone,$short_phone,$sex,$college,$major);
 				Response::out(200);
-			 }	
+			 //}	
 		}
 			
 	}
 
-	/**报名系统-确认报名审核通过或不通过
+	/**确认报名审核通过或不通过
 	*
+	*@group 报名
+	* 
 	*@param int $uid  用户id
-	*@param int $privilege 0 审核判断,默认为1通过,2为不通过  
+	*@param int $privilege  审核判断,为1通过,2为不通过  
 	*
-	*@return status.状态码
+	*@return status:状态码 errmsg:失败时,错误信息 
+	*@example 成功 {"status":200,"data":null}
+	*@example 审核失败 {"status":404,"errmsg":"An error occurred when audit failure."}
 	*/
-	public function Signupreview($uid,$privilege=1)
+	public function signupreview($uid,$privilege)
 	{
 		
 		if($data=Info::where('uid','=',$uid)->select()){
 			$department=$data[0]['department'];
-			echo $department;
+			//echo $department;
 		}else{
 			return false;
 		}
@@ -247,12 +271,12 @@ class Sign
 		if(1==$check&&1==$check_info){
 			// 消息通知
 			if(1==$privilege){
-				Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
+				//Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
 			}else{
 				User::where('id','=',$uid)->update([
 						"role"	=>10
 					]);	
-				Common::setInform($uid, "报名", "报名失败", "您于".date("Y-m-d H:i:s")."报名审核不通过，快去看看！", "");
+				//Common::setInform($uid, "报名", "报名失败", "您于".date("Y-m-d H:i:s")."报名审核不通过，快去看看！", "");
 			}
 			Response::out(200);
 		}else{
@@ -261,19 +285,20 @@ class Sign
 
 	}
 
-	/**报名系统-获取报名列表
+	/**获取报名列表
+	*@group 报名
 	*
-	*@param int $page 0   页码
-	*@param enum $department 0 部门名称{'backend','frontend','design','secret'}
-	*@param int $privilege 0 审核判断,默认为0未审核,1通过,2为不通过
+	*@param int $page    页码
+	*@param enum $department  部门名称{'backend','frontend','design','secret','all'}
+	*@param int $privilege  审核判断,0未审核,1通过,2为不通过
 	*
-	*@return status.状态码 data.指定页的审核数据 num.总页数
+	*@return status:状态码 data.data:指定页的审核数据 data.num:总页数
+	*@example 成功 {"status":200,"data":{"data":[{"uid":"1","name":"huizhe","sid":"15115071013","department":"backend","grade":"15\u8f6f\u5de51\u73ed","phone":"1","short_phone":"653362","privilege":"0","sex":null,"college":null,"major":null},{"uid":"6","name":"qwe","sid":"12345678913","department":"backend","grade":"213","phone":"1","short_phone":"653362","privilege":"0","sex":"\u7537","college":"ert","major":"asd"},{"uid":"11","name":"\u7070\u8005","sid":"15115071001","department":"backend","grade":"2015\u5e74\u7ea7","phone":"1","short_phone":"653362","privilege":"0","sex":"\u7537","college":"\u4fe1\u606f\u79d1\u5b66\u4e0e\u5de5\u7a0b\u5b66\u9662","major":"\u8f6f\u4ef6\u5de5\u7a0b"},{"uid":null,"name":"\u7070\u8005","sid":"15115071004","department":"backend","grade":"2015\u5e74\u7ea7","phone":"1","short_phone":"653362","privilege":"0","sex":"\u7537","college":"\u4fe1\u606f\u79d1\u5b66\u4e0e\u5de5\u7a0b\u5b66\u9662","major":"\u8f6f\u4ef6\u5de5\u7a0b"}],"num":2}}
 	*/
 
-	public function CheckPower($page=1,$department=null,$privilege=0)
-	{
-		Session::set("page_data",$page);	
-		if($department!=null){
+	public function CheckPower($page,$department,$privilege)
+	{	
+		if($department!='all'){
 		$data=Info::where('privilege','=',$privilege)
 			->andwhere('department','=',$department)
 			->limit(($page - 1) * 4, 4)
@@ -290,54 +315,61 @@ class Sign
         Response::out(200,['data'=>$data,'num'=>$num]);       
 	}
 
-	/**报名-一键通过审核(本页)
+	/**一键通过审核(本页)
+	*@group 报名
+	*@param array $array      uid数组
 	*
-	*@return status.状态码
+	*@return status:状态码
+	*@example 成功 {"status":200,"data":null}
 	*/
-	public function Allpass()
+	public function Allpass($array)
 	{				
-		$data_info=Info::where('privilege','=',0)
-				->limit((Session::get("page_data")-1)*4,4)
-				->select('uid,department');
-		foreach($data_info as $key => $value){
-			$data_value=$value;						
-			//获取学号			
-			$uid=$data_value['uid'];			
-			//获取部门
-			$department=$data_value['department'];											
-			//修改角色
-			if('design'==$department){		
-				User::where('id','=',$uid)->update([
-						"role"	=>8
-				]);				
-			}elseif('frontend'==$department){
-				User::where('id','=',$uid)->update([
-						"role"	=>7
-				]);				
-			}elseif('backend'==$department){
-				User::where('id','=',$uid)->update([
-						"role"	=>9
-				]);
-			}else{
-				User::where('id','=',$uid)->update([
-						"role"	=>6
-				]);				
-			}				
-			//审核通过
-			Info::where('uid','=',$uid)->update([
-				"privilege"=>1
-				]);
-			//消息提醒
-			Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
-			
+		for($i=0;$i<count($array);$i++){				
+			$data_info=Info::where('uid','=',$array[$i])
+					->select('uid,department');
+			foreach($data_info as $key => $value){
+				$data_value=$value;						
+				//获取学号			
+				$uid=$data_value['uid'];			
+				//获取部门
+				$department=$data_value['department'];
+														
+				//修改角色
+				if('design'==$department){		
+					User::where('id','=',$uid)->update([
+							"role"	=>8
+					]);				
+				}elseif('frontend'==$department){
+					User::where('id','=',$uid)->update([
+							"role"	=>7
+					]);				
+				}elseif('backend'==$department){
+					User::where('id','=',$uid)->update([
+							"role"	=>9
+					]);
+				}else{
+					User::where('id','=',$uid)->update([
+							"role"	=>6
+					]);				
+				}				
+				//审核通过
+				Info::where('uid','=',$uid)->update([
+					"privilege"=>1
+					]);
+			 	//消息提醒
+			 	Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
+				
+			 }
 		}
-		Session::remove("page_data");
 		Response::out(200);
+		// 
 	}
 
-	/**报名-一键删除报名(全部未审核)
+	/**一键删除报名(全部未审核)
 	*
-	*@return status.状态码
+	* @group 报名
+	*@return status:状态码
+	*@example 成功 {"status":200,"data":null}
 	*/
 	public function Alldelete()
 	{					
@@ -346,10 +378,12 @@ class Sign
 	}
 
 	/**报名-审核淘汰
-	*
+	*@group 报名
+	* 
 	*@param int $uid    用户id
 	*
-	*@return status.状态码
+	*@return status:状态码
+	*@example 成功 {"status":200,"data":null}
 	*/
 	public function Elimination($uid)
 	{
@@ -360,14 +394,17 @@ class Sign
 		Response::out(200);
 	}
 
-	/**报名-搜索
-	*
-	*@param int $page 0   页码
+	/**搜索
+	*@group 报名
+	* 
+	*@param int $page    页码
 	*@param string $content    内容
 	*
-	*@return status.状态码 data.指定页的搜索数据 num.总页数
+	*@return status:状态码 data.data:指定页的搜索数据 data.num:总页数
+	*@example 成功 {"status":200,"data":{"data":[{"uid":"1","name":"huizhe","sid":"15115071013","department":"backend","grade":"15软工1班","phone":"1","short_phone":"653362","privilege":"1","sex":null,"college":null,"major":null},{"uid":"2","name":"huizhe1","sid":"15115071012","department":"backend","grade":"15软工1班","phone":"1","short_phone":"653362","privilege":"1","sex":null,"college":null,"major":null},{"uid":"3","name":"huizhe1","sid":"15115071011","department":"backend","grade":"15软工1班","phone":"1","short_phone":"653362","privilege":"1","sex":null,"college":null,"major":null},{"uid":"4","name":"huizhe","sid":"12345678901","department":"frontend","grade":"frontend","phone":"1","short_phone":"653362","privilege":"1","sex":null,"college":null,"major":null}],"num":3}}
+	*@example 无数据 {"status":311,"errmsg":"Didnotfindrelevantcontent."}
 	*/
-	public function Content_search($page=1,$content)
+	public function Content_search($page,$content)
 	{
 		$data=Info::where('name','like',"%".$content."%")
 			->limit(($page - 1) * 4, 4)
@@ -388,12 +425,14 @@ class Sign
 			return strtotime($timestamp);
 	}
 
-	/**报名-设置报名时间
-	*
+	/**设置报名时间
+	*@group 报名
 	*@param timestamp $end_time 1 截止时间（13位时间戳）
 	*@param timestamp $start_time 0 起始时间（13位时间戳）
 	*
-	*@return status.状态码
+	*@return status:状态码 errmsg:失败时,错误信息 data.tid:时间id
+	*@example 成功 {"status":200,"data":{"tid":"6"}}
+	*@example 截止时间应大于现在和起始时间 {"status":505,"errmsg":"The deadline should be greater than nowtime and start time."}
 	*/
 	public function Addsigntime( $start_time = null,$end_time)
 	{
@@ -411,15 +450,18 @@ class Sign
 		Response::out(200, ['tid' => $time_id[0]]);
 	}
 
-	/**报名-获取所有报名时间
-	*@param int $page 0   页码
+	/**获取所有报名时间
+	*@group 报名
+	*@param int $page   页码
 	*	
-	*@return status.状态码 data.指定页的报名时间 num.总页数
+	*@return status:状态码 errmsg:失败时,错误信息 data.data:指定页的报名时间 data.num:总页数
+	*@example 成功 {"status":200,"data":{"data":[{"time_id":"2","start_time":"2016-09-0520:20:05","end_time":"2016-09-0600:00:00"},{"time_id":"3","start_time":"2016-09-0621:04:25","end_time":"2016-09-0800:00:00"},{"time_id":"4","start_time":"2016-09-1017:02:08","end_time":"2016-09-3000:00:00"},{"time_id":"5","start_time":"2016-10-0621:59:00","end_time":"2016-10-1021:59:00"}],"num":2}}
+	*@example 无数据 {"status":311,"errmsg":"Didnotfindrelevantcontent."}
 	*/
 	public function Getsigntime($page=1)
 	{
-		$data=Info_Time::limit(($page - 1) * 10, 10)->select();	
-		$num=ceil(count(Info_Time::limit(($page - 1) * 4, 4)->select())/4);
+		$data=Info_Time::Limit(($page - 1) * 4, 4)->select();	
+		$num=ceil(count(Info_Time::select())/4);
  		if(0==count($data)){
  			Response::out(311);
  		}else{
@@ -427,10 +469,12 @@ class Sign
  		}
 	}
 
-	/**报名-删除报名时间
+	/**删除报名时间
+	*@group 报名
 	*@param int $time_id    时间id
 	*	
-	*@return status.状态码 
+	*@return status:状态码 
+	*@example 成功 {"status":200,"data":null}
 	*/
 	public function Deletesigntime($time_id)
 	{
@@ -438,9 +482,12 @@ class Sign
 		Response::out(200);
 	}
 
-	/**报名-获取最新报名时间
+	/**获取最新报名时间
+	*@group 报名
 	*	
-	*@return status.状态码 data.报名时间
+	*@return status:状态码 errmsg:失败时,错误信息 data.data:报名时间
+	*@example 成功 {"status":200,"data":{"data":[{"time_id":"7","start_time":"2016-10-08 20:26:00","end_time":"2016-10-11 20:26:00"}]}}
+	*@example 无数据 {"status":311,"errmsg":"Didnotfindrelevantcontent."}
 	*/
 	public function Getnewsigntime()
 	{
@@ -452,12 +499,14 @@ class Sign
  		}
 	}
 
-	/**报名-修改报名时间
+	/**修改报名时间
+	*@group 报名
 	*@param int $time_id    时间id
 	*@param timestamp $end_time 1 截止时间（13位时间戳）
 	*@param timestamp $start_time 0 起始时间（13位时间戳）
-	*	
-	*@return status.状态码 
+	*@return status:状态码 errmsg:失败时,错误信息 
+	*@example 成功 {"status":200,"data":null}
+	*@example 截止时间应大于现在和起始时间 {"status":505,"errmsg":"The deadline should be greater than nowtime and start time."}
 	*/
 	public function Updatesigntime($time_id, $start_time = null,$end_time)
 	{
@@ -476,13 +525,15 @@ class Sign
 		Response::out(200);
 	}
 
-	/**报名-列表通过/否决
+	/**列表通过/否决
+	*@group 报名
 	*@param array $data    列表数据(名字，名字，逗号是中文的！！)
-	*@param int $privilege 0 审核判断,默认为1通过,2为不通过  
+	*@param int $privilege  审核判断,为1通过,2为不通过  
 	*	
-	*@return status.状态码 
+	*@return status:状态码 
+	*@example 成功 {"status":200,"data":null}
 	*/
-	public function Listpass($data,$privilege=1)
+	public function Listpass($data,$privilege)
 	{
 		//切割成数组
 		$array_data=explode("，", $data);
@@ -518,12 +569,12 @@ class Sign
 					]);
 				// 消息通知
 				if(1==$privilege){
-					Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
+					//Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
 				}else{
 					User::where('id','=',$uid)->update([
 							"role"	=>10
 					]);	
-					Common::setInform($uid, "报名", "报名失败", "您于".date("Y-m-d H:i:s")."报名审核不通过，快去看看！", "");
+					//Common::setInform($uid, "报名", "报名失败", "您于".date("Y-m-d H:i:s")."报名审核不通过，快去看看！", "");
 				}
 			}
 		}
@@ -531,9 +582,13 @@ class Sign
 	}
 
 	/**发送短信(120s)
+	*@group 报名
 	*@param string $phone   长号
 	*
-	*@return status.状态码 
+	*@return status:状态码 errmsg:失败时,错误信息 
+	*@example 成功 {"status":200,"data":null}
+	*@example 短信已发送 {"status":425,"errmsg":"message has been sent, please wait a moment."}
+	*@example 该手机已被注册过 {"status":428,"errmsg":"The phone number has been in existence."}
 	*/
 	public function sendPhone($phone){
 		//检查长号的唯一性
@@ -573,11 +628,16 @@ class Sign
 	}
 
 	/**判断短信
-	*
+	*@group 报名
 	*@param string $phone   长号
 	*@param string $token   短信验证码
 	*
-	*@return status.状态码 
+	*@return status:状态码 errmsg:失败时,错误信息 
+	*@example 成功 {"status":200,"data":null}message has been sent, please wait a moment.
+	*@example 短信已发送 {"status":411,"errmsg":"message has been sent, please wait a moment."}
+	*@example 短信验证超时 {"status":413,"errmsg":"Time out."}
+	*@example 请再次发送短信 {"status":426,"errmsg":"Please send back the message."}
+	*@example 验证码为空 {"status":431,"errmsg":"token is null."}
 	*/
 	public function Judge_me($phone,$token=NULL){
 		if($this->Judgemessage($phone,$token)){
@@ -680,7 +740,17 @@ class Sign
 	    } 
 		return false; 
 	}
+	/**get_uid
+	 *
+	 * @header string authentication 口令认证
+	 */
 	
+	private function Getuid(){
+		if(null==Session::get("user.id")){
+			return false;
+		}
+		return Session::get("user.id");
+	}
 	//电脑端报名
 	public function PCsign($uid,$name,$sid,$department,$grade,$phone,$short_phone,$sex,$college,$major){
 		$insert_news=Info::insert([
@@ -698,20 +768,41 @@ class Sign
 				]);
 	}
 
+	/**test
+	 * 
+	 * @return status:状态码 errmsg:失败时,错误信息 data.post_id:成功之后返回帖子的id
+     * @example 200702 {"status":702,"errmsg":"Unavailable Department"}
+     * @example 200200 {"status":200,"data":{"post_id":"38"}}
+	 */
 	public function test(){
 		if($this->Judge_phone()){
-			response("phone");
+			//response("phone");
 		}else{
-			response("PC");
+			//response("PC");
 		}
 
 		if(null==Session::get("phone")){
-			response("1");
+			//response("1");
 		}
 		else{
-			response("2");
+			//response("2");
 		}
+		//Mail::to("a22783276@163.com")->title("WangYuanStudio")->content("asd");	
+		Cache::delete(md5("a22783276@163.com"));
+		Response::out(200);
 		//Cache::delete('13640134362');
 		
+	}
+	/**test
+	 *
+	 * @param  [type] $id   id
+	 * @param  [type] $name name
+	 * @param  [type] $sex  sex
+	 * @return [type]       [description]
+	 */
+	public function test1($id,$name,$sex){
+		//response(200,"hello");
+		Response::out(200,["ds"=>$id,"qw"=>$name,"er"=>$sex]);
+		//echo "ID:" . $id;       
 	}
 }
