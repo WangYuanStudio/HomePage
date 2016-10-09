@@ -205,7 +205,7 @@ use App\Controllers\Login;
 			Response::out(419);
 			return false;
 		}
- 		//if(Verify::auth()){														
+ 		if(Verify::auth()){														
 			$token=md5($mail);
 			$array=[
 				"nickname" =>Html::removeSpecialChars($nickname),
@@ -222,7 +222,7 @@ use App\Controllers\Login;
 如果以上链接无法点击，请将它复制到你的浏览器地址栏中进入访问"; 
 			Mail::to($mail)->title("WangYuanStudio")->content($emailbody);				
 			Response::out(200);			
-		//}							 
+		}							 
 	}
 
 
@@ -387,7 +387,7 @@ use App\Controllers\Login;
 				
 	}
 
-	/**修改密码(调用后自动退出)
+	/**修改密码(调用后需调用退出接口)
 	*@group 官网
 	*@header string authentication 口令认证
 	*
@@ -427,12 +427,12 @@ use App\Controllers\Login;
 			Response::out(312);
 			return false;
 		}
-		Response::out(200);
+		
 		$password1=Html::removeSpecialChars($password1);											
 		$password1=password_hash($password1,PASSWORD_BCRYPT,['cost'=>mt_rand(7,10)]);
- 	// 	$update_psw=User::where('id','=',$uid)->Update([
-		// "password" =>$password1
-		// ]);
+ 		$update_psw=User::where('id','=',$uid)->Update([
+		"password" =>$password1
+		]);
 		if(1==$update_psw){
 			Cache::delete($re_verify."send_verify",Session::get("user.mail"));
 			// $out=new Login();
@@ -499,7 +499,7 @@ use App\Controllers\Login;
 	}
 
 	//修改密码之验证码验证
-	public function Updateverify($verify=NULL)
+	private function Updateverify($verify=NULL)
 	{
 		// echo $verify;
 		// echo Cache::get($verify);

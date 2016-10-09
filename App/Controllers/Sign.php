@@ -219,10 +219,10 @@ class Sign
 					Response::out(420);
 					return false;
 				}
-			 //if(Verify::auth()){
+			 if(Verify::auth()){
 				$this->PCsign($uid,$name,$sid,$department,$grade,$phone,$short_phone,$sex,$college,$major);
 				Response::out(200);
-			 //}	
+			 }	
 		}
 			
 	}
@@ -271,12 +271,12 @@ class Sign
 		if(1==$check&&1==$check_info){
 			// 消息通知
 			if(1==$privilege){
-				//Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
+				Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
 			}else{
 				User::where('id','=',$uid)->update([
 						"role"	=>10
 					]);	
-				//Common::setInform($uid, "报名", "报名失败", "您于".date("Y-m-d H:i:s")."报名审核不通过，快去看看！", "");
+				Common::setInform($uid, "报名", "报名失败", "您于".date("Y-m-d H:i:s")."报名审核不通过，快去看看！", "");
 			}
 			Response::out(200);
 		}else{
@@ -569,12 +569,12 @@ class Sign
 					]);
 				// 消息通知
 				if(1==$privilege){
-					//Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
+					Common::setInform($uid, "报名", "报名成功", "您于".date("Y-m-d H:i:s")."报名审核通过，快去看看！", "");
 				}else{
 					User::where('id','=',$uid)->update([
 							"role"	=>10
 					]);	
-					//Common::setInform($uid, "报名", "报名失败", "您于".date("Y-m-d H:i:s")."报名审核不通过，快去看看！", "");
+					Common::setInform($uid, "报名", "报名失败", "您于".date("Y-m-d H:i:s")."报名审核不通过，快去看看！", "");
 				}
 			}
 		}
