@@ -22,8 +22,8 @@ use PHPExcel;
 class Tribune
 {
     public $middle = [
-//        "publish"      => ["Check_login", "Check_Operation_Count"],
-//        "response"     => ["Check_login", "Check_Operation_Count"],
+        "publish"  => ["Check_login", "Check_Operation_Count"],
+        "response" => ["Check_login", "Check_Operation_Count"],
 //        "getPublished" => "Check_login",
 //        "getMsg" => "Check_login",
 //        "searchPost"   => ["Check_login", "Check_Operation_Count"],
@@ -40,13 +40,13 @@ class Tribune
 
     /**首页加载-获取帖子列表数据
      *
-     * @group 论坛
+     * @group   论坛
      *
-     * @param enum  $department 部门(编程、前端、设计、文秘)
-     * @param int    $page       页码
+     * @param enum $department 部门(编程、前端、设计、文秘)
+     * @param int  $page       页码
      *
-     * @return status:状态码 data.page_count:总页数 data.post:帖子数据 data.post.nickname:昵称 data.post.photo:头像 data.post.id:帖子的id data.post.title:帖子标题 data.post.short_content:帖子简介 data.post.time:发布时间 data.post.last_time:最后回复时间 data.post.view:浏览数 data.post.response:回复数 data.post.img:帖子的第一张图片
-     * @example 200 {"status":200,"data":{"page_count":5,"post":[{"nickname":null,"photo":null,"id":"36","title":"eeeeeee","short_content":"\u56db\u7ea7\u97f6\u5173\u9648\u5fd7\u5cf0&lt;img src=&#039;1.jpg&#039;\/&gt;fuck1","time":"2016-08-29 22:56:43","last_time":"2016-08-29 22:56:43","view":"0","response":"0","img":"2.jpg"},{"nickname":null,"photo":null,"id":"35","title":"eeeeeee","short_content":"\u56db\u7ea7\u97f6\u5173\u9648\u5fd7\u5cf0&lt;img src=&#039;1.jpg&#039;\/&gt;fuck1","time":"2016-08-29 22:56:31","last_time":"2016-08-29 22:56:31","view":"0","response":"0","img":""},{"nickname":null,"photo":null,"id":"34","title":"eeeeeee","short_content":null,"time":"2016-08-29 17:21:01","last_time":"2016-08-29 17:21:01","view":"0","response":"0","img":"<img src='1.jpg'\/>"},{"nickname":"zeffee","photo":"","id":"33","title":"z","short_content":null,"time":"2016-08-22 13:58:42","last_time":null,"view":"88","response":"0","img":null},{"nickname":"zeffee","photo":"","id":"32","title":"zeffee","short_content":null,"time":"2016-08-09 13:34:25","last_time":null,"view":null,"response":"0","img":null},{"nickname":"zeffee","photo":"","id":"31","title":"zeffee","short_content":null,"time":"2016-08-09 13:31:46","last_time":null,"view":null,"response":"0","img":null},{"nickname":"zeffee","photo":"","id":"29","title":"zeffee","short_content":null,"time":"2016-08-08 16:49:46","last_time":null,"view":null,"response":"0","img":null}]}}
+     * @return status:状态码 data.page_count:总页数 data.post:帖子数据 data.post.nickname:昵称 data.post.photo:头像 data.post.id:帖子的id data.post.title:帖子标题 data.post.short_content:帖子简介 data.post.time:发布时间 data.post.last_time:最后回复时间 data.post.view:浏览数 data.post.response:回复数 data.post.img:帖子的第一张图片 data.publish_key:发布帖子的key
+     * @example 200 {"status":200,"data":{"page_count":1,"post":[{"nickname":"intern74500","photo":"avatar\/head.gif","id":"7","title":"php\u7684\u4f7f\u7528","short_content":"\u3000\u987a\u5176\u81ea\u7136\uff0c\u4e00\u5165\u591c\uff0c\u7334\u5b50\u5c31\u50cf\u6492\u4e86\u7684\u5154\u5b50\uff0c","time":"2016-09-08 19:44:09","last_time":"2016-09-08 19:44:09","view":"0","response":"0","img":""},{"nickname":"intern74500","photo":"avatar\/head.gif","id":"4","title":"mysql\u8bb2\u89e3","short_content":" \u4e00\u5b63\u9752\u6625\uff0c\u534a\u751f\u5e74\u534e        \u3000\u3000\u5e7d\u5e7d\u5c81\u6708\uff0c\u6d6e","time":"2016-09-08 19:37:26","last_time":"2016-09-08 19:37:26","view":"1","response":"0","img":""},{"nickname":"intern74500","photo":"avatar\/head.gif","id":"1","title":"\u7f51\u56ed\u7684frimaryday","short_content":"\u8bbe\u8ba1\u4e00\u4e2a\u81ea\u6211\u4ecb\u7ecd\u7684\u9875\u9762","time":"2016-09-08 18:42:45","last_time":"2016-09-08 20:06:00","view":"5","response":"3","img":""}],"publish_key":"d59680f57f68b7ead8178f749792fdbc"}}
      */
     public function index($department, $page)
     {
@@ -65,7 +65,7 @@ class Tribune
             ->limit(($page - 1) * $page_size, $page_size)
             ->select('user.nickname,user.photo,post.id,post.title,post.short_content,post.time,post.last_time,post.view,post.response,post.img');
 
-//        $data["publish_key"] = $this->setCsrfKey("publish_key");
+        $data["publish_key"] = $this->setCsrfKey("publish_key");
 
         Response::out(200, $data);
     }
@@ -73,21 +73,22 @@ class Tribune
 
     /**发帖
      *
-     * @group 论坛
+     * @group   论坛
      *
-     * @header string authentication 口令认证
+     * @header  string authentication 口令认证
      *
      * @param string $title       标题
      * @param string $content     内容
      * @param enum   $department  部门(编程、前端、设计、文秘)
+     * @param string $publish_key 首页加载时候获得的key
      *
      * @return status:状态码 errmsg:失败时,错误信息 data.post_id:成功之后返回帖子的id
-     * @example 200702 {"status":702,"errmsg":"Unavailable Department"}
-     * @example 200200 {"status":200,"data":{"post_id":"38"}}
+     * @example 部门不存在 {"status":702,"errmsg":"Unavailable Department"}
+     * @example 成功 {"status":200,"data":{"post_id":"38"}}
      */
-    public function publish($title, $content, $department)
+    public function publish($title, $content, $department, $publish_key)
     {
-//        $this->checkKey($publish_key, "publish_key");
+        $this->checkKey($publish_key, "publish_key");
 
         if (!in_array($department, ["编程", "前端", "设计", "文秘"])) {
             Response::out(702);
@@ -116,16 +117,20 @@ class Tribune
     }
 
 
-    /**论坛-发表回复
+    /**回复帖子
+     *
+     * @group   论坛
      *
      * @param int    $pid          回复一楼的填写帖子id,否则填写0
      * @param int    $bid          回复其他楼层的填写楼层id,否则填写0
      * @param string $content      回复内容
-     * @param string $response_key 回复帖子的key
+     * @param string $response_key 在打开帖子的时候获取的key
      *
-     * @return floor.返回回复的楼层
+     * @return status:状态码 errmsg:失败时,错误信息 data.floor:返回回复的楼层
+     * @example 成功情况 {"status":200,"data":{"floor":2}}
+     * @example id出错  {"status":701,"errmsg":"Unavailable ID"}
      */
-    public function response($pid = 0, $bid = 0, $content, $response_key)
+    public function response($content, $pid = 0, $bid = 0, $response_key)
     {
         $this->checkKey($response_key, "response_key");
 
@@ -180,27 +185,47 @@ class Tribune
     /* 检查发帖、回复的key合法性
      *
      * @param $key
-     * @param $column
+     * @param $name
      */
-//    private function checkKey($key, $column)
-//    {
-//        if (!Session::get($column) || $key != Session::get($column)) {
-//            Session::remove($column);
-//            Response::out(700);
-//
-//            die();
-//        }
-//    }
+    private function checkKey($key, $name)
+    {
+        $name = $_SERVER["REMOTE_ADDR"] . $name;
+        if (!Cache::get($name) || $key != Cache::get($name)) {
+            Cache::delete($name);
+            Response::out(700);
+
+            die();
+        }
+    }
 
 
-    /**论坛-打开某个帖子-获取信息
+    /* 设置csrf密钥
      *
-     * @param int $pid  1 帖子的id
-     * @param int $page 0 回复的页数,默认值为1
+     * @param $name
      *
-     * @return first.楼主信息,仅加载第一页返回 bbs.其他楼层信息 response_key.回复帖子的key
+     * @return string
      */
-    public function postInfo($pid, $page = 1)
+    private function setCsrfKey($name)
+    {
+        $name = $_SERVER["REMOTE_ADDR"] . $name;
+        $key = md5(time() . mt_rand(1000, 9999));
+        Cache::set($name, $key);
+
+        return $key;
+    }
+
+
+    /**打开某个帖子-获取信息
+     *
+     * @group   论坛
+     *
+     * @param int $pid  帖子的id
+     * @param int $page 回复的页数,默认值为1
+     *
+     * @return status:状态码 first:楼主信息,仅加载第一页返回 bbs:其他楼层信息 response_key:回复帖子的key
+     * @example 2001 {"status":200,"data":{"first":[{"nickname":null,"photo":null,"id":"37","uid":null,"title":"dsf","content":"asf","time":"2016-10-06 15:33:53","department":"\u7f16\u7a0b","view":"2","response":"1","last_time":"2016-10-07 15:01:20","img":"","short_content":"asf"}],"bbs":[{"role":null,"nickname":null,"photo":null,"floor":"2","pid":"37","uid":null,"content":"hahahah","time":"2016-10-07 15:01:20","point_uid":null,"point_floor":"1","is_read":"0","master_uid":null,"master_read":"0","id":"21","point_nickname":null}],"page_count":1}}
+     */
+    public function postInfo($pid, $page)
     {
         $data = [];
         $page_size = 7;
@@ -225,21 +250,6 @@ class Tribune
 
         Response::out(200, $data);
     }
-
-
-    /* 设置csrf密钥
-     *
-     * @param $name
-     *
-     * @return string
-     */
-//    private function setCsrfKey($name)
-//    {
-//        $key = md5(time());
-//        Session::set($name, $key);
-//
-//        return $key;
-//    }
 
 
     /**论坛-个人中心-历史帖子
@@ -435,9 +445,14 @@ class Tribune
         Response::out(200, Cache::get("a"));
     }
 
-    public function test()
+    /**aaa
+     *
+     * @param file   $file fuck
+     * @param string $b    fuckd
+     */
+    public function test($b, $file)
     {
-        (new \Zereri\Lib\Document())->init();
+        response(200, ["return"=>$b . $_FILES["file"]["name"]]);
     }
 
     public function tran()

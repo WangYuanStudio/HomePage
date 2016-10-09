@@ -28,33 +28,36 @@ class Common
   ];
     /**公共类-获取验证码图片
      *
+     * @group 验证码
      */
     public function verifyImg()
     {
         $v = new \App\Lib\Vcode('img', 2, 18, 150, 250, false, true, 0, 0, __ROOT__ . "/public/" . mt_rand(1, 19) . ".jpg", __ROOT__ . '/msyhbd.ttc', [255, 250, 250]);
-        Cache::set($_SERVER["REMOTE_ADDR"] . "_vcode", $v->getData());
+        Cache::set($_SERVER["REMOTE_ADDR"] . "_vcode", json_encode($v->getData()));
         $v->show();
     }
 
 
     /**公共类-获取验证码的提示
      *
+     * @group 验证码
      */
     public function verifyType()
     {
-        response(200, Cache::get($_SERVER["REMOTE_ADDR"] . "_vcode")["type"]);
+        response(200, json_decode(Cache::get($_SERVER["REMOTE_ADDR"] . "_vcode"), true)["type"]);
     }
 
 
     /**公共类-验证验证码
+     * @group 验证码
      *
      * @param array $text 验证码文本
      *
-     * @return status.状态码
+     * @return status:状态码
      */
     public function verify($text)
     {
-        if ($v = Cache::get($_SERVER["REMOTE_ADDR"] . "_vcode")["text"]) {
+        if ($v = json_decode(Cache::get($_SERVER["REMOTE_ADDR"] . "_vcode"), true)["text"]) {
             Cache::delete($_SERVER["REMOTE_ADDR"] . "_vcode");
             foreach ($text as $key => $value) {
                 if ($value["x"] > $v[ $key ]["max_x"]
