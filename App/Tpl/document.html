@@ -117,6 +117,7 @@
                 type: 'POST',
                 dataType: 'json',
                 contentType: 'multipart/form-data',
+                headers: JSON.parse(getParamsJsonData($this, "headers")),
                 success: function (data) {
                     showReturn($this, data);
                 },
