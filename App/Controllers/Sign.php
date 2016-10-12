@@ -59,7 +59,7 @@ class Sign
 		431 => 'token is null.'
 	];
 
-	/**电脑实现报名
+	/**实现报名
 	* @group 报名
 	* @header string authentication 口令认证
 	*
@@ -229,7 +229,7 @@ class Sign
 
 	/**确认报名审核通过或不通过
 	*
-	*@group 报名
+	*@group 报名后台审核管理
 	* 
 	*@param int $uid  用户id
 	*@param int $privilege  审核判断,为1通过,2为不通过  
@@ -286,7 +286,7 @@ class Sign
 	}
 
 	/**获取报名列表
-	*@group 报名
+	*@group 报名后台审核管理
 	*
 	*@param int $page    页码
 	*@param enum $department  部门名称{'backend','frontend','design','secret','all'}
@@ -316,7 +316,7 @@ class Sign
 	}
 
 	/**一键通过审核(本页)
-	*@group 报名
+	*@group 报名后台审核管理
 	*@param array $array      uid数组
 	*
 	*@return status:状态码
@@ -367,7 +367,7 @@ class Sign
 
 	/**一键删除报名(全部未审核)
 	*
-	* @group 报名
+	* @group 报名后台审核管理
 	*@return status:状态码
 	*@example 成功 {"status":200,"data":null}
 	*/
@@ -378,7 +378,7 @@ class Sign
 	}
 
 	/**报名-审核淘汰
-	*@group 报名
+	*@group 报名后台审核管理
 	* 
 	*@param int $uid    用户id
 	*
@@ -395,7 +395,7 @@ class Sign
 	}
 
 	/**搜索
-	*@group 报名
+	*@group 报名后台审核管理
 	* 
 	*@param int $page    页码
 	*@param string $content    内容
@@ -426,7 +426,7 @@ class Sign
 	}
 
 	/**设置报名时间
-	*@group 报名
+	*@group 报名后台时间管理
 	*@param timestamp $end_time 1 截止时间（13位时间戳）
 	*@param timestamp $start_time 0 起始时间（13位时间戳）
 	*
@@ -451,7 +451,7 @@ class Sign
 	}
 
 	/**获取所有报名时间
-	*@group 报名
+	*@group 报名后台时间管理
 	*@param int $page   页码
 	*	
 	*@return status:状态码 errmsg:失败时,错误信息 data.data:指定页的报名时间 data.num:总页数
@@ -470,7 +470,7 @@ class Sign
 	}
 
 	/**删除报名时间
-	*@group 报名
+	*@group 报名后台时间管理
 	*@param int $time_id    时间id
 	*	
 	*@return status:状态码 
@@ -483,7 +483,7 @@ class Sign
 	}
 
 	/**获取最新报名时间
-	*@group 报名
+	*@group 报名后台时间管理
 	*	
 	*@return status:状态码 errmsg:失败时,错误信息 data.data:报名时间
 	*@example 成功 {"status":200,"data":{"data":[{"time_id":"7","start_time":"2016-10-08 20:26:00","end_time":"2016-10-11 20:26:00"}]}}
@@ -500,7 +500,7 @@ class Sign
 	}
 
 	/**修改报名时间
-	*@group 报名
+	*@group 报名后台时间管理
 	*@param int $time_id    时间id
 	*@param timestamp $end_time 1 截止时间（13位时间戳）
 	*@param timestamp $start_time 0 起始时间（13位时间戳）
@@ -526,7 +526,7 @@ class Sign
 	}
 
 	/**列表通过/否决
-	*@group 报名
+	*@group 报名后台审核管理
 	*@param array $data    列表数据(名字，名字，逗号是中文的！！)
 	*@param int $privilege  审核判断,为1通过,2为不通过  
 	*	

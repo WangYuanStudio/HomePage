@@ -56,7 +56,7 @@ use App\Controllers\Login;
 	];
 
 	/**实现注册
-	*@group 官网
+	*@group 官网用户注册
 	*@param string $token  验证码
 	*@return status:状态码 errmsg:失败时,错误信息 data.login_id:返回插入的id
 	*@example 密钥验证过或错误 {"status":411,"errmsg":"Token error."}
@@ -111,7 +111,7 @@ use App\Controllers\Login;
 	}
 	
 	/**用户更换头像
-	*@group 官网
+	*@group 官网用户换头像
 	*@header string authentication 口令认证
 	*
 	*@param file $file 1 上传控件
@@ -155,7 +155,7 @@ use App\Controllers\Login;
 	}
 	
 	/**发送注册邮件
-	*@group 官网
+	*@group 官网用户注册
 	*@param string $mail 	邮箱
 	*@param string $nickname		昵称(16内)
 	*@param string $password     密码 
@@ -227,7 +227,7 @@ use App\Controllers\Login;
 
 
 	/**限制账号
-	*@group 官网
+	*@group 官网封号
 	*@param int $uid    	用户id
 	*
 	*@return status:状态码 errmsg:失败时,错误信息
@@ -246,7 +246,7 @@ use App\Controllers\Login;
 	}
 	
 	/**解除限制账号
-	*@group 官网
+	*@group 官网封号
 	*@param int $uid      用户id
 	*
 	*@return status:状态码 errmsg:失败时,错误信息
@@ -265,7 +265,7 @@ use App\Controllers\Login;
 	}
 
 	/**找回密码之发送邮箱
-	*@group 官网
+	*@group 官网用户找回密码
 	*@param string $mail 	邮箱
 	*
 	*@return status:状态码 errmsg:失败时,错误信息
@@ -311,7 +311,7 @@ use App\Controllers\Login;
 	}
 
 	/**找回密码之修改密码
-	*@group 官网
+	*@group 官网用户找回密码
 	*@param string $password    	密码
 	*@param string $password2		确认密码  
 	*@param string $token           邮箱的验证码 
@@ -388,7 +388,7 @@ use App\Controllers\Login;
 	}
 
 	/**修改密码(调用后需调用退出接口)
-	*@group 官网
+	*@group 官网用户修改密码
 	*@header string authentication 口令认证
 	*
 	*@param string $password1		新密码
@@ -445,7 +445,7 @@ use App\Controllers\Login;
 	}
 
 	/**修改个人信息
-	*@group 官网
+	*@group 官网用户修改个人信息
 	* @header  string authentication 口令认证
 	*
 	*@param string $nickname		昵称(16内)
@@ -475,7 +475,7 @@ use App\Controllers\Login;
 	}
 
 	/**修改密码之发送邮箱
-	*@group 官网
+	*@group 官网用户修改密码
 	*@header string authentication 口令认证
 	*
 	*@return status:状态码 errmsg:失败时,错误信息
