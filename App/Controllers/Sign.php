@@ -320,6 +320,7 @@ class Sign
 	*@param array $array      uid数组
 	*
 	*@return status:状态码
+	*@example 传值 {"array[0]":1,"array[1]":2}
 	*@example 成功 {"status":200,"data":null}
 	*/
 	public function Allpass($array)
