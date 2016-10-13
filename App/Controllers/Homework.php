@@ -19,7 +19,7 @@ date_default_timezone_set('PRC');
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-10-07 20:20
+ * Last modified time: 2016-10-13 23:04
  */
 class Homework
 {
@@ -46,8 +46,8 @@ class Homework
 	const AT_UPLOAD_FIELD = 'file';	// 作业文件上传字段
 
 	public $middle = [
-		// 'uploadWork' => ['Hws_WorkSubmit', 'Check_Operation_Count'],
-		// 'all' => ['Check_login', 'Hws_SeeWork'] // 对所有方法判断登录
+		'uploadWork' => ['Hws_WorkSubmit', 'Check_Operation_Count'],
+		'all' => ['Check_login', 'Hws_SeeWork'] // 对所有方法判断登录
 	];
 
 	/*错误代码 && 错误信息
@@ -88,8 +88,8 @@ class Homework
 	private $loginedUser;
 
 	public function __construct() {
-		$test = User::where('id', '=', 1)->select();
-		$this->loginedUser = $test[0];//Session::get('user');
+		// $test = User::where('id', '=', 1)->select();
+		$this->loginedUser = Session::get('user');
 	}
 
 	/**获取某用户优秀作业
@@ -167,6 +167,11 @@ class Homework
 	 * @param string $note 作业备注
 	 * @param file $file 文件
 	 * @return status:状态码 errmsg:错误信息 data.rid:作业ID
+	 * @example 成功返回 {"status":200,"data":{"rid":"7"}}
+	 * @example 没有上传文件 {"status":515,"errmsg":"File should be uploaded."}
+	 * @example 该类扩展名文件不允许上传 {"status":514,"errmsg":"This file extension is not allow to upload."}
+	 * @example 文件上传失败 {"status":513,"errmsg":"File upload error."}
+	 * @example 数据库操作中，作业数据插入失败 {"status":501,"errmsg":"Homework data insert failed. Maybe error occurs in mysql operation."}
 	 */
 	public function uploadWork($tid, $note = null, $file = null) {
 		if ($task = Hws_Task::where('id', '=', $tid)->select()) {
@@ -222,6 +227,7 @@ class Homework
 	 * @return status:状态码 errmsg:错误信息 data.totalItem:结果总条数 data.totalPage:总页数 data.currentPage:当前页数 data.perPage:每页条数 data.pageData.id:作业ID data.pageData.tid:任务ID data.pageData.uid:提交用户ID data.pageData.file_path:作业文件路径 data.pageData.time:提交时间 data.pageData.note:备注 data.pageData.score:评分 data.pageData.comment:评语 data.pageData.comment_uid:批改用户ID data.pageData.comment_time:批改时间 data.pageData.recommend:是否推荐 data.pageData.unpack_path:解压后路径 data.pageData.user.nickname:提交用户昵称 data.pageData.user.mail:提交用户邮箱 data.pageData.user.photo:提交用户头像路径 data.pageData.user.uid:提交用户UID data.pageData.user.name:提交用户姓名 data.pageData.user.sid:提交用户学号 data.pageData.user.department:提交用户部门 data.pageData.user.grade:提交用户年级 data.pageData.user.phone:提交用户长号 data.pageData.user.short_phone:提交用户短号 data.pageData.user.privilege:报名是否通过审核 data.pageData.user.sex:提交用户性别 data.pageData.user.college:提交用户学院 data.pageData.user.major:提交用户专业
 	 * @example 成功获取 {"status":200,"data":{"totalItem":4,"totalPage":1,"currentPage":"1","perPage":4,"pageData":[{"id":"1","title":"TESTTASK1","content":"测试作业","department":"backend","start_time":"2016-08-0100:00:00","end_time":"2016-08-1200:00:00","attachments":null},{"id":"2","title":"TEST2","content":"内容","department":"frontend","start_time":"2016-08-1111:48:58","end_time":"2016-08-1215:35:19","attachments":null},{"id":"3","title":"TEST3","content":"内容3","department":"secret","start_time":"2016-08-1112:20:57","end_time":"2016-08-1215:35:19","attachments":null},{"id":"4","title":"sss","content":"szx","department":"backend","start_time":"2016-08-1804:06:07","end_time":"2016-12-1812:00:00","attachments":null}]}}
 	 * @example 超出总页数 {"status":200,"data":{"totalItem":4,"totalPage":1,"currentPage":"100","perPage":4,"pageData":[]}}
+	 * @example 部门名称不合法 {"status":500,"errmsg":"Illegal department."}
 	 */
 	public function getAllTasks($department, $page) {
 		$data = null;
@@ -242,12 +248,15 @@ class Homework
 	 * @group 作业系统
 	 * @param int $rid 作业ID
 	 * @return status:状态码 errmsg:错误信息 data.dir:目录 data.file:文件
+	 * @example 成功返回 {"status":200,"data":{"root":"20161013221431_503/","dir":{"20161013221431_503/ss":{"file":["index.html"]}},"file":["index.html"]}}
+	 * @example 作业还没有被解压 {"status":508,"errmsg":"The homework has not been extracted."}
+	 * @example 打开文件夹失败，请注意系统是否具有权限 {"status":509,"errmsg":"Open dir failed. Please notice the system permission."}
 	 */
 	public function getUnzipWorkDir($rid) {
 		$w = Hws_Record::whereAndWhere(['id', '=', $rid], ['recommend', '=', 1])-> select();
 		if ($w) {
 			if ($dir = $this->read_all_dir(self::HW_UNZIP_FOLDER.$w[0]['unpack_path'])) {
-				Response::out(200, $dir);
+				Response::out(200, array_merge(['root' => $w[0]['unpack_path']], $dir));
 			} else {
 				Response::out(509);
 			}
@@ -259,8 +268,13 @@ class Homework
 	/**获取优秀作业文件内容
 	 * 
 	 * @group 作业系统
-	 * @param string $path 文件路径（urlencode后的路径）
+	 * @param string $path 文件路径（urlencode后的路径，如20161013221431_503%2findex.html）
 	 * @return status:状态码 errmsg:错误信息 data.bytes:文件大小（单位字节） data.lines:文件总行数 data.modify_time:上次修改时间 data.text:文件内容
+	 * @example 成功返回 {"status":200,"data":{"bytes":17,"lines":1,"modify_time":"2016-06-04 17:10:01","text":"hello,What's up?"}}
+	 * @example 无效的文件名 {"status":517,"errmsg":"Invalid filename."}
+	 * @example 文件无法打开 {"status":516,"errmsg":"Cannot open the file."}
+	 * @example 文件不支持预览 {"status":511,"errmsg":"This file cannot be preview."}
+	 * @example 文件不存在 {"status":510,"errmsg":"File does not exist."}
 	 */
 	public function getUnzipWorkFile($path) {
 		// 非法字符检测
@@ -340,6 +354,7 @@ class Homework
 	 * @param int $tid 作业ID
 	 * @param int $page 当前页数
 	 * @return status:状态码 errmsg:错误信息 data.totalItem:结果总条数 data.totalPage:总页数 data.currentPage:当前页数 data.perPage:每页条数 data.pageData.id:作业ID data.pageData.tid:任务ID data.pageData.uid:提交用户ID data.pageData.file_path:作业文件路径 data.pageData.time:提交时间 data.pageData.note:备注 data.pageData.score:评分 data.pageData.comment:评语 data.pageData.comment_uid:批改用户ID data.pageData.comment_time:批改时间 data.pageData.recommend:是否推荐 data.pageData.unpack_path:解压后路径 data.pageData.user.nickname:提交用户昵称 data.pageData.user.mail:提交用户邮箱 data.pageData.user.photo:提交用户头像路径 data.pageData.user.uid:提交用户UID data.pageData.user.name:提交用户姓名 data.pageData.user.sid:提交用户学号 data.pageData.user.department:提交用户部门 data.pageData.user.grade:提交用户年级 data.pageData.user.phone:提交用户长号 data.pageData.user.short_phone:提交用户短号 data.pageData.user.privilege:报名是否通过审核 data.pageData.user.sex:提交用户性别 data.pageData.user.college:提交用户学院 data.pageData.user.major:提交用户专业
+	 * @example 成功获取 {"status":200,"data":{"totalItem":1,"totalPage":1,"currentPage":"1","perPage":4,"pageData":[{"id":"1","tid":"1","uid":"1","file_path":"upload/20160811003010_888.zip","time":"2016-08-0800:00:00","note":null,"score":"B","comment":"TEST","comment_uid":"1","comment_time":"2016-08-0900:00:00","recommend":"0","unpack_path":"","user":{"nickname":"laijingwu","mail":"admin@admin.com","photo":null,"uid":"1","name":"赖靖武","sid":"15115011018","department":"backend","grade":"2015级","phone":"13642593995","short_phone":"653995","privilege":"1","sex":"男","college":"信息科学与工程学院","major":"计算机科学与技术"}}]}}
 	 */
 	public function getWorksFromTid($tid, $page) {
 		$permission = Authorization::getExistingPermission($this->loginedUser['role']);
@@ -376,6 +391,8 @@ class Homework
 	 * @param enum $type 类型{0:全部,1:已批改,2:未批改}
 	 * @param int $page 当前页数
 	 * @return status:状态码 errmsg:错误信息 data.totalItem:结果总条数 data.totalPage:总页数 data.currentPage:当前页数 data.perPage:每页条数 data.pageData.id:作业ID data.pageData.tid:任务ID data.pageData.uid:提交用户ID data.pageData.file_path:作业文件路径 data.pageData.time:提交时间 data.pageData.note:备注 data.pageData.score:评分 data.pageData.comment:评语 data.pageData.comment_uid:批改用户ID data.pageData.comment_time:批改时间 data.pageData.recommend:是否推荐 data.pageData.unpack_path:解压后路径 data.pageData.user.nickname:提交用户昵称 data.pageData.user.mail:提交用户邮箱 data.pageData.user.photo:提交用户头像路径 data.pageData.user.uid:提交用户UID data.pageData.user.name:提交用户姓名 data.pageData.user.sid:提交用户学号 data.pageData.user.department:提交用户部门 data.pageData.user.grade:提交用户年级 data.pageData.user.phone:提交用户长号 data.pageData.user.short_phone:提交用户短号 data.pageData.user.privilege:报名是否通过审核 data.pageData.user.sex:提交用户性别 data.pageData.user.college:提交用户学院 data.pageData.user.major:提交用户专业
+	 * @example 成功返回 {"status":200,"data":{"totalItem":6,"totalPage":2,"currentPage":"1","perPage":4,"pageData":["..."]}}
+	 * @example 不具有管理任务的权限 {"status":301,"errmsg":"Permission denied."}
 	 */
 	public function getAllWorks($type, $page) {
 		// 获取登录用户对应所有权限
@@ -431,6 +448,10 @@ class Homework
 	 * @param enum $score 等级/分数{'A','B','C','D'}
 	 * @param string $comment 评语
 	 * @return status:状态码 errmsg:错误信息
+	 * @example 成功批改 {"status":200,"data":null}
+	 * @example 不具有批改作业的权限 {"status":301,"errmsg":"Permission denied."}
+	 * @example 无效的作业 {"status":504,"errmsg":"Invalid rid."}
+	 * @example 不存在该分数等级 {"status":519,"errmsg":"Invalid score."}
 	 */
 	public function correctWork($rid, $score, $comment) {
 		// 验证rid
@@ -469,6 +490,10 @@ class Homework
 	 * @group 作业系统
 	 * @param int $rid 作业ID
 	 * @return status:状态码 errmsg:错误信息
+	 * @example 成功设置 {"status":200,"data":null}
+	 * @example 不具有管理任务的权限 {"status":301,"errmsg":"Permission denied."}
+	 * @example 无效的作业 {"status":504,"errmsg":"Invalid rid."}
+	 * @example 解压作业失败 {"status":507,"errmsg":"Unzip homework failed."}
 	 */
 	public function setExcellentWorks($rid) {
 		$raw = Hws_Record::where('id', '=', $rid)->select();
@@ -532,6 +557,9 @@ class Homework
 	 * @group 作业系统
 	 * @param int $rid 作业ID
 	 * @return status:状态码 errmsg:错误信息
+	 * @example 成功取消 {"status":200,"data":null}
+	 * @example 无效的作业 {"status":504,"errmsg":"Invalid rid."}
+	 * @example 不具有管理任务的权限 {"status":301,"errmsg":"Permission denied."}
 	 */
 	public function cancelExcellentWorks($rid) {
 		$raw = Hws_Record::where('id', '=', $rid)->select();
@@ -564,6 +592,9 @@ class Homework
 	 * @group 作业系统
 	 * @param int $rid 作业ID
 	 * @return status:状态码 errmsg:错误信息
+	 * @example 成功删除 {"status":200,"data":null}
+	 * @example 不具有删除任务的权限 {"status":301,"errmsg":"Permission denied."}
+	 * @example 无效的作业 {"status":504,"errmsg":"Invalid rid."}
 	 */
 	public function deleteWork($rid) {
 		$raw = Hws_Record::where('id', '=', $rid)->select('file_path, unpack_path');
@@ -602,8 +633,14 @@ class Homework
 	 * @param timestamp $start_time 起始时间（13位时间戳）
 	 * @param file $file 附件上传字段（需要上传时才传）
 	 * @return status:状态码 errmsg:错误信息 data.tid:新增任务ID
+	 * @example 成功添加 {"status":200,"data":{"tid":"1"}}
+	 * @example 部门名称不合法 {"status":500,"errmsg":"Illegal department."}
+	 * @example 不具有添加任务的权限 {"status":301,"errmsg":"Permission denied."}
+	 * @example 截止时间应大于现在和起始时间 {"status":505,"errmsg":"The deadline should be greater than nowtime and start time."}
+	 * @example 该类扩展名文件不允许上传 {"status":514,"errmsg":"This file extension is not allow to upload."}
+	 * @example 文件上传失败 {"status":513,"errmsg":"File upload error."}
 	 */
-	public function addTask($title, $content, $department, $end_time, $start_time = null, $file = null) {
+	public function addTask($title, $content, $department, $end_time, $start_time = 0, $file = 0) {
 		if (!in_array($department, self::HW_DEPARTMEMT)) {
 			Response::out(500);
 			return;
@@ -615,7 +652,7 @@ class Homework
 		}
 
 		$end_time = $this->getJSTimestamp($end_time);	// 转换时间戳
-		$start_time = is_null($start_time) ? time() : $this->getJSTimestamp($start_time);
+		$start_time = empty($start_time) ? time() : $this->getJSTimestamp($start_time);
 		if ($end_time < time() || $end_time < $start_time) {
 			// 时间设置不符
 			Response::out(505);
@@ -663,8 +700,15 @@ class Homework
 	 * @param timestamp $start_time 起始时间（13位时间戳）
 	 * @param file $file 附件上传字段（需要上传时才传）
 	 * @return status:状态码 errmsg:错误信息 data.row:受影响条数
+	 * @example 成功修改 {"status":200,"data":{"row":1}}
+	 * @example 不具有修改任务的权限 {"status":301,"errmsg":"Permission denied."}
+	 * @example 无效的任务 {"status":503,"errmsg":"Invalid tid."}
+	 * @example 不具有转移部门的权限 {"status":512,"errmsg":"Not allow to change department into other."}
+	 * @example 截止时间应大于现在和起始时间 {"status":505,"errmsg":"The deadline should be greater than nowtime and start time."}
+	 * @example 该类扩展名文件不允许上传 {"status":514,"errmsg":"This file extension is not allow to upload."}
+	 * @example 文件上传失败 {"status":513,"errmsg":"File upload error."}
 	 */
-	public function updateTask($tid, $title = null, $content = null, $department = null, $end_time = null, $start_time = null, $file = null) {
+	public function updateTask($tid, $title = 0, $content = 0, $department = 0, $end_time = 0, $start_time = 0, $file = 0) {
 		if ($t = Hws_Task::where('id', '=', $tid)->select()) {
             if (!Authorization::isAuthorized($this->loginedUser['role'], 'submit_'.$t[0]['department'].'_homeworks')) {
             	// 无管理权限
@@ -676,11 +720,25 @@ class Homework
         	Response::out(503);
         	return;
         }
+		
 		$task_update = [];
 		if ($title) $task_update['title'] = $title;
 		if ($content) $task_update['content'] = $content;
-		if ($end_time) $task_update['end_time'] = $end_time;
-		if ($start_time) $task_update['start_time'] = $start_time;
+		if ($end_time) {
+			$end_time = $this->getJSTimestamp($end_time);// 转换时间戳
+			$task_update['end_time'] = date("Y-m-d H:i:s", $end_time);
+		}
+		if ($start_time) {
+			$start_time = empty($start_time) ? time() : $this->getJSTimestamp($start_time);
+			$task_update['start_time'] = date("Y-m-d H:i:s", $start_time);
+		}
+		if ( ($start_time && $start_time < time()) ||
+			($end_time && $start_time && $end_time < $start_time) ) {
+			// 时间设置不符
+			Response::out(505);
+			return;
+		}
+
 		if ($department) {
 			if (!Authorization::isAuthorized(
 				$this->loginedUser['role'],
@@ -711,17 +769,22 @@ class Homework
 			}
 			// 删除旧的附件
 			if ($tmp = Hws_Task::where('id', '=', $tid)->select()) {
-				@unlink($tmp[0]['attachments']);
+				if (!empty($tmp[0]['attachments']))
+					@unlink($tmp[0]['attachments']);
 			}
+			$task_update['attachments'] = $src;
 		}
 		Response::out(200, ['row' => Hws_Task::where('id', '=', $tid)->update($task_update)]);
 	}
 
-	/**管理 - 删除任务（会删除对应任务的所有作业）
+	/**管理 - 删除任务（会删除任务所有作业）
 	 * 
 	 * @group 作业系统
 	 * @param int $tid 任务ID
 	 * @return status:状态码 errmsg:错误信息
+	 * @example 成功删除 {"status":200,"data":null}
+	 * @example 不具有删除任务的权限 {"status":301,"errmsg":"Permission denied."}
+	 * @example 无效的任务 {"status":503,"errmsg":"Invalid tid."}
 	 */
 	public function deleteTask($tid) {
 		$task_arr = Hws_Task::where('id', '=', $tid)->select();
@@ -753,9 +816,9 @@ class Homework
 				}
 			}
 			// 删除对应任务的所有作业 数据库信息
-			Hws_Task::where('id', '=', $tid)->delete();
 			Hws_Record::where('tid', '=', $tid)->delete();
 		}
+		Hws_Task::where('id', '=', $tid)->delete();
 		Response::out(200);
 	}
 
@@ -788,6 +851,9 @@ class Homework
 	 * @group 作业系统
 	 * @param int $tid 任务ID
 	 * @return status:状态码 errmsg:错误信息
+	 * @example 成功截止任务 {"status":200,"data":null}
+	 * @example 不具有管理任务的权限 {"status":301,"errmsg":"Permission denied."}
+	 * @example 无效的任务 {"status":503,"errmsg":"Invalid tid."}
 	 */
 	public function setTaskOff($tid) {
 		if ($t = Hws_Task::where('id', '=', $tid)->select()) {
@@ -905,6 +971,9 @@ class Homework
 	 * @group 作业系统
 	 * @param enum $type 导出类型{1:新生信息,2:实习生作业成绩}
 	 * @return status:状态码 errmsg:错误信息 data:Excel二进制数据（如果成功没有status，直接返回二进制数据，引导页面下载）
+	 * @example 成功导出 Bin-File(Excel文件的二进制数据)
+	 * @example 不具有管理权限 {"status":301,"errmsg":"Permission denied."}
+	 * @example 无效的类型 {"status":517,"errmsg":"Invalid type."}
 	 */
 	public function exportData($type) {
 		if ($this->loginedUser['role'] != 1) {	// TODO: 管理员角色ID
@@ -1084,15 +1153,18 @@ class Homework
 		$objWriter->save('php://output');	// Warning: 可能出现缓冲区不足		
 	}
 
-	/**管理 - 任务搜索
+	/**管理 - 根据任务名称搜索作业（这个要看到时候后台设计图需求改）
 	 * 
 	 * @group 作业系统
 	 * @param string $title 任务标题关键词
 	 * @param int $page 当前页数
 	 * @return status:状态码 errmsg:错误信息 data.totalItem:结果总条数 data.totalPage:总页数 data.currentPage:当前页数 data.perPage:每页条数 data.pageData.id:作业ID data.pageData.tid:任务ID data.pageData.uid:提交用户ID data.pageData.file_path:作业文件路径 data.pageData.time:提交时间 data.pageData.note:备注 data.pageData.score:评分 data.pageData.comment:评语 data.pageData.comment_uid:批改用户ID data.pageData.comment_time:批改时间 data.pageData.recommend:是否推荐 data.pageData.unpack_path:解压后路径 data.pageData.user.nickname:提交用户昵称 data.pageData.user.mail:提交用户邮箱 data.pageData.user.photo:提交用户头像路径 data.pageData.user.uid:提交用户UID data.pageData.user.name:提交用户姓名 data.pageData.user.sid:提交用户学号 data.pageData.user.department:提交用户部门 data.pageData.user.grade:提交用户年级 data.pageData.user.phone:提交用户长号 data.pageData.user.short_phone:提交用户短号 data.pageData.user.privilege:报名是否通过审核 data.pageData.user.sex:提交用户性别 data.pageData.user.college:提交用户学院 data.pageData.user.major:提交用户专业
+	 * @example 成功返回搜索结果 {"status":200,"data":{"totalItem":2,"totalPage":1,"currentPage":"1","perPage":4,"pageData":[{"id":null,"title":"新测试编程部任务","content":"内容","department":"backend","tid":null,"uid":null,"file_path":null,"time":null,"note":null,"score":null,"comment":null,"comment_uid":null,"comment_time":null,"recommend":null,"unpack_path":null,"user":[]},{"id":null,"title":"新测试编程部任务33333","content":"嘿嘿嘿嘿嘿","department":"backend","tid":null,"uid":null,"file_path":null,"time":null,"note":null,"score":null,"comment":null,"comment_uid":null,"comment_time":null,"recommend":null,"unpack_path":null,"user":[]}]}}
+	 * @example 没有权限 {"status":301,"errmsg":"Permission denied."}
+	 * @example 无搜索结果 {"status":520,"errmsg":"Without search result."}
 	 */
-	public function searchTask($title, $page) {
-		$data = Hws_Record::leftJoin('hws_task', 'hws_record.tid', '=', 'hws_task.id')
+	public function searchWorkInTask($title, $page) {
+		$data = Hws_Task::leftJoin('hws_record', 'hws_task.id', '=', 'hws_record.tid')
 			->where('hws_task.title', 'like', "%".$title."%")
 			->select('hws_task.id, hws_task.title, hws_task.content, hws_task.department, hws_record.*');
 

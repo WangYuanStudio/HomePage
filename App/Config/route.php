@@ -59,25 +59,25 @@ return [
         "/homework/correctwork"                           => [
             "PATCH" => "Homework@correctWork"
         ],
-        "/homework/setexcellentworks"                     => [
+        "/homework/setexcellentworks/{rid}"               => [
             "PATCH" => "Homework@setExcellentWorks"
         ],
-        "/homework/cancelexcellentworks"                  => [
+        "/homework/cancelexcellentworks/{rid}"            => [
             "PATCH" => "Homework@cancelExcellentWorks"
         ],
-        "/homework/deletework"                            => [
+        "/homework/deletework/{rid}"                      => [
             "DELETE" => "Homework@deleteWork"
         ],
         "/homework/addtask"                               => [
             "POST" => "Homework@addTask"
         ],
         "/homework/updatetask"                            => [
-            "PATCH" => "Homework@updateTask"
+            "POST" => "Homework@updateTask"
         ],
-        "/homework/deletetask"                            => [
+        "/homework/deletetask/{tid}"                      => [
             "DELETE" => "Homework@deleteTask"
         ],
-        "/homework/settaskoff"                            => [
+        "/homework/settaskoff/{tid}"                      => [
             "PATCH" => "Homework@setTaskOff"
         ],
         "/homework/exportdata/{type}"                     => [
