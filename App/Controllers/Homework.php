@@ -19,7 +19,7 @@ date_default_timezone_set('PRC');
  * Copyright @ WangYuanStudio
  *
  * Author: laijingwu
- * Last modified time: 2016-10-13 23:04
+ * Last modified time: 2016-10-13 23:12
  */
 class Homework
 {
@@ -1153,7 +1153,7 @@ class Homework
 		$objWriter->save('php://output');	// Warning: 可能出现缓冲区不足		
 	}
 
-	/**管理 - 根据任务名称搜索作业（这个要看到时候后台设计图需求改）
+	/**管理 - 根据任务名称搜索作业（到时候后台设计图需求改）
 	 * 
 	 * @group 作业系统
 	 * @param string $title 任务标题关键词

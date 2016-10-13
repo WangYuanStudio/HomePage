@@ -83,8 +83,8 @@ return [
         "/homework/exportdata/{type}"                     => [
             "GET" => "Homework@exportData"
         ],
-        "/homework/searchtask/{title}/{page}"             => [
-            "GET" => "Homework@searchTask"
+        "/homework/searchworkintask/{title}/{page}"       => [
+            "GET" => "Homework@searchWorkInTask"
         ],
 
         "/login/checklogin/{mail}/{password}/{log}" => [
